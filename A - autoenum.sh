@@ -768,11 +768,14 @@ get_ip (){
         else
                 if [[ $unchecked_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
                         IP="$unchecked_IP";sleep 1
-                        if [ $(host $unchecked_IP | head -n1 | awk '{print($3)}') -ne "not" ];then
+                        tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0;echo -e
+                        if [[ $(host $unchecked_IP | head -n1 | awk '{print($3)}') -ne "not" ]];then
                                 URL=$(host $unchecked_IP | head -n1 | awk '{print($5)}')
                                 URL=${URL::-1}
+                                echo -e "[+] Reverse dns found $URL"
                         else
                                 URL=0
+                                echo -e "[*] Reverse dns didn't find any URL using $IP ; recon cannot be used"
                         fi
                         cwd=$(pwd);ping -c 1 -W 3 $IP | head -n2 | tail -n1 > $cwd/tmp
                         if ! grep -q "64 bytes" "tmp";then
@@ -780,7 +783,6 @@ get_ip (){
                                 exit
                         fi
                         rm $cwd/tmp
-                        tput setaf 4;echo -e "[+] IP set to $IP ; reverse dns linked it to $URL";tput sgr0;echo -e
                 elif [[ $unchecked_IP =~ [a-z,A-Z,0-9].[a-z]$ ]] || [[ $unchecked_IP =~ [a-z].[a-z,A-Z,0-9].[a-z]$ ]];then
                         URL="$unchecked_IP"
                         IP=$(host $unchecked_IP | head -n1 | awk '{print($4)}')
