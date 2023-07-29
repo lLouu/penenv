@@ -666,8 +666,9 @@ recon (){
         assetfinder $URL | grep '.$URL' | sort -u | tee -a $recon/final1.txt
         
         echo "[+] Double checking for subdomains with amass and certspotter..."
-        amass enum -d $URL | tee -a $recon/final1.txt
-        certspotter | tee -a $recon/final1.txt
+        amass enum -d $URL | awk '{print($1)}' | grep '.$URL' | tee -a $recon/final1.txt
+        certspotter -watchlist $recon/final1.txt -stdout | tee -a $recon/certs.txt
+        cat $recon/certs.txt | grep "DNS Name =" | awk '{print($4)}' | sort -u | tee -a $recon/final1.txt
         sort -u $recon/final1.txt >> $recon/final.txt
         rm $recon/final1.txt
         
@@ -768,14 +769,14 @@ get_ip (){
         else
                 if [[ $unchecked_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
                         IP="$unchecked_IP";sleep 1
-                        tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0;echo -e
-                        if [[ $(host $unchecked_IP | head -n1 | awk '{print($3)}') -ne "not" ]];then
+                        tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0
+                        if [[ $(host $unchecked_IP | head -n1 | awk '{print($3)}') != "not" ]];then
                                 URL=$(host $unchecked_IP | head -n1 | awk '{print($5)}')
                                 URL=${URL::-1}
-                                echo -e "[+] Reverse dns found $URL"
+                                tput setaf 4;echo -e "[+] Reverse dns found $URL";tput sgr0;echo -e
                         else
                                 URL=0
-                                echo -e "[*] Reverse dns didn't find any URL using $IP ; recon cannot be used"
+                                tput setaf 3;echo -e "[-] Reverse dns didn't find any URL using $IP ; recon cannot be used";tput sgr0;echo -e
                         fi
                         cwd=$(pwd);ping -c 1 -W 3 $IP | head -n2 | tail -n1 > $cwd/tmp
                         if ! grep -q "64 bytes" "tmp";then
@@ -786,7 +787,7 @@ get_ip (){
                 elif [[ $unchecked_IP =~ [a-z,A-Z,0-9].[a-z]$ ]] || [[ $unchecked_IP =~ [a-z].[a-z,A-Z,0-9].[a-z]$ ]];then
                         URL="$unchecked_IP"
                         IP=$(host $unchecked_IP | head -n1 | awk '{print($4)}')
-                        tput setaf 4;echo -e "$unchecked_IP resolved to $IP\n";tput sgr0
+                        tput setaf 4;echo -e "[+] $unchecked_IP resolved to $IP\n";tput sgr0
                 else
                         tput setaf 8
                         echo "[-] Invalid IP or hostname detected."
