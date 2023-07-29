@@ -187,8 +187,8 @@ tput setaf 6
         echo '  / /_/ // /_/ // /_ / /_/ //  __// / / // /_/ // / / / / /  '
         echo '  \__,_/ \__,_/ \__/ \____/ \___//_/ /_/ \__,_//_/ /_/ /_/   '
         echo "                                                             "
-tput bold; echo "Author: Grimmie                                           "
-tput bold; echo "Version: 3.0.1                                            "
+tput bold; echo "Author: Grimmie && lLou_                                  "
+tput bold; echo "Version: 3.0.1 - A                                        "
         tput sgr0
         sleep 1.025
 }
@@ -776,7 +776,7 @@ get_ip (){
                                 exit
                         fi
                         rm $cwd/tmp
-                        tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0;echo -e
+                        tput setaf 4;echo -e "[+] IP set to $IP ; reverse dns linked it to $URL";tput sgr0;echo -e
                 elif [[ $unchecked_IP =~ [a-z,A-Z,0-9].[a-z]$ ]] || [[ $unchecked_IP =~ [a-z].[a-z,A-Z,0-9].[a-z]$ ]];then
                         URL="$unchecked_IP"
                         IP=$(host $unchecked_IP | head -n1 | awk '{print($4)}')
@@ -1047,25 +1047,7 @@ while true && [[ ! "$IP" == " " ]];do
                         break
                         ;;
                 "set target")
-                        echo -en "Enter IP/hostname > ";read unchecked_IP
-                        if [[ $unchecked_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
-                		cwd=$(pwd);ping -c 1 $unchecked_IP | head -n2 | tail -n1 > $cwd/tmp
-                		if ! grep -q "64 bytes" "tmp";then
-					echo "[-] IP failed to resolve"
-				else
-					IP="$unchecked_IP";tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0;echo -e
-				fi
-				rm $cwd/tmp
-		        elif [[ $unchecked_IP =~ [a-z,A-Z,0-9].[a-z]$ ]] || [[ $unchecked_IP =~ [a-z].[a-z,A-Z,0-9].[a-z]$ ]];then
-                		IP=$(host $unchecked_IP | head -n1 | awk '{print($4)}')
-                		tput setaf 4;echo -e "$unchecked_IP resolved to $IP\n";tput sgr0
-                        elif [[ $unchecked_IP == "*" ]];then
-				IP="dev"
-			else
-                                echo "[-] Invalid IP detected."
-                                echo "[-] Example: 192.168.1.5"
-                        fi
-                        echo "[*] IP changed to $IP"
+                        get_ip
                         menu
                         break
                         ;;
