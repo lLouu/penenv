@@ -663,10 +663,10 @@ recon (){
         fi
         
         echo "[+] Harvesting subdomains with assetfinder..."
-        assetfinder $URL | grep '.$URL' | sort -u | tee -a $recon/final1.txt
+        assetfinder $URL | grep ".$URL" | sort -u | tee -a $recon/final1.txt
         
-        echo "[+] Double checking for subdomains with amass and certspotter..."
-        amass enum -d $URL | awk '{print($1)}' | grep '.$URL' | tee -a $recon/final1.txt
+        echo "[+] Double checking for subdomains with amass and certspotter... This might take a while..."
+        amass enum -d $URL | awk '{print($1)}' | grep ".$URL" | tee -a $recon/final1.txt
         certspotter -watchlist $recon/final1.txt -stdout | tee -a $recon/certs.txt
         cat $recon/certs.txt | grep "DNS Name =" | awk '{print($4)}' | sort -u | tee -a $recon/final1.txt
         sort -u $recon/final1.txt >> $recon/final.txt
@@ -691,7 +691,7 @@ recon (){
                 touch $recon/potential_takeovers/potential_takeovers1.txt
         fi
         for line in $(cat ~/$recon/final.txt);do echo $line |sort -u >> ~/$recon/potential_takeovers/domains.txt;done
-        subjack -w $recon/httprobe/alive.txt -t 100 -timeout 30 -ssl -c ~/go/src/github.com/haccer/subjack/fingerprints.json -v 3 >> $recon/potential_takeovers/potential_takeovers/potential_takeovers1.txt
+        subjack -w $recon/httprobe/alive.txt -t 100 -timeout 30 -ssl -c ~/go/src/github.com/haccer/subjack/fingerprints.json -v 3 >> $recon/potential_takeovers/potential_takeovers1.txt
         sort -u $recon/potential_takeovers/potential_takeovers1.txt >> $recon/potential_takeovers/potential_takeovers.txt
         rm $recon/potential_takeovers/potential_takeovers1.txt
         
