@@ -768,8 +768,12 @@ get_ip (){
         else
                 if [[ $unchecked_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
                         IP="$unchecked_IP";sleep 1
-                        URL=$(host $unchecked_IP | head -n1 | awk '{print($5)}')
-                        URL=${URL::-1}
+                        if [ $(host $unchecked_IP | head -n1 | awk '{print($3)}') -ne "not" ];then
+                                URL=$(host $unchecked_IP | head -n1 | awk '{print($5)}')
+                                URL=${URL::-1}
+                        else
+                                URL=0
+                        fi
                         cwd=$(pwd);ping -c 1 -W 3 $IP | head -n2 | tail -n1 > $cwd/tmp
                         if ! grep -q "64 bytes" "tmp";then
                                 echo -e "[-] IP failed to resolve\n[-] Exiting..."
