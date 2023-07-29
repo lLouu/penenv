@@ -626,6 +626,11 @@ windows_enum (){
 
 # source $dir/functions/sumrecon.sh
 recon (){
+        if [ ! $URL ];then
+                echo "[-] $IP has no found domain name to recon for..."
+                return
+        fi
+
         if [ ! -d "$recon/3rd-lvls" ];then
                 mkdir $recon/3rd-lvls
         fi
@@ -658,11 +663,10 @@ recon (){
         fi
         
         echo "[+] Harvesting subdomains with assetfinder..."
-        assetfinder $url | grep '.$url' | sort -u | tee -a $recon/final1.txt
+        assetfinder $URL | grep '.$URL' | sort -u | tee -a $recon/final1.txt
         
         echo "[+] Double checking for subdomains with amass and certspotter..."
-        amass enum -d $url | tee -a $recon/final1.txt
-        #curl -s https://certspotter.com/api/v0/certs\?domain\=$url | jq '.[].dns_names[]' | sed 's/\"//g' | sed 's/\*\.//g' | sort -u
+        amass enum -d $URL | tee -a $recon/final1.txt
         certspotter | tee -a $recon/final1.txt
         sort -u $recon/final1.txt >> $recon/final.txt
         rm $recon/final1.txt
@@ -673,7 +677,7 @@ recon (){
         for line in $(cat $recon/3rd-lvl-domains.txt);do echo $line | sort -u | tee -a $recon/final.txt;done
         
         echo "[+] Harvesting full 3rd lvl domains with sublist3r..."
-        for domain in $(cat $url/recon/3rd-lvl-domains.txt);do sublist3r -d $domain -o $recon/3rd-lvls/$domain.txt;done
+        for domain in $(cat $recon/3rd-lvl-domains.txt);do sublist3r -d $domain -o $recon/3rd-lvls/$domain.txt;done
 
         echo "[+] Probing for alive domains..."
         cat $recon/final.txt | sort -u | httprobe -s -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' | sort -u >> $recon/httprobe/alive.txt
@@ -764,6 +768,8 @@ get_ip (){
         else
                 if [[ $unchecked_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
                         IP="$unchecked_IP";sleep 1
+                        URL=$(host $unchecked_IP | head -n1 | awk '{print($5)}')
+                        URL=${URL::-1}
                         cwd=$(pwd);ping -c 1 -W 3 $IP | head -n2 | tail -n1 > $cwd/tmp
                         if ! grep -q "64 bytes" "tmp";then
                                 echo -e "[-] IP failed to resolve\n[-] Exiting..."
@@ -772,6 +778,7 @@ get_ip (){
                         rm $cwd/tmp
                         tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0;echo -e
                 elif [[ $unchecked_IP =~ [a-z,A-Z,0-9].[a-z]$ ]] || [[ $unchecked_IP =~ [a-z].[a-z,A-Z,0-9].[a-z]$ ]];then
+                        URL="$unchecked_IP"
                         IP=$(host $unchecked_IP | head -n1 | awk '{print($4)}')
                         tput setaf 4;echo -e "$unchecked_IP resolved to $IP\n";tput sgr0
                 else
@@ -818,6 +825,7 @@ halp_meh (){
         echo -e
         tput smul;echo "Scan Profiles:";tput rmul
         tput bold;echo -e "[~] Main:";tput sgr0
+        echo -e "[*] recon"
         echo -e "[*] aggr"
         echo -e "[*] reg"
 	echo -e "[*] top 1k"
