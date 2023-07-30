@@ -770,8 +770,8 @@ get_ip (){
                 if [[ $unchecked_IP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then
                         IP="$unchecked_IP";sleep 1
                         tput setaf 4;echo -e "[+] IP set to $IP";tput sgr0
-                        if [[ $(host $unchecked_IP | head -n1 | awk '{print($3)}') != "not" ]];then
-                                URL=$(host $unchecked_IP | head -n1 | awk '{print($5)}')
+                        if [[ $(resolveip $unchecked_IP | head -n1 | awk '{print($1)}') != "resolveip" ]];then
+                                URL=$(resolveip $unchecked_IP | head -n1 | awk '{print($6)}')
                                 URL=${URL::-1}
                                 tput setaf 4;echo -e "[+] Reverse dns found $URL";tput sgr0;echo -e
                         else
@@ -786,7 +786,7 @@ get_ip (){
                         rm $cwd/tmp
                 elif [[ $unchecked_IP =~ [a-z,A-Z,0-9].[a-z]$ ]] || [[ $unchecked_IP =~ [a-z].[a-z,A-Z,0-9].[a-z]$ ]];then
                         URL="$unchecked_IP"
-                        IP=$(host $unchecked_IP | head -n1 | awk '{print($4)}')
+                        IP=$(resolveip $unchecked_IP | head -n1 | awk '{print($6)}')
                         tput setaf 4;echo -e "[+] $unchecked_IP resolved to $IP\n";tput sgr0
                 else
                         tput setaf 8
