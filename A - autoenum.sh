@@ -1,5 +1,6 @@
 #!/bin/bash
 dir=$(dirname $(readlink -f $0))
+usr=$(whoami)
 
 # TODO : implement testssl in the different fetch
 # cloned from https://github.com/Gr1mmie/autoenum
@@ -9,6 +10,10 @@ sudo apt-get update > upgrade
 sudo apt-get upgrade -y > upgrade
 sudo apt-get autoremove -y > upgrade; rm upgrade
 
+if [ ! -x "$(command -v tput)" ];then
+        echo "[+] tput not detected. installing..."
+        sudo apt-get install tput -y > /dev/null
+fi
 
 if [ ! -x "$(command -v python3)" ];then
         echo "[+] python3 not detected...Installing"
@@ -54,44 +59,44 @@ fi
 
 if [ ! -x "$(command -v assetfinder)" ];then
         echo "[+] assetfinder not detected...Installing"
-        sudo go install github.com/tomnomnom/assetfinder@latest > /dev/null
-        sudo cp /root/go/bin/assetfinder /bin/assetfinder
+        go install github.com/tomnomnom/assetfinder@latest > /dev/null
+        sudo cp /home/$usr/go/bin/assetfinder /bin/assetfinder
 fi
 
 if [ ! -x "$(command -v amass)" ];then
         echo "[+] amass not detected...Installing"
-        sudo go install github.com/owasp-amass/amass/v4/...@master > /dev/null
-        sudo cp /root/go/bin/amass /bin/amass
+        go install github.com/owasp-amass/amass/v4/...@master > /dev/null
+        sudo cp /home/$usr/go/bin/amass /bin/amass
 fi
 
 if [ ! -x "$(command -v gowitness)" ];then
         echo "[+] Gowitness not detected...Installing"
-        sudo go install github.com/sensepost/gowitness@latest > /dev/null
-        sudo cp /root/go/bin/gowitness /bin/gowitness
+        go install github.com/sensepost/gowitness@latest > /dev/null
+        sudo cp /home/$usr/go/bin/gowitness /bin/gowitness
 fi
 
 if [ ! -x "$(command -v subjack)" ];then
         echo "[+] Subjack not detected...Installing"
-        sudo go install github.com/haccer/subjack@latest > /dev/null
-        sudo cp /root/go/bin/subjack /bin/subjack
+        go install github.com/haccer/subjack@latest > /dev/null
+        sudo cp /home/$usr/go/bin/subjack /bin/subjack
 fi
 
 if [ ! -x "$(command -v certspotter)" ];then
         echo "[+] certspotter not detected...Installing"
-        sudo go install software.sslmate.com/src/certspotter/cmd/certspotter@latest > /dev/null
-        sudo cp /root/go/bin/certspotter /bin/certspotter
+        go install software.sslmate.com/src/certspotter/cmd/certspotter@latest > /dev/null
+        sudo cp /home/$usr/go/bin/certspotter /bin/certspotter
 fi
 
 if [ ! -x "$(command -v httprobe)" ];then
         echo "[+] httprobe not detected...Installing"
-        sudo go install github.com/tomnomnom/httprobe@latest > /dev/null
-        sudo cp /root/go/bin/httprobe /bin/httprobe
+        go install github.com/tomnomnom/httprobe@latest > /dev/null
+        sudo cp /home/$usr/go/bin/httprobe /bin/httprobe
 fi
 
 if [ ! -x "$(command -v waybackurls)" ];then
         echo "[+] waybackurls not detected...Installing"
-        sudo go install github.com/tomnomnom/waybackurls@latest > /dev/null
-        sudo cp /root/go/bin/waybackurls /bin/waybackurls
+        go install github.com/tomnomnom/waybackurls@latest > /dev/null
+        sudo cp /home/$usr/go/bin/waybackurls /bin/waybackurls
 fi
 
 if [[ ! -x "$(command -v testssl)" ]];then
@@ -129,7 +134,7 @@ if [ ! -x "$(command -v onesixtyone)" ];then
 fi
 
 if [ ! -x "$(command -v rpcbind)" ];then
-        echo "rpcbind not detected. Installing..."
+        echo "[+] rpcbind not detected. Installing..."
         sudo apt-get install rpcbind -y > /dev/null
 fi
 
@@ -183,10 +188,6 @@ if [ ! -x "$(command -v jq)" ];then
         sudo apt-get install jq -y > /dev/null
 fi
 
-if [ ! -x "$(command -v tput)" ];then
-        echo "[+] tput not detected. installing..."
-        sudo apt-get install tput -y > /dev/null
-fi
 
 # source $dir/functions/banner.sh
 banner (){
@@ -206,25 +207,25 @@ tput bold; echo "Version: 3.0.1 - A                                        "
 
 # source $dir/functions/upgrade.sh
 upgrade (){
-        echo "[*] Checking if anything requires updates, this may take a few minutes...."
+        tput setaf 4;echo "[*] Checking if anything requires updates, this may take a few minutes...."
 	arr=('nmap' 'nikto' 'wafw00f' 'odat' 'oscanner' 'dnsenum' 'dnsrecon' 'fierce' 'onesixtyone' 'whatweb' 'rpcbind' 'gem')
 	for tool in $arr[@];do
 		sudo apt-get install $tool -y 2&>/dev/null &
 	done
 		gem install wpscan 2&>/dev/null &
 	wait
-        echo "[*] Done!"
+        tput setaf 4;echo "[*] Done!";tput sgr0
 }
 
 # source $dir/functions/scans.sh
 OS_guess (){
 	guess=$(ping -c 1 -W 3 $IP | grep '64' | awk '{print($6)}' | cut -d '=' -f2)
 	if [[ "$guess" == 127 ]] || [[ "$guess" == 128 ]];then
-		tput setaf 2;echo "[*] This machine is probably running Windows";tput sgr0
+		tput setaf 4;echo "[*] This machine is probably running Windows";tput sgr0
 	elif [[ "$guess" == 255 ]] || [[ "$guess" == 254 ]];then
-		tput setaf 2;echo "[*] This machine is probably running Cisco/Solaris/OpenBSD";tput sgr0
+		tput setaf 4;echo "[*] This machine is probably running Cisco/Solaris/OpenBSD";tput sgr0
 	elif [[ "$guess" == 63 ]] || [[ "$guess" == 64 ]];then
-		tput setaf 2;echo "[*] This machine is probably running Linux";tput sgr0
+		tput setaf 4;echo "[*] This machine is probably running Linux";tput sgr0
 	else
 		echo "[-] Could not determine OS"
 	fi
@@ -719,13 +720,13 @@ recon (){
                 if [ ! -d "$recon/domains/$domain/dig.txt" ];then
                 touch $recon/domains/$domain/dig.txt
                 fi
-                echo "[*] Digging DNS data from 8.8.8.8 on $domain $(date +'%Y-%m-%d %T') "
+                tput setaf 4;echo "[*] Digging DNS data from 8.8.8.8 on $domain $(date +'%Y-%m-%d %T') ";tput sgr0
                 dig @8.8.8.8 $domain any > $recon/domains/$domain/dig.txt
-                echo "[*] Pulling plugins data on $domain $(date +'%Y-%m-%d %T') "
+                tput setaf 4;echo "[*] Pulling plugins data on $domain $(date +'%Y-%m-%d %T') ";tput sgr0
                 whatweb --info-plugins -t 50 -v $domain >> $recon/domains/$domain/plugins.txt; sleep 3
-                echo "[*] Running whatweb on $domain $(date +'%Y-%m-%d %T')"
+                tput setaf 4;echo "[*] Running whatweb on $domain $(date +'%Y-%m-%d %T')";tput sgr0
                 whatweb -t 50 -v $domain >> $recon/domains/$domain/output.txt; sleep 3
-                echo "[*] Running gowitness on $domain $(date +'%Y-%m-%d %T')"
+                tput setaf 4;echo "[*] Running gowitness on $domain $(date +'%Y-%m-%d %T')";tput sgr0
                 gowitness single -o ~/$recon/domains/$domain/$(date +'%Y-%m-%d %T - gowitness') $domain
         done
         
@@ -861,32 +862,32 @@ halp_meh (){
 
 halp_meh_pws (){
         tput smul;echo "General Commands:";tput rmul
-        echo "[*] ping - Verify host is up/accepting ping probes"
-        echo "[*] help - displays this page"
-        echo "[*] banner - display banner"
-        echo "[*] clear - clears screen"
-        echo "[*] reset - run this if text is unviewable after a scan"
-        echo "[*] commands - shows all avaliable commands"
-        echo "[*] shell - allows you to run commands as if in a terminal"
-        echo "[*] upgrade - checks to see if any dependencies require an update"
-        echo "[*] set target - opens prompt to change target IP"
+        tput setaf 4;echo "[*] ping - Verify host is up/accepting ping probes";tput sgr0
+        tput setaf 4;echo "[*] help - displays this page";tput sgr0
+        tput setaf 4;echo "[*] banner - display banner";tput sgr0
+        tput setaf 4;echo "[*] clear - clears screen";tput sgr0
+        tput setaf 4;echo "[*] reset - run this if text is unviewable after a scan";tput sgr0
+        tput setaf 4;echo "[*] commands - shows all avaliable commands";tput sgr0
+        tput setaf 4;echo "[*] shell - allows you to run commands as if in a terminal";tput sgr0
+        tput setaf 4;echo "[*] upgrade - checks to see if any dependencies require an update";tput sgr0
+        tput setaf 4;echo "[*] set target - opens prompt to change target IP";tput sgr0
         echo -e
         tput smul;echo "Scan Profiles:";tput rmul
-        tput bold;echo "[~] Main - These scans are 'the works', enumerate further depending on services discovered ";tput sgr0
-        echo "[*] recon - do recon with minimal interactions"
-        echo "[*] aggr - scans all ports aggressively"
-        echo "[*] reg - scans all ports normally, no scripts and checks only for OS"
-	echo "[*] top 1k - run a number of scans on the first 1000 ports"
-	echo "[*] top 10k - runs a number of scans on the first 10000 ports"
-        echo "[*] aggr+vuln - aggr scan. Also fires off NSE on discovered services searching for known exploits"
-        echo "[*] reg+vuln - reg scan. Also firing off NSE on discovered services searching for known exploits"
-	echo "[*] top 1k+vuln - runs the top 1k scans and vuln scan"
-	echo "[*] top 10k+vuln - runs the top 10k scans and vuln scan"
-	echo "[*] udp - checks for udp ports"
+        tput setaf 6;echo "[~] Main - These scans are 'the works', enumerate further depending on services discovered ";tput sgr0
+        tput setaf 4;echo "[*] recon - do recon with minimal interactions";tput sgr0
+        tput setaf 4;echo "[*] aggr - scans all ports aggressively";tput sgr0
+        tput setaf 4;echo "[*] reg - scans all ports normally, no scripts and checks only for OS";tput sgr0
+	tput setaf 4;echo "[*] top 1k - run a number of scans on the first 1000 ports";tput sgr0
+	tput setaf 4;echo "[*] top 10k - runs a number of scans on the first 10000 ports";tput sgr0
+        tput setaf 4;echo "[*] aggr+vuln - aggr scan. Also fires off NSE on discovered services searching for known exploits";tput sgr0
+        tput setaf 4;echo "[*] reg+vuln - reg scan. Also firing off NSE on discovered services searching for known exploits";tput sgr0
+	tput setaf 4;echo "[*] top 1k+vuln - runs the top 1k scans and vuln scan";tput sgr0
+	tput setaf 4;echo "[*] top 10k+vuln - runs the top 10k scans and vuln scan";tput sgr0
+	tput setaf 4;echo "[*] udp - checks for udp ports";tput sgr0
         echo -e
-        tput bold;echo "[~] Auxiliary - These scans can be run standalone, do not enumerate beyond";tput sgr0
-        echo "[*] quick - scans with scripts enabled for quick script enumeration"
-        echo "[*] vuln - searches for services and checks for known exploits"
+        tput setaf 6;echo "[~] Auxiliary - These scans can be run standalone, do not enumerate beyond";tput sgr0
+        tput setaf 4;echo "[*] quick - scans with scripts enabled for quick script enumeration";tput sgr0
+        tput setaf 4;echo "[*] vuln - searches for services and checks for known exploits";tput sgr0
         echo -e;sleep 0.5
 }
 
@@ -964,28 +965,28 @@ while true && [[ ! "$IP" == " " ]];do
                         break
                         ;;
 		"udp")
-			echo "[~] SCAN MODE: udp";sleep 2;echo -e
+			tput setaf 6;echo "[~] SCAN MODE: udp";sleep 2;echo -e;tput sgr0
 			mkbasedirs
 			udp
 			menu
 			break
 			;;
                 "vuln")
-                        echo "[~] SCAN MODE: vuln";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: vuln";sleep 2;echo -e;tput sgr0
                         mkbasedirs
                         vuln
                         menu
                         break
                         ;;
                 "recon")
-                        echo "[~] SCAN MODE: recon";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: recon";sleep 2;echo -e;tput sgr0
                         mkbasedirs
                         recon
                         menu
                         break
                         ;;
                 "aggr")
-                        echo "[~] SCAN MODE: aggr";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: aggr";sleep 2;echo -e;tput sgr0
                         mkbasedirs
                         aggr
                         cleanup
@@ -993,7 +994,7 @@ while true && [[ ! "$IP" == " " ]];do
                         break
                         ;;
                 "reg")
-                        echo "[~] SCAN MODE: reg";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: reg";sleep 2;echo -e;tput sgr0
                         mkbasedirs
                         reg
                         cleanup
@@ -1001,13 +1002,13 @@ while true && [[ ! "$IP" == " " ]];do
                         break
                         ;;
                 "quick")
-                        echo "[~] SCAN MODE: quick";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: quick";sleep 2;echo -e;tput sgr0
                         nmap -sC -sV -T4 -Pn $IP
                         menu
                         break
                         ;;
 		"top 1k" | "top1k")
-			echo "[~] SCAN MODE: top 1k";sleep 2;echo -e
+			tput setaf 6;echo "[~] SCAN MODE: top 1k";sleep 2;echo -e;tput sgr0
 			mkbasedirs
 			top_1k
 			cleanup
@@ -1015,7 +1016,7 @@ while true && [[ ! "$IP" == " " ]];do
 			break
 			;;
 		"top 10k" | "top10k")
-			echo "[~] SCAN MODE: top 10k";sleep 2;echo -e
+			tput setaf 6;echo "[~] SCAN MODE: top 10k";sleep 2;echo -e;tput sgr0
 			mkbasedirs
 			top_10k
 			cleanup
@@ -1023,7 +1024,7 @@ while true && [[ ! "$IP" == " " ]];do
 			break
 			;;
 		"top 1k+vuln" | "top1k+vuln")
-			echo "[~] SCAN MODE: top 1k+vuln";sleep 2;echo -e
+			tput setaf 6;echo "[~] SCAN MODE: top 1k+vuln";sleep 2;echo -e;tput sgr0
 			mkbasedirs
 			top_1k
 			vuln
@@ -1032,7 +1033,7 @@ while true && [[ ! "$IP" == " " ]];do
 			break
 			;;
 		"top 10k+vuln" | "top10k+vuln")
-			echo "[~] SCAN MODE: top 10k+vuln";sleep 2;echo -e
+			tput setaf 6;echo "[~] SCAN MODE: top 10k+vuln";sleep 2;echo -e;tput sgr0
 			mkbasedirs
 			top_10k
 			vuln
@@ -1041,7 +1042,7 @@ while true && [[ ! "$IP" == " " ]];do
 			break
 			;;
                 "aggr+vuln")
-                        echo "[~] SCAN MODE: aggr+vuln";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: aggr+vuln";sleep 2;echo -e;tput sgr0
                         mkbasedirs
                         aggr
                         vuln
@@ -1050,7 +1051,7 @@ while true && [[ ! "$IP" == " " ]];do
                         break
                         ;;
                 "reg+vuln")
-                        echo "[~] SCAN MODE: reg+vuln";sleep 2;echo -e
+                        tput setaf 6;echo "[~] SCAN MODE: reg+vuln";sleep 2;echo -e;tput sgr0
                         mkbasedirs
                         reg
                         vuln
