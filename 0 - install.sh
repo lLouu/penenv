@@ -11,8 +11,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.0"
-echo "Script version : V1.0"
+echo "Suite version : V0.1.1"
+echo "Script version : V1.1"
 echo ""
 echo ""
 
@@ -49,12 +49,13 @@ if [[ ! -x "$(command -v autoenum)" ]];then
         wget https://raw.githubusercontent.com/lLouu/penenv/main/A%20-%20autoenum.sh -q
         chmod +x A\ -\ autoenum.sh
         sudo mv A\ -\ autoenum.sh /bin/autoenum
-        echo "[+] Installing autoenum dependencies"
-        echo ""
-        autoenum --first
-        tput setaf 4;echo "[*] all autoenum dependencies installed...";tput sgr0
-        echo ""
 fi
+
+echo "[+] Checking autoenum dependencies"
+echo ""
+autoenum --first
+tput setaf 4;echo "[*] all autoenum dependencies installed...";tput sgr0
+echo ""
 
 # Install start
 if [[ ! -x "$(command -v start)" ]];then

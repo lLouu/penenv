@@ -5,10 +5,11 @@ usr=$(whoami)
 # TODO : implement testssl in the different fetch
 # cloned from https://github.com/Gr1mmie/autoenum
 
-echo "[+] Updating apt-get and upgrading installed packages..."
+echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
 sudo apt-get update > upgrade
 sudo apt-get upgrade -y > upgrade
 sudo apt-get autoremove -y > upgrade; rm upgrade
+tput setaf 4;echo "[*] apt-get updated and upgraded";tput sgr0
 
 if [ ! -x "$(command -v tput)" ];then
         echo "[+] tput not detected. installing..."
@@ -32,12 +33,12 @@ if [ ! -x "$(command -v pip)" ];then
         fi
 fi
 
-echo "[+] Upgrading pip and python packages"
-tput setaf 6;echo "[~] An error and a warning may appear here : that is normal";tput sgr0
-pip install --upgrade pip -q
+echo "[+] Upgrading pip and python packages... This may take a while"
+pip install --upgrade pip -q 2> /dev/null
 pip list --outdated | awk '{print($1)}' | tail -n +3 > requirements.txt
-pip install -r requirements.txt --upgrade -q
+sudo pip install -r requirements.txt --upgrade -q 2> /dev/null
 rm requirements.txt
+tput setaf 4;echo "[*] pip and python packages upgraded";tput sgr0
 
 
 if [ ! -x "$(command -v dig)" ];then
