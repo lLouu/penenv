@@ -29,13 +29,13 @@ fi
 
 if [ ! -x "$(command -v dig)" ]; then
         echo "[+] dig not detected...Installing"
-        sudo apt-get install dnsutils > intalling; rm installing
+        sudo apt-get install dnsutils > installing; rm installing
 fi
 
 if [ ! -x "$(command -v sublist3r)" ]; then
         echo "[+] sublist3r not detected...Installing"
-        sudo git clone https://github.com/aboul3la/Sublist3r.git > intalling; rm installing
-        sudo pip install -r Sublist3r/requirements.txt > intalling; rm installing
+        sudo git clone https://github.com/aboul3la/Sublist3r.git > installing; rm installing
+        sudo pip install -r Sublist3r/requirements.txt > installing; rm installing
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -54,43 +54,43 @@ fi
 
 if [ ! -x "$(command -v assetfinder)" ]; then
         echo "[+] assetfinder not detected...Installing"
-        sudo go install github.com/tomnomnom/assetfinder@latest
+        sudo go install github.com/tomnomnom/assetfinder@latest > installing;rm installing
         sudo cp /root/go/bin/assetfinder /bin/assetfinder
 fi
 
 if [ ! -x "$(command -v amass)" ]; then
         echo "[+] amass not detected...Installing"
-        sudo go install github.com/owasp-amass/amass/v4/...@master
+        sudo go install github.com/owasp-amass/amass/v4/...@master > installing;rm installing
         sudo cp /root/go/bin/amass /bin/amass
 fi
 
 if [ ! -x "$(command -v gowitness)" ];then
         echo "[+] Gowitness not detected...Installing"
-        sudo go install github.com/sensepost/gowitness@latest
+        sudo go install github.com/sensepost/gowitness@latest > installing;rm installing
         sudo cp /root/go/bin/gowitness /bin/gowitness
 fi
 
 if [ ! -x "$(command -v subjack)" ];then
         echo "[+] Subjack not detected...Installing"
-        sudo go install github.com/haccer/subjack
+        sudo go install github.com/haccer/subjack > installing;rm installing
         sudo cp /root/go/bin/subjack /bin/subjack
 fi
 
 if [ ! -x "$(command -v certspotter)" ];then
         echo "[+] certspotter not detected...Installing"
-        sudo go install software.sslmate.com/src/certspotter/cmd/certspotter@latest
+        sudo go install software.sslmate.com/src/certspotter/cmd/certspotter@latest > installing;rm installing
         sudo cp /root/go/bin/certspotter /bin/certspotter
 fi
 
 if [ ! -x "$(command -v httprobe)" ]; then
         echo "[+] httprobe not detected...Installing"
-        sudo go install github.com/tomnomnom/httprobe@latest
+        sudo go install github.com/tomnomnom/httprobe@latest > installing;rm installing
         sudo cp /root/go/bin/httprobe /bin/httprobe
 fi
 
 if [ ! -x "$(command -v waybackurls)" ]; then
         echo "[+] waybackurls not detected...Installing"
-        sudo go install github.com/tomnomnom/waybackurls@latest
+        sudo go install github.com/tomnomnom/waybackurls@latest > installing;rm installing
         sudo cp /root/go/bin/waybackurls /bin/waybackurls
 fi
 
@@ -170,8 +170,8 @@ fi
 
 if [ ! -x "$(command -v odat)" ];then
         echo "[+] odat not detected. installing..."
-        sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz > installing;rm installing
-        sudo tar xzvf odat-linux-libc2.17-x86_64.tar.gz > installing;rm installing
+        sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
+        sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
         printf "#! /bin/sh\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$@" > odat
         chmod +x odat

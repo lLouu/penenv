@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 # TODO : responder
 
 echo "    ____             ______          ";

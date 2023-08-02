@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 # TODO : add cold tools
 # TODO : add networkers
 
@@ -32,7 +32,7 @@ fi
 # Set self command
 if [[ ! -x "$(command -v install_penenv)" ]];then
         echo -e "[+] install_penenv not detected as a command...Setting up"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh > installing;rm installing
+        wget https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh -q
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
@@ -40,17 +40,20 @@ fi
 # Install autoenum & its dependencies
 if [[ ! -x "$(command -v autoenum)" ]];then
         echo -e "[+] autoenum not detected...Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/A%20-%20autoenum.sh > installing;rm installing
+        wget https://raw.githubusercontent.com/lLouu/penenv/main/A%20-%20autoenum.sh -q
         chmod +x A\ -\ autoenum.sh
         sudo mv A\ -\ autoenum.sh /bin/autoenum
         echo -e "[+] Installing autoenum dependencies"
+        echo -e ""
         autoenum --first
+        echo -e "[*] all autoenum dependencies installed..."
+        echo -e ""
 fi
 
 # Install start
 if [[ ! -x "$(command -v start)" ]];then
         echo -e "[+] start not detected...Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/1%20-%20start.sh > installing;rm installing
+        wget https://raw.githubusercontent.com/lLouu/penenv/main/1%20-%20start.sh -q
         chmod +x 1\ -\ start.sh
         sudo mv 1\ -\ start.sh /bin/start
 fi
@@ -64,7 +67,7 @@ fi
 
 if [[ ! -x "$(find $hotscript -name Invoke-Bloodhound.ps1)" ]];then
         echo -e "[+] Invoke-Bloodhound not detected...Installing"
-        wget https://raw.githubusercontent.com/BloodHoundAD/BloodHound/master/Collectors/SharpHound.ps1 > installing;rm installing
+        wget https://raw.githubusercontent.com/BloodHoundAD/BloodHound/master/Collectors/SharpHound.ps1 -q
         mv SharpHound.ps1 $hotscript/Invoke-Bloodhound.ps1
 fi
 
@@ -157,32 +160,30 @@ fi
 
 if [[! -f "$hotscript/WinPEAS.ps1"]];then
         echo -e "[+] WinPEAS powershell not detected...Installing"
-        wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1
+        wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1 -q
         mv winPEAS.ps1 $hotscript/WinPEAS.ps1
 fi
 
 if [[! -f "$hotscript/WinPEAS.bat"]];then
         echo -e "[+] WinPEAS bat not detected...Installing"
-        wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASbat/winPEAS.bat
+        wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASbat/winPEAS.bat -q
         mv winPEAS.bat $hotscript/WinPEAS.bat
 fi
 
 # Install miranda
 if [[ ! -f "$hotscript/miranda.py" ]];then
         echo -e "[+] Miranda not detected...Installing"
-        wget https://raw.githubusercontent.com/0x90/miranda-upnp/master/src/miranda.py
+        wget https://raw.githubusercontent.com/0x90/miranda-upnp/master/src/miranda.py -q
         mv miranda.py $hotscript/miranda.py
 fi
 
 # Install pspy
 if [[ ! -f "$hotscript/pspy32" ]];then
         echo -e "[+] Pspy32 not detected...Installing"
-        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32
-        mv pspy32 $hotscript/pspy32
+        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32
 fi
 
 if [[ ! -f "$hotscript/pspy64" ]];then
         echo -e "[+] Pspy64 not detected...Installing"
-        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64
-        mv pspy64 $hotscript/pspy64
+        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
 fi
