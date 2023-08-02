@@ -100,7 +100,7 @@ if [[ -f "/opt/nessus/sbin/nessusd" ]];then
 fi
 
 # Install ftp module
-if [[ ! -x "$(pip list | grep pyftplib)" ]];then
+if [[ ! -x "$(pip list | grep pyftpdlib)" ]];then
         echo "[+] Pyftplib not detected...Installing"
         sudo pip install pyftpdlib -q > /dev/null
 fi
@@ -110,8 +110,8 @@ if [[ ! -d "/usr/share/doc/python-impacket" ]];then
         echo "[+] Impacket not detected...Installing"
         sudo pip install impacket -q > /dev/null
         git clone https://github.com/fortra/impacket --quiet > /dev/null
-        sudo cp impacket/exemple/* /bin
-        sudo mv impacket /usr/share/doc/python-impacket > /dev/null
+        sudo cp impacket/exemples/* /bin
+        sudo mv impacket /usr/share/doc/python-impacket
         printf "#! /bin/sh\nls /usr/share/doc/python-impacket/examples/" > impacket_script
         chmod +x impacket_script
         sudo mv impacket_script /bin/impacket_script

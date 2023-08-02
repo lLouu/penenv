@@ -32,6 +32,12 @@ if [ ! -x "$(command -v pip)" ];then
         fi
 fi
 
+if [ ! -x "$(pip -V | grep 'pip 20')" ];then
+        echo "[+] pip not upgraded... Upgrading"
+        tput setaf 6;echo "[~] An error and a warning may appear here : that is normal";tput sgr0
+        sudo pip install --upgrade pip
+fi
+
 if [ ! -x "$(command -v dig)" ];then
         echo "[+] dig not detected...Installing"
         sudo apt-get install dnsutils > /dev/null
@@ -40,7 +46,7 @@ fi
 if [ ! -x "$(command -v sublist3r)" ];then
         echo "[+] sublist3r not detected...Installing"
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
-        sudo pip install -r Sublist3r/requirements.txt -q > /dev/null
+        sudo pip install -r Sublist3r/requirements.txt -q
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -830,33 +836,33 @@ shell_preserve (){
 
 halp_meh (){
         tput smul;echo "General Commands:";tput rmul
-        echo -e "[*] ping"
-        echo -e "[*] help"
-        echo -e "[*] banner"
-        echo -e "[*] clear"
-        echo -e "[*] reset"
-        echo -e "[*] commands"
-        echo -e "[*] shell"
-        echo -e "[*] upgrade"
-        echo -e "[*] set target"
-        echo -e "[*] exit"
+        tput setaf 4;echo "[*] ping";tput sgr0
+        tput setaf 4;echo "[*] help";tput sgr0
+        tput setaf 4;echo "[*] banner";tput sgr0
+        tput setaf 4;echo "[*] clear";tput sgr0
+        tput setaf 4;echo "[*] reset";tput sgr0
+        tput setaf 4;echo "[*] commands";tput sgr0
+        tput setaf 4;echo "[*] shell";tput sgr0
+        tput setaf 4;echo "[*] upgrade";tput sgr0
+        tput setaf 4;echo "[*] set target";tput sgr0
+        tput setaf 4;echo "[*] exit";tput sgr0
         echo -e
         tput smul;echo "Scan Profiles:";tput rmul
-        tput bold;echo -e "[~] Main:";tput sgr0
-        echo -e "[*] recon"
-        echo -e "[*] aggr"
-        echo -e "[*] reg"
-	echo -e "[*] top 1k"
-	echo -e "[*] top 10k"
-        echo -e "[*] aggr+vuln"
-        echo -e "[*] reg+vuln"
-	echo -e "[*] top 1k+vuln"
-	echo -e "[*] top 10k+vuln"
-	echo -e "[*] udp"
+        tput setaf 6;echo -e "[~] Main:";tput sgr0
+        tput setaf 4;echo "[*] recon";tput sgr0
+        tput setaf 4;echo "[*] aggr";tput sgr0
+        tput setaf 4;echo "[*] reg";tput sgr0
+	tput setaf 4;echo "[*] top 1k";tput sgr0
+	tput setaf 4;echo "[*] top 10k";tput sgr0
+        tput setaf 4;echo "[*] aggr+vuln";tput sgr0
+        tput setaf 4;echo "[*] reg+vuln";tput sgr0
+	tput setaf 4;echo "[*] top 1k+vuln";tput sgr0
+	tput setaf 4;echo "[*] top 10k+vuln";tput sgr0
+	tput setaf 4;echo "[*] udp";tput sgr0
         echo -e
-        tput bold;echo -e "[~] Auxiliary:";tput sgr0
-        echo -e "[*] vuln"
-        echo -e "[*] quick"
+        tput setaf 6;echo -e "[~] Auxiliary:";tput sgr0
+        tput setaf 4;echo "[*] vuln";tput sgr0
+        tput setaf 4;echo "[*] quick";tput sgr0
 	echo -e;sleep 0.5
 }
 
