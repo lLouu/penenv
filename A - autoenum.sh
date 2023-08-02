@@ -35,7 +35,7 @@ fi
 echo "[+] Upgrading pip and python packages"
 tput setaf 6;echo "[~] An error and a warning may appear here : that is normal";tput sgr0
 pip install --upgrade pip -q
-pip list --outdated > requirements.txt
+pip list --outdated | awk '{print($1)}' | tail -n +3 > requirements.txt
 pip install -r requirements.txt --upgrade -q
 rm requirements.txt
 
