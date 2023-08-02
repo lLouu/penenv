@@ -1,6 +1,7 @@
 #!/bin/bash
 dir=$(dirname $(readlink -f $0))
 
+# TODO : implement testssl in the different fetch
 # cloned from https://github.com/Gr1mmie/autoenum
 
 echo "[+] Updating apt-get and upgrading installed packages..."
@@ -93,6 +94,15 @@ if [ ! -x "$(command -v waybackurls)" ]; then
         sudo cp /root/go/bin/waybackurls /bin/waybackurls
 fi
 
+if [[ ! -x "$(command -v testssl)" ]]
+        echo -e "[+] Testssl not detected...Installing"
+        git clone --depth 1 https://github.com/drwetter/testssl.sh.git > installing;rm installing
+        sudo mv testssl.sh /lib32/testssl
+        printf "#! /bin/sh\nsudo /lib32/testssl/testssl.sh \$@" > testssl
+        chmod +x testssl
+        sudo mv testssl /bin/testssl
+fi
+
 if [ ! -x "$(command -v nmap)" ];then
         echo "[+] nmap not detected...Installing"
         sudo apt-get install nmap -y > installing;rm installing
@@ -163,8 +173,8 @@ if [ ! -x "$(command -v odat)" ];then
         sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz > installing;rm installing
         sudo tar xzvf odat-linux-libc2.17-x86_64.tar.gz > installing;rm installing
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
-        printf "#! /bin/sh\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 $@" > odat
-        sudo chmod +x odat
+        printf "#! /bin/sh\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$@" > odat
+        chmod +x odat
         sudo mv odat /bin/odat
 fi
 
@@ -1074,6 +1084,11 @@ while true && [[ ! "$IP" == " " ]];do
         esac
 done
 }
+
+if [[ $1 == '--first' ]];then
+        echo -e "[+] autoenum dependencies installed"
+        exit 1
+fi
 
 if [[ $1 == '-nr' ]];then nr=1;fi
 clear
