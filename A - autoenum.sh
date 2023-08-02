@@ -32,11 +32,13 @@ if [ ! -x "$(command -v pip)" ];then
         fi
 fi
 
-if [ ! -x "$(pip -V | grep 'pip 20')" ];then
-        echo "[+] pip not upgraded... Upgrading"
-        tput setaf 6;echo "[~] An error and a warning may appear here : that is normal";tput sgr0
-        sudo pip install --upgrade pip
-fi
+echo "[+] Upgrading pip and python packages"
+tput setaf 6;echo "[~] An error and a warning may appear here : that is normal";tput sgr0
+pip install --upgrade pip -q
+pip list --outdated > requirements.txt
+pip install -r requirements.txt --upgrade -q
+rm requirements.txt
+
 
 if [ ! -x "$(command -v dig)" ];then
         echo "[+] dig not detected...Installing"
@@ -46,7 +48,7 @@ fi
 if [ ! -x "$(command -v sublist3r)" ];then
         echo "[+] sublist3r not detected...Installing"
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
-        sudo pip install -r Sublist3r/requirements.txt -q
+        pip install -r Sublist3r/requirements.txt -q
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -65,43 +67,43 @@ fi
 
 if [ ! -x "$(command -v assetfinder)" ];then
         echo "[+] assetfinder not detected...Installing"
-        go install github.com/tomnomnom/assetfinder@latest > /dev/null
+        go install github.com/tomnomnom/assetfinder@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/assetfinder /bin/assetfinder
 fi
 
 if [ ! -x "$(command -v amass)" ];then
         echo "[+] amass not detected...Installing"
-        go install github.com/owasp-amass/amass/v4/...@master > /dev/null
+        go install github.com/owasp-amass/amass/v4/...@master 2> /dev/null
         sudo cp /home/$usr/go/bin/amass /bin/amass
 fi
 
 if [ ! -x "$(command -v gowitness)" ];then
         echo "[+] Gowitness not detected...Installing"
-        go install github.com/sensepost/gowitness@latest > /dev/null
+        go install github.com/sensepost/gowitness@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/gowitness /bin/gowitness
 fi
 
 if [ ! -x "$(command -v subjack)" ];then
         echo "[+] Subjack not detected...Installing"
-        go install github.com/haccer/subjack@latest > /dev/null
+        go install github.com/haccer/subjack@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/subjack /bin/subjack
 fi
 
 if [ ! -x "$(command -v certspotter)" ];then
         echo "[+] certspotter not detected...Installing"
-        go install software.sslmate.com/src/certspotter/cmd/certspotter@latest > /dev/null
+        go install software.sslmate.com/src/certspotter/cmd/certspotter@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/certspotter /bin/certspotter
 fi
 
 if [ ! -x "$(command -v httprobe)" ];then
         echo "[+] httprobe not detected...Installing"
-        go install github.com/tomnomnom/httprobe@latest > /dev/null
+        go install github.com/tomnomnom/httprobe@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/httprobe /bin/httprobe
 fi
 
 if [ ! -x "$(command -v waybackurls)" ];then
         echo "[+] waybackurls not detected...Installing"
-        go install github.com/tomnomnom/waybackurls@latest > /dev/null
+        go install github.com/tomnomnom/waybackurls@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/waybackurls /bin/waybackurls
 fi
 
