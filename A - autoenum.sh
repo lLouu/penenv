@@ -12,13 +12,13 @@ sudo apt-get autoremove -y > upgrade; rm upgrade
 
 if [ ! -x "$(command -v python3)" ]; then
         echo "[+] python3 not detected...Installing"
-        sudo apt-get install python3 -y > installing;rm installing
+        sudo apt-get install python3 -y > /dev/null
 fi
 
 if [ ! -x "$(command -v pip)" ]; then
         if [ ! -x "$(command -v pip3)" ]; then
                 echo "[+] pip not detected...Installing"
-                sudo apt-get install python3-pip -y > installing;rm installing
+                sudo apt-get install python3-pip -y > /dev/null
         fi
         # Check if an alias is needed
         if [ ! -x "$(command -v pip)" ]; then
@@ -29,13 +29,13 @@ fi
 
 if [ ! -x "$(command -v dig)" ]; then
         echo "[+] dig not detected...Installing"
-        sudo apt-get install dnsutils > installing; rm installing
+        sudo apt-get install dnsutils > /dev/null
 fi
 
 if [ ! -x "$(command -v sublist3r)" ]; then
         echo "[+] sublist3r not detected...Installing"
-        sudo git clone https://github.com/aboul3la/Sublist3r.git > installing; rm installing
-        sudo pip install -r Sublist3r/requirements.txt > installing; rm installing
+        sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
+        sudo pip install -r Sublist3r/requirements.txt -q > /dev/null
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -44,59 +44,59 @@ fi
 
 if [ ! -x "$(command -v go)" ]; then
         echo "[+] golang not detected...Installing"
-        sudo apt-get install golang -y > installing;rm installing
+        sudo apt-get install golang -y > /dev/null
 fi
 
 if [ ! -x "$(command -v git)" ]; then
         echo "[+] git not detected...Installing"
-        sudo apt-get install git -y > installing;rm installing
+        sudo apt-get install git -y > /dev/null
 fi
 
 if [ ! -x "$(command -v assetfinder)" ]; then
         echo "[+] assetfinder not detected...Installing"
-        sudo go install github.com/tomnomnom/assetfinder@latest > installing;rm installing
+        sudo go install github.com/tomnomnom/assetfinder@latest > /dev/null
         sudo cp /root/go/bin/assetfinder /bin/assetfinder
 fi
 
 if [ ! -x "$(command -v amass)" ]; then
         echo "[+] amass not detected...Installing"
-        sudo go install github.com/owasp-amass/amass/v4/...@master > installing;rm installing
+        sudo go install github.com/owasp-amass/amass/v4/...@master > /dev/null
         sudo cp /root/go/bin/amass /bin/amass
 fi
 
 if [ ! -x "$(command -v gowitness)" ];then
         echo "[+] Gowitness not detected...Installing"
-        sudo go install github.com/sensepost/gowitness@latest > installing;rm installing
+        sudo go install github.com/sensepost/gowitness@latest > /dev/null
         sudo cp /root/go/bin/gowitness /bin/gowitness
 fi
 
 if [ ! -x "$(command -v subjack)" ];then
         echo "[+] Subjack not detected...Installing"
-        sudo go install github.com/haccer/subjack > installing;rm installing
+        sudo go install github.com/haccer/subjack > /dev/null
         sudo cp /root/go/bin/subjack /bin/subjack
 fi
 
 if [ ! -x "$(command -v certspotter)" ];then
         echo "[+] certspotter not detected...Installing"
-        sudo go install software.sslmate.com/src/certspotter/cmd/certspotter@latest > installing;rm installing
+        sudo go install software.sslmate.com/src/certspotter/cmd/certspotter@latest > /dev/null
         sudo cp /root/go/bin/certspotter /bin/certspotter
 fi
 
 if [ ! -x "$(command -v httprobe)" ]; then
         echo "[+] httprobe not detected...Installing"
-        sudo go install github.com/tomnomnom/httprobe@latest > installing;rm installing
+        sudo go install github.com/tomnomnom/httprobe@latest > /dev/null
         sudo cp /root/go/bin/httprobe /bin/httprobe
 fi
 
 if [ ! -x "$(command -v waybackurls)" ]; then
         echo "[+] waybackurls not detected...Installing"
-        sudo go install github.com/tomnomnom/waybackurls@latest > installing;rm installing
+        sudo go install github.com/tomnomnom/waybackurls@latest > /dev/null
         sudo cp /root/go/bin/waybackurls /bin/waybackurls
 fi
 
 if [[ ! -x "$(command -v testssl)" ]]
         echo -e "[+] Testssl not detected...Installing"
-        git clone --depth 1 https://github.com/drwetter/testssl.sh.git > installing;rm installing
+        git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet > /dev/null
         sudo mv testssl.sh /lib32/testssl
         printf "#! /bin/sh\nsudo /lib32/testssl/testssl.sh \$@" > testssl
         chmod +x testssl
@@ -105,67 +105,67 @@ fi
 
 if [ ! -x "$(command -v nmap)" ];then
         echo "[+] nmap not detected...Installing"
-        sudo apt-get install nmap -y > installing;rm installing
+        sudo apt-get install nmap -y > /dev/null
 fi
 
 if [ ! -x "$(command -v nikto)" ];then
         echo "[+] nikto not detected. Installing..."
-        sudo apt-get install nikto -y > installing;rm installing
+        sudo apt-get install nikto -y > /dev/null
 fi
 
 if [ ! -x "$(command -v gobuster)" ];then
         echo "[+] gobuster not detected. Installing..."
-        sudo apt-get install gobuster -y > installing;rm installing
+        sudo apt-get install gobuster -y > /dev/null
 fi
 
 if [ ! -x "$(command -v whatweb)" ];then
        echo "[+] whatweb not detected. installing..."
-        sudo apt-get install whatweb -y > installing;rm installing
+        sudo apt-get install whatweb -y > /dev/null
 fi
 
 if [ ! -x "$(command -v onesixtyone)" ];then
         echo "[+] onesixtyone not detected. Installing..."
-        sudo apt-get install onesixtyone -y > installing;rm installing
+        sudo apt-get install onesixtyone -y > /dev/null
 fi
 
 if [ ! -x "$(command -v rpcbind)" ];then
         echo "rpcbind not detected. Installing..."
-        sudo apt-get install rpcbind -y > installing;rm installing
+        sudo apt-get install rpcbind -y > /dev/null
 fi
 
 if [ ! -x "$(command -v snmp-check)" ];then
         echo "[+] snmp-check not detected. Installing..."
-        sudo apt-get install snmpcheck -y > installing;rm installing
+        sudo apt-get install snmpcheck -y > /dev/null
 fi
 
 if [ ! -x "$(command -v snmpwalk)" ];then
         echo "[+] snmpwalk not detected. Installing..."
-        sudo apt-get install snmp -y > installing;rm installing
+        sudo apt-get install snmp -y > /dev/null
 fi
 
 if [ ! -x "$(command -v fierce)" ];then
         echo "[+] fierce not detected. Installing..."
-        sudo apt-get install fierce -y > installing;rm installing
+        sudo apt-get install fierce -y > /dev/null
 fi
 
 if [ ! -x "$(command -v dnsrecon)" ];then
         echo "[+] dnsrecon not detected. Installing..."
-        sudo apt-get install dnsrecon -y > installing;rm installing
+        sudo apt-get install dnsrecon -y > /dev/null
 fi
 
 if [ ! -x "$(command -v dnsenum)" ];then
         echo "[+] dnsenum not detected. Installing..."
-        sudo apt-get install dnsenum -y > installing;rm installing
+        sudo apt-get install dnsenum -y > /dev/null
 fi
 
 if [ ! -x "$(command -v oscanner)" ];then
         echo "[+] oscanner not detected. Installing..."
-        sudo apt-get install oscanner -y > installing;rm installing
+        sudo apt-get install oscanner -y > /dev/null
 fi
 
 if [ ! -x "$(command -v wafw00f)" ];then
         echo "[+] wafw00f not detected. Installing..."
-        sudo apt-get install wafw00f -y > installing;rm installing
+        sudo apt-get install wafw00f -y > /dev/null
 fi
 
 if [ ! -x "$(command -v odat)" ];then
@@ -180,12 +180,12 @@ fi
 
 if [ ! -x "$(command -v jq)" ];then
         echo "[+] jq not detected. installing..."
-        sudo apt-get install jq -y > installing;rm installing
+        sudo apt-get install jq -y > /dev/null
 fi
 
 if [ ! -x "$(command -v tput)" ];then
         echo "[+] tput not detected. installing..."
-        sudo apt-get install tput -y > installing;rm installing
+        sudo apt-get install tput -y > /dev/null
 fi
 
 # source $dir/functions/banner.sh

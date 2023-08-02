@@ -61,7 +61,7 @@ fi
 # Install bloodhound
 if [[ ! -x "$(command -v bloodhound)" ]];then
         echo -e "[+] Bloodhound not detected...Installing"
-        sudo apt-get install bloodhound -y > installing;rm installing
+        sudo apt-get install bloodhound -y > /dev/null
         echo -e "[~] Go to http://localhost:7474 to set new neo4j password" 
 fi
 
@@ -73,7 +73,7 @@ fi
 
 if [[ ! -x "$(command -v java)" ]];then
         echo -e "[+] Java not detected...Installing"
-        sudo apt-get install default-jdk -y > installing;rm installing
+        sudo apt-get install default-jdk -y > /dev/null
 fi
 
 if [[ ! "$(java --version)" =~ "openjdk 11.0.18" ]];then
@@ -86,8 +86,8 @@ if [[ -f "/opt/nessus/sbin/nessusd" ]];then
         echo -e "[+] Nessus not detected...Installing"
         curl --request GET \
                --url 'https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-10.5.3-debian10_amd64.deb' \
-               --output 'Nessus.deb' > installing;rm installing
-        sudo apt-get install ./Nessus.deb -y > installing;rm installing
+               --output 'Nessus.deb' > /dev/null
+        sudo apt-get install ./Nessus.deb -y > /dev/null
         rm Nessus.deb
         sudo systemctl start nessusd
         echo -e "[~] Go to http://localhost:8834 to complete nessus installation" 
@@ -96,16 +96,16 @@ fi
 # Install ftp module
 if [[ ! -x "$(pip list | grep pyftpdlib)" ]];then
         echo -e "[+] Pyftpdlib not detected...Installing"
-        sudo pip install pyftpdlib > installing;rm installing
+        sudo pip install pyftpdlib -q > /dev/null
 fi
 
 # Install impacket
 if [[ ! -d "/usr/share/doc/python-impacket" ]];then
         echo -e "[+] Impacket not detected...Installing"
-        sudo pip install python3-impacket > installing;rm installing
-        git clone https://github.com/fortra/impacket > installing;rm installing
+        sudo pip install python3-impacket -q > /dev/null
+        git clone https://github.com/fortra/impacket --quiet > /dev/null
         sudo cp impacket/exemple/* /bin
-        sudo mv impacket /usr/share/doc/python-impacket > installing;rm installing
+        sudo mv impacket /usr/share/doc/python-impacket > /dev/null
         printf "#! /bin/sh\nls /usr/share/doc/python-impacket/examples/" > impacket_script
         chmod +x impacket_script
         sudo mv impacket_script /bin/impacket_script
@@ -114,17 +114,17 @@ fi
 # Install dns2cat & dependencies
 if [[ ! -x "$(command -v make)" ]];then
         echo -e "[+] Make not detected...Installing"
-        sudo apt-get install make -y > installing;rm installing
+        sudo apt-get install make -y > /dev/null
 fi
 
 if [[ ! -x "$(command -v gem)" ]];then
         echo -e "[+] Rubby not detected...Installing"
-        sudo apt-get install ruby-dev -y > installing;rm installing
+        sudo apt-get install ruby-dev -y > /dev/null
 fi
 
 if [[ ! -d "/lib/dnscat" ]];then
         echo -e "[+] Dnscat sourcecode not detected...Installing"
-        git clone https://github.com/iagox86/dnscat2.git > installing;rm installing
+        git clone https://github.com/iagox86/dnscat2.git --quiet > /dev/null
         sudo mv dnscat2 /lib/dnscat
 fi
 
@@ -132,7 +132,7 @@ if [[ ! -f "$hotscript/dnscat" ]];then
         echo -e "[+] Dnscat client not detected...Making"
         workingdir=$(pwd)
         cd /lib/dnscat/client
-        make > installing;rm installing
+        make > /dev/null
         mv dnscat $hotscript/dnscat
         cd $workingdir
 fi
