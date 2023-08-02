@@ -29,7 +29,7 @@ if [[ ! -d $log ]];then
 fi
 
 # Check installations
-if [[ ! -x "$(command -v install_penenv)" ]]; then
+if [[ ! -x "$(command -v install_penenv)" ]];then
         echo -e "[+] install_penenv not detected as a command...Setting up"
         wget https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh > installing;rm installing
         chmod +x 0\ -\ install.sh

@@ -10,29 +10,29 @@ sudo apt-get upgrade -y > upgrade
 sudo apt-get autoremove -y > upgrade; rm upgrade
 
 
-if [ ! -x "$(command -v python3)" ]; then
+if [ ! -x "$(command -v python3)" ];then
         echo "[+] python3 not detected...Installing"
         sudo apt-get install python3 -y > /dev/null
 fi
 
-if [ ! -x "$(command -v pip)" ]; then
-        if [ ! -x "$(command -v pip3)" ]; then
+if [ ! -x "$(command -v pip)" ];then
+        if [ ! -x "$(command -v pip3)" ];then
                 echo "[+] pip not detected...Installing"
                 sudo apt-get install python3-pip -y > /dev/null
         fi
         # Check if an alias is needed
-        if [ ! -x "$(command -v pip)" ]; then
+        if [ ! -x "$(command -v pip)" ];then
                 echo "[+] pip3 detected...Putting pip as an alias"
                 sudo alias pip="pip3"
         fi
 fi
 
-if [ ! -x "$(command -v dig)" ]; then
+if [ ! -x "$(command -v dig)" ];then
         echo "[+] dig not detected...Installing"
         sudo apt-get install dnsutils > /dev/null
 fi
 
-if [ ! -x "$(command -v sublist3r)" ]; then
+if [ ! -x "$(command -v sublist3r)" ];then
         echo "[+] sublist3r not detected...Installing"
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
         sudo pip install -r Sublist3r/requirements.txt -q > /dev/null
@@ -42,23 +42,23 @@ if [ ! -x "$(command -v sublist3r)" ]; then
         sudo rm -R Sublist3r
 fi
 
-if [ ! -x "$(command -v go)" ]; then
+if [ ! -x "$(command -v go)" ];then
         echo "[+] golang not detected...Installing"
         sudo apt-get install golang -y > /dev/null
 fi
 
-if [ ! -x "$(command -v git)" ]; then
+if [ ! -x "$(command -v git)" ];then
         echo "[+] git not detected...Installing"
         sudo apt-get install git -y > /dev/null
 fi
 
-if [ ! -x "$(command -v assetfinder)" ]; then
+if [ ! -x "$(command -v assetfinder)" ];then
         echo "[+] assetfinder not detected...Installing"
         sudo go install github.com/tomnomnom/assetfinder@latest > /dev/null
         sudo cp /root/go/bin/assetfinder /bin/assetfinder
 fi
 
-if [ ! -x "$(command -v amass)" ]; then
+if [ ! -x "$(command -v amass)" ];then
         echo "[+] amass not detected...Installing"
         sudo go install github.com/owasp-amass/amass/v4/...@master > /dev/null
         sudo cp /root/go/bin/amass /bin/amass
@@ -72,7 +72,7 @@ fi
 
 if [ ! -x "$(command -v subjack)" ];then
         echo "[+] Subjack not detected...Installing"
-        sudo go install github.com/haccer/subjack > /dev/null
+        sudo go install github.com/haccer/subjack@latest > /dev/null
         sudo cp /root/go/bin/subjack /bin/subjack
 fi
 
@@ -82,19 +82,19 @@ if [ ! -x "$(command -v certspotter)" ];then
         sudo cp /root/go/bin/certspotter /bin/certspotter
 fi
 
-if [ ! -x "$(command -v httprobe)" ]; then
+if [ ! -x "$(command -v httprobe)" ];then
         echo "[+] httprobe not detected...Installing"
         sudo go install github.com/tomnomnom/httprobe@latest > /dev/null
         sudo cp /root/go/bin/httprobe /bin/httprobe
 fi
 
-if [ ! -x "$(command -v waybackurls)" ]; then
+if [ ! -x "$(command -v waybackurls)" ];then
         echo "[+] waybackurls not detected...Installing"
         sudo go install github.com/tomnomnom/waybackurls@latest > /dev/null
         sudo cp /root/go/bin/waybackurls /bin/waybackurls
 fi
 
-if [[ ! -x "$(command -v testssl)" ]]
+if [[ ! -x "$(command -v testssl)" ]];then
         echo -e "[+] Testssl not detected...Installing"
         git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet > /dev/null
         sudo mv testssl.sh /lib32/testssl
@@ -593,7 +593,7 @@ smb_enum (){
         mkdir -p $loot/smb/shares
         # checks for eternal blue and other common smb vulns
         nmap --script smb-vuln-ms17-010.nse --script-args=unsafe=1 -p 139,445 $IP | tee -a $loot/smb/eternalblue
-        if ! grep -q "smb-vuln-ms17-010:" "auotenum/loot/smb/eternalblue"; then rm $loot/smb/eternalblue;fi
+        if ! grep -q "smb-vuln-ms17-010:" "auotenum/loot/smb/eternalblue";then rm $loot/smb/eternalblue;fi
         nmap --script smb-vuln-ms08-067.nse --script-args=unsafe=1 -p 445 $IP | tee -a $loot/smb/08-067
         if ! grep -q "smb-vuln-ms08-067:" "autoenum/loot/smb/08-067";then rm $loot/smb/08-067;fi
         nmap --script smb-vuln* -p 139,445 $IP | tee -a $loot/smb/gen_vulns
@@ -741,7 +741,7 @@ recon (){
         echo "[+] Pulling and compiling js/php/aspx/jsp/json files from wayback output..."
         for line in $(cat $recon/wayback/wayback_output.txt);do
                 ext="${line##*.}"
-                if [[ "$ext" == "js" ]]; then
+                if [[ "$ext" == "js" ]];then
                 echo $line | sort -u | tee -a  $recon/wayback/extensions/js.txt
                 fi
                 if [[ "$ext" == "html" ]];then

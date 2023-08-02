@@ -102,7 +102,7 @@ fi
 # Install impacket
 if [[ ! -d "/usr/share/doc/python-impacket" ]];then
         echo -e "[+] Impacket not detected...Installing"
-        sudo pip install python3-impacket -q > /dev/null
+        sudo pip install impacket -q > /dev/null
         git clone https://github.com/fortra/impacket --quiet > /dev/null
         sudo cp impacket/exemple/* /bin
         sudo mv impacket /usr/share/doc/python-impacket > /dev/null
@@ -126,6 +126,8 @@ if [[ ! -d "/lib/dnscat" ]];then
         echo -e "[+] Dnscat sourcecode not detected...Installing"
         git clone https://github.com/iagox86/dnscat2.git --quiet > /dev/null
         sudo mv dnscat2 /lib/dnscat
+        # correct minor sourcecode error
+        sudo sed -i 's/return a.value.ptr == a.value.ptr/return a.value.ptr == b.value.ptr/g' /lib/dnscat/client/libs/ll.c
 fi
 
 if [[ ! -f "$hotscript/dnscat" ]];then
@@ -140,9 +142,9 @@ fi
 if [[ ! -x "$(command -v dnscat)" ]];then
         echo -e "[+] Dnscat server not detected...Making"
         workingdir=$(pwd)
-        sudo cd /lib/dnscat/server
-        sudo gem install bundler
-        sudo bundler install
+        cd /lib/dnscat/server
+        sudo gem install bundler > /dev/null
+        sudo bundler install > /dev/null
         cd $workingdir
         
         echo -e "[+] Creating command..."
@@ -152,19 +154,19 @@ if [[ ! -x "$(command -v dnscat)" ]];then
 fi
 
 # Install PEAS
-if [[! -f "$hotscript/LinPEAS.sh"]];then
+if [[ ! -f "$hotscript/LinPEAS.sh"]];then
         echo -e "[+] LinPEAS not detected...Installing"
-        curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh
+        curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh > /dev/null
         mv linpeas.sh $hotscript/LinPEAS.sh
 fi
 
-if [[! -f "$hotscript/WinPEAS.ps1"]];then
+if [[ ! -f "$hotscript/WinPEAS.ps1"]];then
         echo -e "[+] WinPEAS powershell not detected...Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1 -q
         mv winPEAS.ps1 $hotscript/WinPEAS.ps1
 fi
 
-if [[! -f "$hotscript/WinPEAS.bat"]];then
+if [[ ! -f "$hotscript/WinPEAS.bat"]];then
         echo -e "[+] WinPEAS bat not detected...Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASbat/winPEAS.bat -q
         mv winPEAS.bat $hotscript/WinPEAS.bat
@@ -180,10 +182,10 @@ fi
 # Install pspy
 if [[ ! -f "$hotscript/pspy32" ]];then
         echo -e "[+] Pspy32 not detected...Installing"
-        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32
+        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32 > /dev/null
 fi
 
 if [[ ! -f "$hotscript/pspy64" ]];then
         echo -e "[+] Pspy64 not detected...Installing"
-        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
+        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64 > /dev/null
 fi
