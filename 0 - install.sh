@@ -71,7 +71,7 @@ if [[ ! -x "$(command -v bloodhound)" ]];then
         tput setaf 6;echo "[~] Go to http://localhost:7474 to set new neo4j password";tput sgr0
 fi
 
-if [[ ! -x "$(find $hotscript -name Invoke-Bloodhound.ps1)" ]];then
+if [[ ! -f "$hotscript/Invoke-Bloodhound.ps1" ]];then
         echo "[+] Invoke-Bloodhound not detected...Installing"
         wget https://raw.githubusercontent.com/BloodHoundAD/BloodHound/master/Collectors/SharpHound.ps1 -q
         mv SharpHound.ps1 $hotscript/Invoke-Bloodhound.ps1
@@ -90,7 +90,7 @@ fi
 # Install Nessus
 if [[ -f "/opt/nessus/sbin/nessusd" ]];then
         echo "[+] Nessus not detected...Installing"
-        curl --request GET \
+        curl -s --request GET \
                --url 'https://www.tenable.com/downloads/api/v2/pages/nessus/files/Nessus-10.5.3-debian10_amd64.deb' \
                --output 'Nessus.deb' > /dev/null
         sudo apt-get install ./Nessus.deb -y > /dev/null
@@ -100,8 +100,8 @@ if [[ -f "/opt/nessus/sbin/nessusd" ]];then
 fi
 
 # Install ftp module
-if [[ ! -x "$(pip list | grep pyftpdlib)" ]];then
-        echo "[+] Pyftpdlib not detected...Installing"
+if [[ ! -x "$(pip list | grep pyftplib)" ]];then
+        echo "[+] Pyftplib not detected...Installing"
         sudo pip install pyftpdlib -q > /dev/null
 fi
 
@@ -162,8 +162,7 @@ fi
 # Install PEAS
 if [[ ! -f "$hotscript/LinPEAS.sh" ]];then
         echo "[+] LinPEAS not detected...Installing"
-        curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh > /dev/null
-        mv linpeas.sh $hotscript/LinPEAS.sh
+        curl -L -s https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh --output $hotscript/LinPEAS.sh
 fi
 
 if [[ ! -f "$hotscript/WinPEAS.ps1" ]];then
@@ -188,10 +187,10 @@ fi
 # Install pspy
 if [[ ! -f "$hotscript/pspy32" ]];then
         echo "[+] Pspy32 not detected...Installing"
-        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32 > /dev/null
+        curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32
 fi
 
 if [[ ! -f "$hotscript/pspy64" ]];then
         echo "[+] Pspy64 not detected...Installing"
-        curl -L https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64 > /dev/null
+        curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
 fi
