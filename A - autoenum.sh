@@ -35,8 +35,16 @@ fi
 
 echo "[+] Upgrading pip and python packages... This may take a while"
 pip install --upgrade pip -q 2> /dev/null
-pip list --outdated | awk '{print($1)}' | tail -n +3 > requirements.txt
-sudo pip install -r requirements.txt --upgrade -q 2> /dev/null
+l=$(pip list --outdated | awk '{print($1, "==", $3)}' | tail -n +3)
+n=$(echo $l | wc -l | awk '{print($1)}')
+tput setaf 6;echo "[~] $n packages to upgrade";tput sgr0
+i=0
+for line in $l
+do
+        pip install $line --upgrade -q 2> /dev/null
+        (( i = i+1 ))
+        echo -ne "$i/$n/\r"
+done
 rm requirements.txt
 tput setaf 4;echo "[*] pip and python packages upgraded";tput sgr0
 
@@ -49,7 +57,7 @@ fi
 if [ ! -x "$(command -v sublist3r)" ];then
         echo "[+] sublist3r not detected...Installing"
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
-        pip install -r Sublist3r/requirements.txt -q
+        pip install -r Sublist3r/requirements.txt -q 2> /dev/null
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -236,7 +244,7 @@ OS_guess (){
 	elif [[ "$guess" == 63 ]] || [[ "$guess" == 64 ]];then
 		tput setaf 4;echo "[*] This machine is probably running Linux";tput sgr0
 	else
-		echo "[-] Could not determine OS"
+		tput setaf 1;echo "[-] Could not determine OS";tput sgr0
 	fi
 	sleep 1.5
 }
@@ -635,19 +643,19 @@ smb_enum (){
 
 linux_enum (){
         #get exact snmp version
-        echo "[-] Work in Progress"
+        tput setaf 1;echo "[-] Work in Progress";tput sgr0
 }
 
 windows_enum (){
         # get exact snmp version
         # pull entire MIB into sections
-        echo "[-] Work in Progress"
+        tput setaf 1;echo "[-] Work in Progress";tput sgr0
 }
 
 # source $dir/functions/sumrecon.sh
 recon (){
         if [ ! $URL ];then
-                echo "[-] $IP has no found domain name to recon for..."
+                tput setaf 1;echo "[-] $IP has no found domain name to recon for...";tput sgr0
                 return
         fi
 
@@ -800,7 +808,7 @@ get_ip (){
                         fi
                         cwd=$(pwd);ping -c 1 -W 3 $IP | head -n2 | tail -n1 > $cwd/tmp
                         if ! grep -q "64 bytes" "tmp";then
-                                echo -e "[-] IP failed to resolve\n[-] Exiting..."
+                                tput setaf 1;echo -e "[-] IP failed to resolve\n[-] Exiting...";tput sgr0
                                 exit
                         fi
                         rm $cwd/tmp
@@ -809,7 +817,7 @@ get_ip (){
                         IP=$(resolveip $unchecked_IP | head -n1 | awk '{print($6)}')
                         tput setaf 4;echo -e "[+] $unchecked_IP resolved to $IP\n";tput sgr0
                 else
-                        tput setaf 8
+                        tput setaf 1
                         echo "[-] Invalid IP or hostname detected."
                         echo -e "[-] Example:\n\t[>] 192.168.1.5\n\t[>] google.com"
                         tput sgr0
@@ -966,7 +974,7 @@ while true && [[ ! "$IP" == " " ]];do
                         ;;
                 "ping")
 			if [[ "$IP" == "dev" ]];then
-				echo "[-] set an IP. use set target to do this"
+				tput setaf 1;echo "[-] set an IP. use set target to do this";tput sgr0
 			else
                         	ping $IP -c 1;echo -e
 			fi
@@ -1096,7 +1104,8 @@ done
 }
 
 if [[ $1 == '--first' ]];then
-        echo -e "[+] autoenum dependencies installed"
+        tput setaf 4;echo "[*] all autoenum dependencies installed...";tput sgr0
+        echo ""
         exit 1
 fi
 

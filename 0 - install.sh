@@ -54,8 +54,6 @@ fi
 echo "[+] Checking autoenum dependencies"
 echo ""
 autoenum --first
-tput setaf 4;echo "[*] all autoenum dependencies installed...";tput sgr0
-echo ""
 
 # Install start
 if [[ ! -x "$(command -v start)" ]];then
@@ -103,13 +101,13 @@ fi
 # Install ftp module
 if [[ ! -x "$(pip list | grep pyftpdlib)" ]];then
         echo "[+] Pyftplib not detected...Installing"
-        sudo pip install pyftpdlib -q > /dev/null
+        sudo pip install pyftpdlib -q 2> /dev/null
 fi
 
 # Install impacket
 if [[ ! -d "/usr/share/doc/python-impacket" ]];then
         echo "[+] Impacket not detected...Installing"
-        sudo pip install impacket -q > /dev/null
+        sudo pip install impacket -q 2> /dev/null
         git clone https://github.com/fortra/impacket --quiet > /dev/null
         sudo cp impacket/exemples/* /bin
         sudo mv impacket /usr/share/doc/python-impacket
