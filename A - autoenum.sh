@@ -36,16 +36,15 @@ fi
 echo "[+] Upgrading pip and python packages... This may take a while"
 pip install --upgrade pip -q 2> /dev/null
 l=$(pip list --outdated | awk '{print($1, "==", $3)}' | tail -n +3)
-n=$(echo $l | wc -l | awk '{print($1)}')
+n=$(echo "$l" | wc -l | awk '{print($1)}')
 tput setaf 6;echo "[~] $n packages to upgrade";tput sgr0
 i=0
 for line in $l
 do
         pip install $line --upgrade -q 2> /dev/null
         (( i = i+1 ))
-        echo -ne "$i/$n/\r"
+        echo -ne "$i/$n\r"
 done
-rm requirements.txt
 tput setaf 4;echo "[*] pip and python packages upgraded";tput sgr0
 
 

@@ -16,7 +16,14 @@ echo "Script version : V1.1"
 echo ""
 echo ""
 
-
+branch="main"
+while getopts ":hn:" option; do
+        case $option in
+                b)
+                        branch=$OPTARG
+                        ;;
+        esac
+done
 
 # Set directory environement
 usr=$(whoami)
@@ -38,7 +45,7 @@ fi
 # Set self command
 if [[ ! -x "$(command -v install_penenv)" ]];then
         echo "[+] install_penenv not detected as a command...Setting up"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh -q
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh -q
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
@@ -46,7 +53,7 @@ fi
 # Install autoenum & its dependencies
 if [[ ! -x "$(command -v autoenum)" ]];then
         echo "[+] autoenum not detected...Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/A%20-%20autoenum.sh -q
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/A%20-%20autoenum.sh -q
         chmod +x A\ -\ autoenum.sh
         sudo mv A\ -\ autoenum.sh /bin/autoenum
 fi
@@ -58,7 +65,7 @@ autoenum --first
 # Install start
 if [[ ! -x "$(command -v start)" ]];then
         echo "[+] start not detected...Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/1%20-%20start.sh -q
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/1%20-%20start.sh -q
         chmod +x 1\ -\ start.sh
         sudo mv 1\ -\ start.sh /bin/start
 fi
