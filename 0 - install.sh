@@ -16,14 +16,33 @@ echo "Script version : V1.1"
 echo ""
 echo ""
 
+
+
+# Manage options
 branch="main"
-while getopts ":hn:" option; do
-        case $option in
-                b)
-                        branch=$OPTARG
-                        ;;
-        esac
+
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -b|--branch)
+      branch="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
 done
+
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+
 
 # Set directory environement
 usr=$(whoami)
