@@ -16,9 +16,9 @@ echo ""
 
 # Manage options
 branch="main"
-check=true
-force=false
-no_upgrade=false
+check="1"
+force=""
+no_upgrade=""
 
 POSITIONAL_ARGS=()
 
@@ -30,15 +30,15 @@ while [[ $# -gt 0 ]]; do
       shift # past value
       ;;
     -nc|--no-check)
-      check=false
+      check=""
       shift
       ;;
     -f|--force)
-      force=true
+      force="1"
       shift
       ;;
     -nu|--no-upgrade)
-      no_upgrade=true
+      no_upgrade="1"
       shift
       ;;
     -h|--help)
@@ -83,7 +83,7 @@ if [[ ! -x "$(command -v install_penenv)" ]];then
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
-install_penenv $#
+install_penenv $@
 
 # Starting Neo4j
 echo "[+] Starting neo4j"
