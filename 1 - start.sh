@@ -21,6 +21,7 @@ force=""
 no_upgrade=""
 
 POSITIONAL_ARGS=()
+ORIGINAL_ARGS=$@
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -83,7 +84,7 @@ if [[ ! -x "$(command -v install_penenv)" ]];then
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
-install_penenv $@
+install_penenv $ORIGINAL_ARGS
 
 # Starting Neo4j
 echo "[+] Starting neo4j"

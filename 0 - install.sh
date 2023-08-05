@@ -25,6 +25,7 @@ force=""
 no_upgrade=""
 
 POSITIONAL_ARGS=()
+ORIGINAL_ARGS=$@
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -120,7 +121,8 @@ fi
 
 if [[ $check ]];then
         tput setaf 6;echo "[~] Checking done... Reloading command";tput sgr0
-        install_penenv $@ -nc
+        echo "";
+        install_penenv $ORIGINAL_ARGS -nc
         exit 1
 fi
 
@@ -211,7 +213,7 @@ fi
 if [[ ! -d "/usr/share/doc/python-impacket" || $force ]];then
         echo "[+] Impacket not detected... Installing"
         if [[ -d "/usr/share/doc/python-impacket" ]];then
-                mv /usr/share/doc/python-impacket /usr/share/doc/python-impacket.old
+                sudo mv /usr/share/doc/python-impacket /usr/share/doc/python-impacket.old
                 tput setaf 6;echo "[~] Moved /usr/share/doc/python-impacket to /usr/share/doc/python-impacket.old due to forced reinstallation";tput sgr0
         fi
         sudo pip install impacket -q 2> /dev/null
@@ -233,7 +235,7 @@ fi
 if [[ ! -x "$(command -v sublist3r)" || $force ]];then
         echo "[+] sublist3r not detected... Installing"
         if [[ -d "/lib/python3/dist-packages/subbrute" ]];then
-                mv /lib/python3/dist-packages/subbrute /lib/python3/dist-packages/subbrute.old
+                sudo mv /lib/python3/dist-packages/subbrute /lib/python3/dist-packages/subbrute.old
                 tput setaf 6;echo "[~] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute.old due to forced reinstallation";tput sgr0
         fi
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
@@ -297,7 +299,7 @@ fi
 if [[ ! -x "$(command -v testssl)" || $force ]];then
         echo -e "[+] Testssl not detected... Installing"
         if [[ -d "/lib32/testssl" ]];then
-                mv /lib32/testssl /lib32/testssl.old
+                sudo mv /lib32/testssl /lib32/testssl.old
                 tput setaf 6;echo "[~] Moved /lib32/testssl to /lib32/testssl.old due to forced reinstallation";tput sgr0
         fi
         git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet > /dev/null
@@ -389,7 +391,7 @@ fi
 if [[ ! -x "$(command -v odat)" || $force ]];then
         echo "[+] odat not detected... Installing"
         if [[ -d "/lib32/odat_lib" ]];then
-                mv /lib32/odat_lib /lib32/odat_lib.old
+                sudo mv /lib32/odat_lib /lib32/odat_lib.old
                 tput setaf 6;echo "[~] Moved /lib32/odat_lib to /lib32/odat_lib.old due to forced reinstallation";tput sgr0
         fi
         sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
@@ -411,6 +413,10 @@ fi
 # Install dns2cat & dependencies
 if [[ ! -d "/lib/dnscat" || $force ]];then
         echo "[+] Dnscat sourcecode not detected... Installing"
+        if [[ -d "/lib/dnscat" ]];then
+                sudo mv /lib/dnscat /lib/dnscat.old
+                tput setaf 6;echo "[~] Moved /lib/dnscat to /lib/dnscat.old due to forced reinstallation";tput sgr0
+        fi
         git clone https://github.com/iagox86/dnscat2.git --quiet > /dev/null
         sudo mv dnscat2 /lib/dnscat
         # correct minor sourcecode error
