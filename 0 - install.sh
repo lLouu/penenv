@@ -213,8 +213,8 @@ fi
 if [[ ! -d "/usr/share/doc/python-impacket" || $force ]];then
         echo "[+] Impacket not detected... Installing"
         if [[ -d "/usr/share/doc/python-impacket" ]];then
-                sudo mv /usr/share/doc/python-impacket /usr/share/doc/python-impacket.old
-                tput setaf 6;echo "[~] Moved /usr/share/doc/python-impacket to /usr/share/doc/python-impacket.old due to forced reinstallation";tput sgr0
+                sudo mv /usr/share/doc/python-impacket /usr/share/doc/python-impacket-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /usr/share/doc/python-impacket to /usr/share/doc/python-impacket-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
         sudo pip install impacket -q 2> /dev/null
         git clone https://github.com/fortra/impacket --quiet > /dev/null
@@ -235,8 +235,8 @@ fi
 if [[ ! -x "$(command -v sublist3r)" || $force ]];then
         echo "[+] sublist3r not detected... Installing"
         if [[ -d "/lib/python3/dist-packages/subbrute" ]];then
-                sudo mv /lib/python3/dist-packages/subbrute /lib/python3/dist-packages/subbrute.old
-                tput setaf 6;echo "[~] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute.old due to forced reinstallation";tput sgr0
+                sudo mv /lib/python3/dist-packages/subbrute /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
         pip install -r Sublist3r/requirements.txt -q 2> /dev/null
@@ -299,8 +299,8 @@ fi
 if [[ ! -x "$(command -v testssl)" || $force ]];then
         echo -e "[+] Testssl not detected... Installing"
         if [[ -d "/lib32/testssl" ]];then
-                sudo mv /lib32/testssl /lib32/testssl.old
-                tput setaf 6;echo "[~] Moved /lib32/testssl to /lib32/testssl.old due to forced reinstallation";tput sgr0
+                sudo mv /lib32/testssl /lib32/testssl-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
         git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet > /dev/null
         sudo mv testssl.sh /lib32/testssl
@@ -391,8 +391,8 @@ fi
 if [[ ! -x "$(command -v odat)" || $force ]];then
         echo "[+] odat not detected... Installing"
         if [[ -d "/lib32/odat_lib" ]];then
-                sudo mv /lib32/odat_lib /lib32/odat_lib.old
-                tput setaf 6;echo "[~] Moved /lib32/odat_lib to /lib32/odat_lib.old due to forced reinstallation";tput sgr0
+                sudo mv /lib32/odat_lib /lib32/odat_lib-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib32/odat_lib to /lib32/odat_lib-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
         sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
@@ -414,8 +414,8 @@ fi
 if [[ ! -d "/lib/dnscat" || $force ]];then
         echo "[+] Dnscat sourcecode not detected... Installing"
         if [[ -d "/lib/dnscat" ]];then
-                sudo mv /lib/dnscat /lib/dnscat.old
-                tput setaf 6;echo "[~] Moved /lib/dnscat to /lib/dnscat.old due to forced reinstallation";tput sgr0
+                sudo mv /lib/dnscat /lib/dnscat-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
         git clone https://github.com/iagox86/dnscat2.git --quiet > /dev/null
         sudo mv dnscat2 /lib/dnscat
