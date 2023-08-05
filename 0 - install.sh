@@ -396,6 +396,7 @@ if [[ ! -x "$(command -v odat)" || $force ]];then
         fi
         sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
+        sudo rm odat-linux-libc2.17-x86_64.tar.gz
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
         printf "#! /bin/sh\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$@" > odat
         chmod +x odat
