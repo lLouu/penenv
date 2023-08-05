@@ -9,12 +9,60 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.1"
-echo "Script version : V1.0"
+echo "Suite version : V0.1.2"
+echo "Script version : V1.1"
 echo ""
 echo ""
 
+# Manage options
+branch="main"
+check=true
+force=false
+no_upgrade=false
 
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -b|--branch)
+      branch="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -nc|--no-check)
+      check=false
+      shift
+      ;;
+    -f|--force)
+      force=true
+      shift
+      ;;
+    -nu|--no-upgrade)
+      no_upgrade=true
+      shift
+      ;;
+    -h|--help)
+      echo "[~] Github options"
+      echo "[*] -b | --branch <main|dev> (default: main) - Use this branch version of the github"
+      echo "[*] -nc | --no-check - Disable the check of the branch on github"
+      echo ""
+      echo "[~] Misc options"
+      echo "[*] -f | --force - Force the installation even when the detection says it is installed"
+      echo "[*] -nu | --no-upgrade - Disable apt and pip upgrading"
+      echo "[*] -h | --help - Get help"
+      ;;
+    -*|--*)
+      tput setaf 1;echo "[-] Unknown option $1... Exiting";tput sgr0
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 # Set directory environement
 usr=$(whoami)
@@ -35,7 +83,7 @@ if [[ ! -x "$(command -v install_penenv)" ]];then
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
-install_penenv
+install_penenv $#
 
 # Starting Neo4j
 echo "[+] Starting neo4j"
