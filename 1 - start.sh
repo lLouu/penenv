@@ -10,7 +10,7 @@ echo "                                     ";
 echo ""
 echo "Author : lLou_"
 echo "Script version : V1.1"
-echo "Suite version : V0.1.3"
+echo "Suite version : V0.1.4"
 echo ""
 echo ""
 

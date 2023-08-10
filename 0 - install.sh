@@ -9,8 +9,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.3"
-echo "Script version : V1.3"
+echo "Suite version : V0.1.4"
+echo "Script version : V1.4"
 echo ""
 echo ""
 
@@ -22,6 +22,15 @@ apt_installation () {
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $name not detected... Installing"
                 sudo apt-get install $pkg -y > /dev/null
+        fi
+}
+
+go_installation () {
+        if [[ $# -ne 2 ]];then tput setaf 1;echo "[!] DEBUG : $# argument given for go installation, when 2 are required... ($@)";tput sgr0; return; fi 
+        if [[ ! -x "$(command -v $1)" || $force ]];then
+                echo "[+] $1 not detected... Installing"
+                go install $2 2> /dev/null
+                sudo cp /home/$usr/go/bin/$1 /bin/$1
         fi
 }
 
@@ -99,12 +108,12 @@ fi
 apt_installation "tput" "tput" "ncurses-bin"
 
 # PenEnv
-###### Install install_penenv
-if [[ ! -x "$(command -v install_penenv)" || $check || $force ]];then
-        echo "[+] install_penenv not detected as a command...Setting up"
+###### Install install-penenv
+if [[ ! -x "$(command -v install-penenv)" || $check || $force ]];then
+        echo "[+] install-penenv not detected as a command...Setting up"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh -q
         chmod +x 0\ -\ install.sh
-        sudo mv 0\ -\ install.sh /bin/install_penenv
+        sudo mv 0\ -\ install.sh /bin/install-penenv
 fi
 
 ###### Install autoenum
@@ -126,7 +135,7 @@ fi
 if [[ $check ]];then
         tput setaf 6;echo "[~] Checking done... Reloading command";tput sgr0
         echo "";
-        install_penenv $ORIGINAL_ARGS -nc
+        install-penenv $ORIGINAL_ARGS -nc
         exit 1
 fi
 
@@ -252,39 +261,19 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
 fi
 
 ###### Install assetfinder
-if [[ ! -x "$(command -v assetfinder)" || $force ]];then
-        echo "[+] assetfinder not detected... Installing"
-        go install github.com/tomnomnom/assetfinder@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/assetfinder /bin/assetfinder
-fi
+go_installation "assetfinder" "github.com/tomnomnom/assetfinder@latest"
 
 ###### Install amass
-if [[ ! -x "$(command -v amass)" || $force ]];then
-        echo "[+] amass not detected... Installing"
-        go install github.com/owasp-amass/amass/v4/...@master 2> /dev/null
-        sudo cp /home/$usr/go/bin/amass /bin/amass
-fi
+go_installation "amass" "github.com/owasp-amass/amass/v4/...@master"
 
 ###### Install gowitness
-if [[ ! -x "$(command -v gowitness)" || $force ]];then
-        echo "[+] Gowitness not detected... Installing"
-        go install github.com/sensepost/gowitness@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/gowitness /bin/gowitness
-fi
+go_installation "gowitness" "github.com/sensepost/gowitness@latest"
 
 ###### Install subjack
-if [[ ! -x "$(command -v subjack)" || $force ]];then
-        echo "[+] Subjack not detected... Installing"
-        go install github.com/haccer/subjack@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/subjack /bin/subjack
-fi
+go_installation "subjack" "github.com/haccer/subjack@latest"
 
 ###### Install certspotter
-if [[ ! -x "$(command -v certspotter)" || $force ]];then
-        echo "[+] certspotter not detected... Installing"
-        go install software.sslmate.com/src/certspotter/cmd/certspotter@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/certspotter /bin/certspotter
-fi
+go_installation "certspotter" "software.sslmate.com/src/certspotter/cmd/certspotter@latest"
 
 ###### Install dnsrecon
 apt_installation "dnsrecon"
@@ -293,11 +282,35 @@ apt_installation "dnsrecon"
 apt_installation "dnsenum"
 
 ###### Install waybackurls
-if [[ ! -x "$(command -v waybackurls)" || $force ]];then
-        echo "[+] waybackurls not detected... Installing"
-        go install github.com/tomnomnom/waybackurls@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/waybackurls /bin/waybackurls
+go_installation "waybackurls" "github.com/tomnomnom/waybackurls@latest"
+
+###### Install Arjun
+if [[ ! "$(pip list | grep arjun)" || $force ]];then
+        echo "[+] Arjun not detected... Installing"
+        sudo pip install arjun -q 2> /dev/null
 fi
+
+###### Install BrokenLinkChecker
+if [[ ! -x "$(command -v blc)" || $force ]];then
+        echo "[+] BrokenLinkChecker not detected... Installing"
+        sudo npm install --silent --global broken-link-checker 2> /dev/null
+fi
+
+###### Install dirscrapper
+if [[ ! -x "$(command -v dirscapper)" || $force ]];then
+        echo "[+] Dirscapper not detected... Installing"
+        git clone https://github.com/Cillian-Collins/dirscraper.git --quiet > /dev/null
+        chmod +x ./dirscraper/dirscraper.py
+        sudo mv dirscraper/dirscraper.py /bin/dirscraper
+        pip install -r ./dirscraper/requirements.txt
+        rm -R ./dirscraper
+fi
+
+###### Install Haktrails
+go_installation "haktrails" "github.com/hakluke/haktrails@latest"
+
+###### Install Hakrawler
+go_installation "hakrawler" "github.com/hakluke/hakrawler@latest"
 
 ### Fuzzers
 ###### Install gobuster
@@ -305,6 +318,12 @@ apt_installation "gobuster"
 
 ###### Install whatweb
 apt_installation "whatweb"
+
+###### Install ffuf
+go_installation "ffuf" "github.com/ffuf/ffuf/v2@latest"
+
+###### Install x8
+
 
 ### Others
 ###### Install wappalyzer
@@ -349,14 +368,37 @@ apt_installation "nikto"
 apt_installation "wafw00f"
 
 ###### Install httprobe
-if [[ ! -x "$(command -v httprobe)" || $force ]];then
-        echo "[+] httprobe not detected... Installing"
-        go install github.com/tomnomnom/httprobe@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/httprobe /bin/httprobe
+go_installation "httprobe" "github.com/tomnomnom/httprobe@latest"
+
+###### Install Secretfinder
+if [[ ! -x "$(command -v secretfinder)" || $force ]];then
+        echo "[+] Secretfinder not detected... Installing"
+        git clone https://github.com/m4ll0k/SecretFinder.git --quiet > /dev/null
+        chmod +x ./SecretFinder/secretfinder.py
+        sudo mv SecretFinder/secretfinder.py /bin/secretfinder
+        pip install -r ./SecretFinder/requirements.txt
+        rm -R ./SecretFinder
 fi
 
 ### Bruteforce
+###### Install hashcat
+apt_installation "hashcat"
 
+###### Install hydra
+if [[ ! -x "$(command -v hydra)" || $force ]];then
+        echo "[+] Hydra not detected... Installing"
+        git clone https://github.com/vanhauser-thc/thc-hydra --quiet > /dev/null
+        cd thc-hydra
+        ./configure >/dev/null 2>/dev/null
+        make > /dev/null
+        sudo make install >/dev/null 2>/dev/null
+        sudo mv hydra /bin/hydra
+        cd ..
+        rm -R thc-hydra
+fi
+
+###### Install john
+apt_installation "john"
 
 ### Network
 ###### Install nmap
@@ -375,6 +417,15 @@ apt_installation "snmp-check" "snmp-check" "snmpcheck"
 apt_installation "snmpwalk" "snmpwalk" "snmp"
 
 ### Exploits
+###### Install Metasploit
+
+###### Install AutoHackBruteOS
+
+###### Install sqlmap
+
+###### Install commix
+
+###### Install searchsploit
 
 
 ### Others
@@ -431,6 +482,30 @@ fi
 
 ###### Install cewl
 apt_installation "cewl"
+
+###### Install cupp
+if [[ ! -x "$(command -v cupp)" || $force ]];then
+        echo "[+] Cupp not detected... Installing"
+        wget https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py -q
+        chmod +x cupp.py
+        mv cupp.py bin/cupp
+fi
+
+###### Install DDexec
+if [[ ! -x "$(command -v ddexec)" || $force ]];then
+        echo "[+] DDexec not detected... Installing"
+        wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
+        chmod +x DDexec.sh
+        mv DDexec.sh bin/ddexec
+fi
+
+###### Install mitm6
+
+###### Install proxychain
+
+###### Install responder
+
+###### Install Evil winrm
 
 
 

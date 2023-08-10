@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (54/82)
+## Install (65/82)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -48,9 +48,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] google-chrome
  - [X] jq
 
-### Tools (26/47)
+### Tools (37/47)
 #### Web Scan
-##### Subdomains & paths (8/13)
+##### Subdomains & paths (13)
  - [X] sublist3r
  - [X] assetfinder
  - [X] amass
@@ -60,28 +60,28 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] dnsrecon
  - [X] dnsenum
  - [X] waybackurls
- - [ ] arjun
- - [ ] brokenlinkchecker
- - [ ] dirscapper
- - [ ] haktrails
- - [ ] hakrawler
-##### Fuzzers (2/4)
+ - [X] arjun
+ - [X] brokenlinkchecker
+ - [X] dirscapper
+ - [X] haktrails
+ - [X] hakrawler
+##### Fuzzers (3/4)
  - [X] gobuster
  - [X] whatweb
- - [ ] ffuf
+ - [X] ffuf
  - [ ] x8
-##### Others (5/6)
+##### Others (6)
  - [X] wappalyzer
  - [X] testssl
  - [X] nikto
  - [X] wafw00f
  - [X] httprobe
- - [ ] secretfinder
+ - [X] secretfinder
 
-#### Bruteforce (0/3)
- - [ ] hashcat
- - [ ] hydra
- - [ ] john
+#### Bruteforce (3)
+ - [X] hashcat
+ - [X] hydra
+ - [X] john
 
 #### Network (5)
  - [X] nmap
@@ -97,15 +97,15 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] commix
  - [ ] searchsploit
 
-#### Other (6/12)
+#### Other (8/12)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
  - [X] odat
  - [X] crackmapexec
  - [X] cewl
- - [ ] cupp
- - [ ] DDexec
+ - [X] cupp
+ - [X] DDexec
  - [ ] mitm6
  - [ ] proxychain
  - [ ] responder
