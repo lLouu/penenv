@@ -5,221 +5,21 @@ usr=$(whoami)
 # TODO : implement testssl in the different fetch
 # cloned from https://github.com/Gr1mmie/autoenum
 
-echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
-sudo apt-get update > upgrade
-sudo apt-get upgrade -y > upgrade
-sudo apt-get autoremove -y > upgrade; rm upgrade
-tput setaf 4;echo "[*] apt-get updated and upgraded";tput sgr0
-
-if [ ! -x "$(command -v tput)" ];then
-        echo "[+] tput not detected. installing..."
-        sudo apt-get install tput -y > /dev/null
-fi
-
-if [ ! -x "$(command -v python3)" ];then
-        echo "[+] python3 not detected...Installing"
-        sudo apt-get install python3 -y > /dev/null
-fi
-
-if [ ! -x "$(command -v pip)" ];then
-        if [ ! -x "$(command -v pip3)" ];then
-                echo "[+] pip not detected...Installing"
-                sudo apt-get install python3-pip -y > /dev/null
-        fi
-        # Check if an alias is needed
-        if [ ! -x "$(command -v pip)" ];then
-                echo "[+] pip3 detected...Putting pip as an alias"
-                sudo alias pip="pip3"
-        fi
-fi
-
-echo "[+] Upgrading pip and python packages... This may take a while"
-pip install --upgrade pip -q 2> /dev/null
-l=$(pip list --outdated | awk '{print($1, "==", $3)}' | tail -n +3)
-n=$(echo "$l" | wc -l | awk '{print($1)}')
-tput setaf 6;echo "[~] $n packages to upgrade";tput sgr0
-i=0
-for line in $l
-do
-        pip install $line --upgrade -q 2> /dev/null
-        (( i = i+1 ))
-        echo -ne "$i/$n\r"
-done
-tput setaf 4;echo "[*] pip and python packages upgraded";tput sgr0
-
-
-if [ ! -x "$(command -v dig)" ];then
-        echo "[+] dig not detected...Installing"
-        sudo apt-get install dnsutils > /dev/null
-fi
-
-if [ ! -x "$(command -v sublist3r)" ];then
-        echo "[+] sublist3r not detected...Installing"
-        sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
-        pip install -r Sublist3r/requirements.txt -q 2> /dev/null
-        sudo mv Sublist3r/sublist3r.py /bin/sublist3r
-        sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
-        sudo rm Sublist3r/*
-        sudo rm -R Sublist3r
-fi
-
-if [ ! -x "$(command -v go)" ];then
-        echo "[+] golang not detected...Installing"
-        sudo apt-get install golang -y > /dev/null
-fi
-
-if [ ! -x "$(command -v git)" ];then
-        echo "[+] git not detected...Installing"
-        sudo apt-get install git -y > /dev/null
-fi
-
-if [ ! -x "$(command -v assetfinder)" ];then
-        echo "[+] assetfinder not detected...Installing"
-        go install github.com/tomnomnom/assetfinder@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/assetfinder /bin/assetfinder
-fi
-
-if [ ! -x "$(command -v amass)" ];then
-        echo "[+] amass not detected...Installing"
-        go install github.com/owasp-amass/amass/v4/...@master 2> /dev/null
-        sudo cp /home/$usr/go/bin/amass /bin/amass
-fi
-
-if [ ! -x "$(command -v gowitness)" ];then
-        echo "[+] Gowitness not detected...Installing"
-        go install github.com/sensepost/gowitness@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/gowitness /bin/gowitness
-fi
-
-if [ ! -x "$(command -v subjack)" ];then
-        echo "[+] Subjack not detected...Installing"
-        go install github.com/haccer/subjack@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/subjack /bin/subjack
-fi
-
-if [ ! -x "$(command -v certspotter)" ];then
-        echo "[+] certspotter not detected...Installing"
-        go install software.sslmate.com/src/certspotter/cmd/certspotter@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/certspotter /bin/certspotter
-fi
-
-if [ ! -x "$(command -v httprobe)" ];then
-        echo "[+] httprobe not detected...Installing"
-        go install github.com/tomnomnom/httprobe@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/httprobe /bin/httprobe
-fi
-
-if [ ! -x "$(command -v waybackurls)" ];then
-        echo "[+] waybackurls not detected...Installing"
-        go install github.com/tomnomnom/waybackurls@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/waybackurls /bin/waybackurls
-fi
-
-if [[ ! -x "$(command -v testssl)" ]];then
-        echo -e "[+] Testssl not detected...Installing"
-        git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet > /dev/null
-        sudo mv testssl.sh /lib32/testssl
-        printf "#! /bin/sh\nsudo /lib32/testssl/testssl.sh \$@" > testssl
-        chmod +x testssl
-        sudo mv testssl /bin/testssl
-fi
-
-if [ ! -x "$(command -v nmap)" ];then
-        echo "[+] nmap not detected...Installing"
-        sudo apt-get install nmap -y > /dev/null
-fi
-
-if [ ! -x "$(command -v nikto)" ];then
-        echo "[+] nikto not detected. Installing..."
-        sudo apt-get install nikto -y > /dev/null
-fi
-
-if [ ! -x "$(command -v gobuster)" ];then
-        echo "[+] gobuster not detected. Installing..."
-        sudo apt-get install gobuster -y > /dev/null
-fi
-
-if [ ! -x "$(command -v whatweb)" ];then
-       echo "[+] whatweb not detected. installing..."
-        sudo apt-get install whatweb -y > /dev/null
-fi
-
-if [ ! -x "$(command -v onesixtyone)" ];then
-        echo "[+] onesixtyone not detected. Installing..."
-        sudo apt-get install onesixtyone -y > /dev/null
-fi
-
-if [ ! -x "$(command -v rpcbind)" ];then
-        echo "[+] rpcbind not detected. Installing..."
-        sudo apt-get install rpcbind -y > /dev/null
-fi
-
-if [ ! -x "$(command -v snmp-check)" ];then
-        echo "[+] snmp-check not detected. Installing..."
-        sudo apt-get install snmpcheck -y > /dev/null
-fi
-
-if [ ! -x "$(command -v snmpwalk)" ];then
-        echo "[+] snmpwalk not detected. Installing..."
-        sudo apt-get install snmp -y > /dev/null
-fi
-
-if [ ! -x "$(command -v fierce)" ];then
-        echo "[+] fierce not detected. Installing..."
-        sudo apt-get install fierce -y > /dev/null
-fi
-
-if [ ! -x "$(command -v dnsrecon)" ];then
-        echo "[+] dnsrecon not detected. Installing..."
-        sudo apt-get install dnsrecon -y > /dev/null
-fi
-
-if [ ! -x "$(command -v dnsenum)" ];then
-        echo "[+] dnsenum not detected. Installing..."
-        sudo apt-get install dnsenum -y > /dev/null
-fi
-
-if [ ! -x "$(command -v oscanner)" ];then
-        echo "[+] oscanner not detected. Installing..."
-        sudo apt-get install oscanner -y > /dev/null
-fi
-
-if [ ! -x "$(command -v wafw00f)" ];then
-        echo "[+] wafw00f not detected. Installing..."
-        sudo apt-get install wafw00f -y > /dev/null
-fi
-
-if [ ! -x "$(command -v odat)" ];then
-        echo "[+] odat not detected. installing..."
-        sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
-        sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
-        sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
-        printf "#! /bin/sh\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$@" > odat
-        chmod +x odat
-        sudo mv odat /bin/odat
-fi
-
-if [ ! -x "$(command -v jq)" ];then
-        echo "[+] jq not detected. installing..."
-        sudo apt-get install jq -y > /dev/null
-fi
-
 
 # source $dir/functions/banner.sh
 banner (){
-tput setaf 6
-        echo '                   --                                        '
-        echo '    ____ _ __  __ / /_ ____   ___   ____   __  __ ____ ___   '
-        echo '   / __ `// / / // __// __ \ / _ \ / __ \ / / / // __ `__ \  '
-        echo '  / /_/ // /_/ // /_ / /_/ //  __// / / // /_/ // / / / / /  '
-        echo '  \__,_/ \__,_/ \__/ \____/ \___//_/ /_/ \__,_//_/ /_/ /_/   '
-        echo "                                                             "
-tput bold; echo "Author: Grimmie && lLou_                                  "
-tput bold; echo "Version: 3.0.1 - A                                        "
-        tput sgr0
-        sleep 1.025
+        tput setaf 6
+                echo '                   --                                        '
+                echo '    ____ _ __  __ / /_ ____   ___   ____   __  __ ____ ___   '
+                echo '   / __ `// / / // __// __ \ / _ \ / __ \ / / / // __ `__ \  '
+                echo '  / /_/ // /_/ // /_ / /_/ //  __// / / // /_/ // / / / / /  '
+                echo '  \__,_/ \__,_/ \__/ \____/ \___//_/ /_/ \__,_//_/ /_/ /_/   '
+                echo "                                                             "
+        tput bold; echo "Author: Grimmie && lLou_                                  "
+        tput bold; echo "Version: 3.0.1 - B                                        "
+                tput sgr0
+                sleep 1.025
 }
-
 
 # source $dir/functions/upgrade.sh
 upgrade (){
@@ -417,7 +217,6 @@ vuln (){
         nmap -sV --script=vulscan/vulscan.nse $IP | tee -a $vulns/vulscan
         nmap -Pn --script vuln $IP | tee -a $vulns/vuln
 }
-
 
 # source $dir/functions/enum.sh
 redis_enum (){
@@ -910,203 +709,197 @@ halp_meh_pws (){
 # source $dir/functions/menu.sh
 menu (){
 
-WHITE='\033[01;37m'
-CLEAR='\033[0m'
-# https://medium.com/bugbountywriteup/fasten-your-recon-process-using-shell-scripting-359800905d2a
+        WHITE='\033[01;37m'
+        CLEAR='\033[0m'
+        # https://medium.com/bugbountywriteup/fasten-your-recon-process-using-shell-scripting-359800905d2a
 
-if [[  "$module" == "" ]];then
-        cli="Autoenum($IP) > "
-fi
+        if [[  "$module" == "" ]];then
+                cli="Autoenum($IP) > "
+        fi
 
-tput bold;tput setaf 1;echo -en "$cli";tput sgr0;read arg
-while true && [[ ! "$IP" == " " ]];do
-                # add more color
-                # add more banners (?)...grimmie want more banners :(
+        tput bold;tput setaf 1;echo -en "$cli";tput sgr0;read arg
+        while true && [[ ! "$IP" == " " ]];do
+                        # add more color
+                        # add more banners (?)...grimmie want more banners :(
 
-        mkbasedirs (){
-        echo "[+] Checking for base dirs..."
-        if [[ ! -d "$IP/autoenum" ]];then mkdir -p $IP/autoenum;fi
-        if [[ ! -d "$IP/autoenum/recon" ]];then mkdir -p $IP/autoenum/recon;fi;recon="$IP/autoenum/recon"
-        if [[ ! -d "$IP/autoenum/loot/raw" ]];then mkdir -p $IP/autoenum/loot/raw; loot="$IP/autoenum/loot";else loot="$IP/autoenum/loot";fi
-        if [[ ! -d "$loot/exploits" ]];then mkdir -p $loot/exploits;fi
-        echo "[+] Done!"
-        }
-        case $arg in
-                "")
-                        menu
-                        break
-                        ;;
-                "home")
-                        cli="Autoenum($IP) > "
-                        menu
-                        break
-                        ;;
-                "commands")
-                        halp_meh
-                        menu
-                        break
-                        ;;
-                "shell")
-                        shell_preserve
-                        menu
-                        break
-                        ;;
-                "reset")
-                        reset
-                        menu
-                        break
-                        ;;
-                "upgrade")
-                        upgrade
-                        menu
-                        break
-                        ;;
-                "clear")
-                        clear
-                        menu
-                        break
-                        ;;
-                "banner")
-                        banner
-                        menu
-                        break
-                        ;;
-                "ping")
-			if [[ "$IP" == "dev" ]];then
-				tput setaf 1;echo "[-] set an IP. use set target to do this";tput sgr0
-			else
-                        	ping $IP -c 1;echo -e
-			fi
-			menu
-                        break
-                        ;;
-		"udp")
-			tput setaf 6;echo "[~] SCAN MODE: udp";sleep 2;echo -e;tput sgr0
-			mkbasedirs
-			udp
-			menu
-			break
-			;;
-                "vuln")
-                        tput setaf 6;echo "[~] SCAN MODE: vuln";sleep 2;echo -e;tput sgr0
-                        mkbasedirs
-                        vuln
-                        menu
-                        break
-                        ;;
-                "recon")
-                        tput setaf 6;echo "[~] SCAN MODE: recon";sleep 2;echo -e;tput sgr0
-                        mkbasedirs
-                        recon
-                        menu
-                        break
-                        ;;
-                "aggr")
-                        tput setaf 6;echo "[~] SCAN MODE: aggr";sleep 2;echo -e;tput sgr0
-                        mkbasedirs
-                        aggr
-                        cleanup
-                        menu
-                        break
-                        ;;
-                "reg")
-                        tput setaf 6;echo "[~] SCAN MODE: reg";sleep 2;echo -e;tput sgr0
-                        mkbasedirs
-                        reg
-                        cleanup
-                        menu
-                        break
-                        ;;
-                "quick")
-                        tput setaf 6;echo "[~] SCAN MODE: quick";sleep 2;echo -e;tput sgr0
-                        nmap -sC -sV -T4 -Pn $IP
-                        menu
-                        break
-                        ;;
-		"top 1k" | "top1k")
-			tput setaf 6;echo "[~] SCAN MODE: top 1k";sleep 2;echo -e;tput sgr0
-			mkbasedirs
-			top_1k
-			cleanup
-			menu
-			break
-			;;
-		"top 10k" | "top10k")
-			tput setaf 6;echo "[~] SCAN MODE: top 10k";sleep 2;echo -e;tput sgr0
-			mkbasedirs
-			top_10k
-			cleanup
-			menu
-			break
-			;;
-		"top 1k+vuln" | "top1k+vuln")
-			tput setaf 6;echo "[~] SCAN MODE: top 1k+vuln";sleep 2;echo -e;tput sgr0
-			mkbasedirs
-			top_1k
-			vuln
-			cleanup
-			menu
-			break
-			;;
-		"top 10k+vuln" | "top10k+vuln")
-			tput setaf 6;echo "[~] SCAN MODE: top 10k+vuln";sleep 2;echo -e;tput sgr0
-			mkbasedirs
-			top_10k
-			vuln
-			cleanup
-			menu
-			break
-			;;
-                "aggr+vuln")
-                        tput setaf 6;echo "[~] SCAN MODE: aggr+vuln";sleep 2;echo -e;tput sgr0
-                        mkbasedirs
-                        aggr
-                        vuln
-                        cleanup
-                        menu
-                        break
-                        ;;
-                "reg+vuln")
-                        tput setaf 6;echo "[~] SCAN MODE: reg+vuln";sleep 2;echo -e;tput sgr0
-                        mkbasedirs
-                        reg
-                        vuln
-                        cleanup
-                        menu
-                        break
-                        ;;
-                "help")
-                        halp_meh_pws
-                        menu
-                        break
-                        ;;
-                "set target")
-                        get_ip
-                        menu
-                        break
-                        ;;
+                mkbasedirs (){
+                echo "[+] Checking for base dirs..."
+                if [[ ! -d "$IP/autoenum" ]];then mkdir -p $IP/autoenum;fi
+                if [[ ! -d "$IP/autoenum/recon" ]];then mkdir -p $IP/autoenum/recon;fi;recon="$IP/autoenum/recon"
+                if [[ ! -d "$IP/autoenum/loot/raw" ]];then mkdir -p $IP/autoenum/loot/raw; loot="$IP/autoenum/loot";else loot="$IP/autoenum/loot";fi
+                if [[ ! -d "$loot/exploits" ]];then mkdir -p $loot/exploits;fi
+                echo "[+] Done!"
+                }
+                case $arg in
+                        "")
+                                menu
+                                break
+                                ;;
+                        "home")
+                                cli="Autoenum($IP) > "
+                                menu
+                                break
+                                ;;
+                        "commands")
+                                halp_meh
+                                menu
+                                break
+                                ;;
+                        "shell")
+                                shell_preserve
+                                menu
+                                break
+                                ;;
+                        "reset")
+                                reset
+                                menu
+                                break
+                                ;;
+                        "upgrade")
+                                upgrade
+                                menu
+                                break
+                                ;;
+                        "clear")
+                                clear
+                                menu
+                                break
+                                ;;
+                        "banner")
+                                banner
+                                menu
+                                break
+                                ;;
+                        "ping")
+                                if [[ "$IP" == "dev" ]];then
+                                        tput setaf 1;echo "[-] set an IP. use set target to do this";tput sgr0
+                                else
+                                        ping $IP -c 1;echo -e
+                                fi
+                                menu
+                                break
+                                ;;
+                        "udp")
+                                tput setaf 6;echo "[~] SCAN MODE: udp";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                udp
+                                menu
+                                break
+                                ;;
+                        "vuln")
+                                tput setaf 6;echo "[~] SCAN MODE: vuln";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                vuln
+                                menu
+                                break
+                                ;;
+                        "recon")
+                                tput setaf 6;echo "[~] SCAN MODE: recon";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                recon
+                                menu
+                                break
+                                ;;
+                        "aggr")
+                                tput setaf 6;echo "[~] SCAN MODE: aggr";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                aggr
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "reg")
+                                tput setaf 6;echo "[~] SCAN MODE: reg";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                reg
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "quick")
+                                tput setaf 6;echo "[~] SCAN MODE: quick";sleep 2;echo -e;tput sgr0
+                                nmap -sC -sV -T4 -Pn $IP
+                                menu
+                                break
+                                ;;
+                        "top 1k" | "top1k")
+                                tput setaf 6;echo "[~] SCAN MODE: top 1k";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                top_1k
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "top 10k" | "top10k")
+                                tput setaf 6;echo "[~] SCAN MODE: top 10k";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                top_10k
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "top 1k+vuln" | "top1k+vuln")
+                                tput setaf 6;echo "[~] SCAN MODE: top 1k+vuln";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                top_1k
+                                vuln
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "top 10k+vuln" | "top10k+vuln")
+                                tput setaf 6;echo "[~] SCAN MODE: top 10k+vuln";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                top_10k
+                                vuln
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "aggr+vuln")
+                                tput setaf 6;echo "[~] SCAN MODE: aggr+vuln";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                aggr
+                                vuln
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "reg+vuln")
+                                tput setaf 6;echo "[~] SCAN MODE: reg+vuln";sleep 2;echo -e;tput sgr0
+                                mkbasedirs
+                                reg
+                                vuln
+                                cleanup
+                                menu
+                                break
+                                ;;
+                        "help")
+                                halp_meh_pws
+                                menu
+                                break
+                                ;;
+                        "set target")
+                                get_ip
+                                menu
+                                break
+                                ;;
 
-                "exit")
-                        tput setaf 8;echo "[-] Terminating session..."
-                        tput sgr0
-                        sleep 1.5
-			exit 1
-                        ;;
-                *)
-                        tput setaf 8;echo "[-] Invalid input detected"
-                        tput sgr0
-                        menu
-                        break
-                        ;;
-        esac
-done
+                        "exit")
+                                tput setaf 8;echo "[-] Terminating session..."
+                                tput sgr0
+                                sleep 1.5
+                                exit 1
+                                ;;
+                        *)
+                                tput setaf 8;echo "[-] Invalid input detected"
+                                tput sgr0
+                                menu
+                                break
+                                ;;
+                esac
+        done
 }
-
-if [[ $1 == '--first' ]];then
-        tput setaf 4;echo "[*] all autoenum dependencies installed...";tput sgr0
-        echo ""
-        exit 1
-fi
 
 if [[ $1 == '-nr' ]];then nr=1;fi
 clear

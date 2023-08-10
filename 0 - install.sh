@@ -1,6 +1,4 @@
-#! /bin/bash
-# TODO : add cold tools
-# TODO : add networkers
+#! /bin/bash$
 
 
 echo "    ____             ______          ";
@@ -11,12 +9,21 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.2"
-echo "Script version : V1.2"
+echo "Suite version : V0.1.3"
+echo "Script version : V1.3"
 echo ""
 echo ""
 
-
+apt_installation () {
+        if [[ $# -eq 0 || $# -gt 3 ]];then tput setaf 1;echo "[!] DEBUG : $# argument given for apt installation, when only 1, 2 or 3 are accepted... ($@)";tput sgr0; return; fi 
+        if [[ $# -eq 1 ]];then name=$1; pkg=$1; fi
+        if [[ $# -eq 2 ]];then name=$2; pkg=$2; fi
+        if [[ $# -eq 3 ]];then =$2; pkg=$3; fi
+        if [[ ! -x "$(command -v $1)" || $force ]];then
+                echo "[+] $name not detected... Installing"
+                sudo apt-get install $pkg -y > /dev/null
+        fi
+}
 
 # Manage options
 branch="main"
@@ -88,14 +95,11 @@ if [[ ! -d $hotscript ]];then
         mkdir $hotscript
 fi
 
-# colors !
-if [[ ! -x "$(command -v tput)" || $force ]];then
-        echo "[+] tput not detected... Installing"
-        sudo apt-get install ncurses-bin -y > /dev/null
-fi
+# colors
+apt_installation "tput" "tput" "ncurses-bin"
 
-## Set self command
-# Install install_penenv
+# PenEnv
+###### Install install_penenv
 if [[ ! -x "$(command -v install_penenv)" || $check || $force ]];then
         echo "[+] install_penenv not detected as a command...Setting up"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh -q
@@ -103,7 +107,7 @@ if [[ ! -x "$(command -v install_penenv)" || $check || $force ]];then
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
 
-# Install autoenum
+###### Install autoenum
 if [[ ! -x "$(command -v autoenum)" || $check || $force ]];then
         echo "[+] autoenum not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/A%20-%20autoenum.sh -q
@@ -111,7 +115,7 @@ if [[ ! -x "$(command -v autoenum)" || $check || $force ]];then
         sudo mv A\ -\ autoenum.sh /bin/autoenum
 fi
 
-# Install start
+###### Install start
 if [[ ! -x "$(command -v start)" || $check || $force ]];then
         echo "[+] start not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/1%20-%20start.sh -q
@@ -127,7 +131,7 @@ if [[ $check ]];then
 fi
 
 ## Languages and downloaders
-# Upgrade apt
+###### Upgrade apt
 if [[ ! $no_upgrade ]];then
         echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
         sudo apt-get update > upgrade
@@ -136,13 +140,13 @@ if [[ ! $no_upgrade ]];then
         tput setaf 4;echo "[*] apt-get updated and upgraded";tput sgr0
 fi
 
-# Install python3
-if [[ ! -x "$(command -v python3)" || $force ]];then
-        echo "[+] python3 not detected... Installing"
-        sudo apt-get install python3 -y > /dev/null
-fi
+###### Install python3
+apt_installation "python3"
 
-# Install pip
+###### Install 2to3
+apt_installation "2to3"
+
+###### Install pip
 if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 echo "[+] pip not detected... Installing"
@@ -155,7 +159,7 @@ if [[ ! -x "$(command -v pip)" || $force ]];then
         fi
 fi
 
-# Upgrade pip
+###### Upgrade pip
 if [[ ! $no_upgrade ]];then
         echo "[+] Upgrading pip and python packages... This may take a while"
         pip install --upgrade pip -q 2> /dev/null
@@ -172,66 +176,67 @@ if [[ ! $no_upgrade ]];then
         tput setaf 4;echo "[*] pip and python packages upgraded";tput sgr0
 fi
 
-# Install go
-if [[ ! -x "$(command -v go)" || $force ]];then
-        echo "[+] golang not detected... Installing"
-        sudo apt-get install golang -y > /dev/null
+###### Install poetry
+if [[ ! -x "$(command -v poetry)" || $force ]];then
+        echo "[+] poetry not detected... Installing"
+        curl -sSL https://install.python-poetry.org | python3 > /dev/null
 fi
 
-# Install Ruby
-if [[ ! -x "$(command -v gem)" || $force ]];then
-        echo "[+] Rubby not detected... Installing"
-        sudo apt-get install ruby-dev -y > /dev/null
+###### Install go
+apt_installation "go" "golang"
+
+###### Install Ruby
+apt_installation "gem" "Ruby" "ruby-dev"
+
+###### Install Java
+apt_installation "java" "Java" "default-jdk"
+
+###### Install Nodejs
+apt_installation "node" "NodeJS" "nodejs"
+
+###### Install npm
+apt_installation "npm"
+
+###### Install yarn
+if [[ ! -x "$(command -v yarn)" || $force ]];then
+        echo "[+] Yarn not detected... Installing"
+        sudo npm install --silent --global yarn 2> /dev/null
 fi
 
-# Install Java
-if [[ ! -x "$(command -v java)" || $force ]];then
-        echo "[+] Java not detected... Installing"
-        sudo apt-get install default-jdk -y > /dev/null
-fi
+###### Install make
+apt_installation "make"
 
-# Install make
-if [[ ! -x "$(command -v make)" || $force ]];then
-        echo "[+] Make not detected... Installing"
-        sudo apt-get install make -y > /dev/null
-fi
+###### Install git
+apt_installation "git"
 
-# Install git
-if [[ ! -x "$(command -v git)" || $force ]];then
-        echo "[+] git not detected... Installing"
-        sudo apt-get install git -y > /dev/null
-fi
+###### Install krb5
+apt_installation "kinit" "Kerberos" "krb5-user"
 
-## Commands
-# Install ftp module
-if [[ ! -x "$(pip list | grep pyftpdlib)" || $force ]];then
+# Commands
+###### Install ftp module
+if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
         echo "[+] Pyftplib not detected... Installing"
         sudo pip install pyftpdlib -q 2> /dev/null
 fi
 
-# Install impacket
-if [[ ! -d "/usr/share/doc/python-impacket" || $force ]];then
-        echo "[+] Impacket not detected... Installing"
-        if [[ -d "/usr/share/doc/python-impacket" ]];then
-                sudo mv /usr/share/doc/python-impacket /usr/share/doc/python-impacket-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /usr/share/doc/python-impacket to /usr/share/doc/python-impacket-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
-        fi
-        sudo pip install impacket -q 2> /dev/null
-        git clone https://github.com/fortra/impacket --quiet > /dev/null
-        sudo cp impacket/examples/* /bin
-        sudo mv impacket /usr/share/doc/python-impacket
-        printf "#! /bin/sh\nls /usr/share/doc/python-impacket/examples/" > impacket_script
-        chmod +x impacket_script
-        sudo mv impacket_script /bin/impacket_script
+###### Install dnsutils
+apt_installation "dig" "dig" "dnsutils"
+
+###### Install google-chrome
+if [[ ! -x "$(command -v google-chrome)" || $force ]];then
+        echo "[+] google-chrome not detected... Installing"
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
+        sudo apt-get install ./google-chrome-stable_current_amd64.deb -y > /dev/null
+        rm google-chrome-stable_current_amd64.deb
 fi
 
-# Install dnsutils
-if [[ ! -x "$(command -v dig)" || $force ]];then
-        echo "[+] dig not detected... Installing"
-        sudo apt-get install dnsutils > /dev/null
-fi
+###### Install jq
+apt_installation "jq"
 
-# Install sublist3r
+# Tools
+## Web scan
+### Subdomain & paths
+###### Install sublist3r
 if [[ ! -x "$(command -v sublist3r)" || $force ]];then
         echo "[+] sublist3r not detected... Installing"
         if [[ -d "/lib/python3/dist-packages/subbrute" ]];then
@@ -246,56 +251,84 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
         sudo rm -R Sublist3r
 fi
 
-# Install assetfinder
+###### Install assetfinder
 if [[ ! -x "$(command -v assetfinder)" || $force ]];then
         echo "[+] assetfinder not detected... Installing"
         go install github.com/tomnomnom/assetfinder@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/assetfinder /bin/assetfinder
 fi
 
-# Install amass
+###### Install amass
 if [[ ! -x "$(command -v amass)" || $force ]];then
         echo "[+] amass not detected... Installing"
         go install github.com/owasp-amass/amass/v4/...@master 2> /dev/null
         sudo cp /home/$usr/go/bin/amass /bin/amass
 fi
 
-# Install gowitness
+###### Install gowitness
 if [[ ! -x "$(command -v gowitness)" || $force ]];then
         echo "[+] Gowitness not detected... Installing"
         go install github.com/sensepost/gowitness@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/gowitness /bin/gowitness
 fi
 
-# Install subjack
+###### Install subjack
 if [[ ! -x "$(command -v subjack)" || $force ]];then
         echo "[+] Subjack not detected... Installing"
         go install github.com/haccer/subjack@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/subjack /bin/subjack
 fi
 
-# Install certspotter
+###### Install certspotter
 if [[ ! -x "$(command -v certspotter)" || $force ]];then
         echo "[+] certspotter not detected... Installing"
         go install software.sslmate.com/src/certspotter/cmd/certspotter@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/certspotter /bin/certspotter
 fi
 
-# Install httprobe
-if [[ ! -x "$(command -v httprobe)" || $force ]];then
-        echo "[+] httprobe not detected... Installing"
-        go install github.com/tomnomnom/httprobe@latest 2> /dev/null
-        sudo cp /home/$usr/go/bin/httprobe /bin/httprobe
-fi
+###### Install dnsrecon
+apt_installation "dnsrecon"
 
-# Install waybackurls
+###### Install dnsenum
+apt_installation "dnsenum"
+
+###### Install waybackurls
 if [[ ! -x "$(command -v waybackurls)" || $force ]];then
         echo "[+] waybackurls not detected... Installing"
         go install github.com/tomnomnom/waybackurls@latest 2> /dev/null
         sudo cp /home/$usr/go/bin/waybackurls /bin/waybackurls
 fi
 
-# Install testssl
+### Fuzzers
+###### Install gobuster
+apt_installation "gobuster"
+
+###### Install whatweb
+apt_installation "whatweb"
+
+### Others
+###### Install wappalyzer
+if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
+        echo "[+] wappalyzer not detected... Installing"
+        if [[ -d "/lib/wappalyzer" ]];then
+                sudo mv /lib/wappalyzer /lib/wappalyzer-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+        fi
+        git clone https://github.com/wappalyzer/wappalyzer.git --quiet > /dev/null
+        sudo mv wappalyzer /lib/wappalyzer
+        workingdir=$(pwd)
+        cd /lib/wappalyzer
+        # correct minor sourcecode error
+        sudo sed -i 's/this.analyzedURLS[url.href]?.status/this.analyzedURLS[url.href].status/g' /lib/wappalyzer/src/drivers/npm/drivers.js
+        yarn install --silent 2>/dev/null >/dev/null
+        yarn run link --silent 2>/dev/null >/dev/null
+        cd $workingdir
+        printf "#! /bin/sh\nsudo node /lib/wappalyzer/src/drivers/npm/cli.js \$@" > wappalyzer
+        chmod +x wappalyzer
+        sudo mv wappalyzer /bin/wappalyzer
+fi
+
+###### Install testssl
 if [[ ! -x "$(command -v testssl)" || $force ]];then
         echo -e "[+] Testssl not detected... Installing"
         if [[ -d "/lib32/testssl" ]];then
@@ -309,92 +342,59 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
         sudo mv testssl /bin/testssl
 fi
 
-# Install nmap
-if [[ ! -x "$(command -v nmap)" || $force ]];then
-        echo "[+] nmap not detected... Installing"
-        sudo apt-get install nmap -y > /dev/null
+###### Install nikto
+apt_installation "nikto"
+
+###### Install wafw00f
+apt_installation "wafw00f"
+
+###### Install httprobe
+if [[ ! -x "$(command -v httprobe)" || $force ]];then
+        echo "[+] httprobe not detected... Installing"
+        go install github.com/tomnomnom/httprobe@latest 2> /dev/null
+        sudo cp /home/$usr/go/bin/httprobe /bin/httprobe
 fi
 
-# Install nikto
-if [[ ! -x "$(command -v nikto)" || $force ]];then
-        echo "[+] nikto not detected... Installing"
-        sudo apt-get install nikto -y > /dev/null
-fi
+### Bruteforce
 
-# Install gobuster
-if [[ ! -x "$(command -v gobuster)" || $force ]];then
-        echo "[+] gobuster not detected... Installing"
-        sudo apt-get install gobuster -y > /dev/null
-fi
 
-# Install whatweb
-if [[ ! -x "$(command -v whatweb)" || $force ]];then
-       echo "[+] whatweb not detected... Installing"
-        sudo apt-get install whatweb -y > /dev/null
-fi
+### Network
+###### Install nmap
+apt_installation "nmap"
 
-# Install onewistyone
-if [[ ! -x "$(command -v onesixtyone)" || $force ]];then
-        echo "[+] onesixtyone not detected... Installing"
-        sudo apt-get install onesixtyone -y > /dev/null
-fi
+###### Install onewistyone
+apt_installation "onesixtyone"
 
-# Install rpcbind
-if [[ ! -x "$(command -v rpcbind)" || $force ]];then
-        echo "[+] rpcbind not detected... Installing"
-        sudo apt-get install rpcbind -y > /dev/null
-fi
+###### Install rpcbind
+apt_installation "rpcbind"
 
-# Install snmpcheck
-if [[ ! -x "$(command -v snmp-check)" || $force ]];then
-        echo "[+] snmp-check not detected... Installing"
-        sudo apt-get install snmpcheck -y > /dev/null
-fi
+###### Install snmpcheck
+apt_installation "snmp-check" "snmp-check" "snmpcheck"
 
-# Install snmpwalk
-if [[ ! -x "$(command -v snmpwalk)" || $force ]];then
-        echo "[+] snmpwalk not detected... Installing"
-        sudo apt-get install snmp -y > /dev/null
-fi
+###### Install snmpwalk
+apt_installation "snmpwalk" "snmpwalk" "snmp"
 
-# Install fierce
-if [[ ! -x "$(command -v fierce)" || $force ]];then
-        echo "[+] fierce not detected... Installing"
-        sudo apt-get install fierce -y > /dev/null
-fi
+### Exploits
 
-# Install dnsrecon
-if [[ ! -x "$(command -v dnsrecon)" || $force ]];then
-        echo "[+] dnsrecon not detected... Installing"
-        sudo apt-get install dnsrecon -y > /dev/null
-fi
 
-# Install dnsenum
-if [[ ! -x "$(command -v dnsenum)" || $force ]];then
-        echo "[+] dnsenum not detected... Installing"
-        sudo apt-get install dnsenum -y > /dev/null
-fi
+### Others
+###### Install impacket
+apt_installation "impacket-ntlmrelayx" "impacket" "impacket-scripts"
 
-# Install oscanner
-if [[ ! -x "$(command -v oscanner)" || $force ]];then
-        echo "[+] oscanner not detected... Installing"
-        sudo apt-get install oscanner -y > /dev/null
-fi
+###### Install fierce
+apt_installation "fierce"
 
-# Install wafw00f
-if [[ ! -x "$(command -v wafw00f)" || $force ]];then
-        echo "[+] wafw00f not detected... Installing"
-        sudo apt-get install wafw00f -y > /dev/null
-fi
+###### Install oscanner
+apt_installation "oscanner"
 
-# Install odat
+###### Install odat
 if [[ ! -x "$(command -v odat)" || $force ]];then
         echo "[+] odat not detected... Installing"
         if [[ -d "/lib32/odat_lib" ]];then
                 sudo mv /lib32/odat_lib /lib32/odat_lib-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib32/odat_lib to /lib32/odat_lib-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        sudo wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
+        wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
         sudo rm odat-linux-libc2.17-x86_64.tar.gz
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
@@ -403,15 +403,39 @@ if [[ ! -x "$(command -v odat)" || $force ]];then
         sudo mv odat /bin/odat
 fi
 
-# Install jq
-if [[ ! -x "$(command -v jq)" || $force ]];then
-        echo "[+] jq not detected... Installing"
-        sudo apt-get install jq -y > /dev/null
+###### Install crackmapexec
+if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
+        echo "[+] crackmapexec not detected... Installing"
+        if [[ -d "/lib/crackmapexec" ]];then
+                sudo mv /lib/crackmapexec /lib/crackmapexec-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+        fi
+        sudo apt-get install -y libssl-dev libffi-dev python-dev-is-python3 build-essential > /dev/null
+        git clone https://github.com/mpgn/CrackMapExec --quiet > /dev/null
+        sudo mv CrackMapExec /lib/crackmapexec
+        workingdir=$(pwd)
+        cd /lib/crackmapexec
+        poetry install >/dev/null
+        poetry run crackmapexec >/dev/null
+        cd $workingdir
+        printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run crackmapexec \$@" > crackmapexec
+        chmod +x crackmapexec
+        sudo mv crackmapexec /bin/crackmapexec
+        printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run crackmapexec \$@" > cme
+        chmod +x cme
+        sudo mv cme /bin/cme
+        printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run cmedb \$@" > cmedb
+        chmod +x cmedb
+        sudo mv cmedb /bin/cmedb
 fi
+
+###### Install cewl
+apt_installation "cewl"
+
 
 
 ## Hot scripts
-# Install dns2cat & dependencies
+###### Install dnscat2 & dependencies
 if [[ ! -d "/lib/dnscat" || $force ]];then
         echo "[+] Dnscat sourcecode not detected... Installing"
         if [[ -d "/lib/dnscat" ]];then
@@ -447,50 +471,62 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         sudo mv dnscat /bin/dnscat
 fi
 
-# Install PEAS
+###### Install PEAS
 if [[ ! -f "$hotscript/LinPEAS.sh" || $force ]];then
         echo "[+] LinPEAS not detected... Installing"
         curl -L -s https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh --output $hotscript/LinPEAS.sh
+        chmod +x $hotscript/LinPEAS.sh
 fi
 
 if [[ ! -f "$hotscript/WinPEAS.ps1" || $force ]];then
         echo "[+] WinPEAS powershell not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1 -q
         mv winPEAS.ps1 $hotscript/WinPEAS.ps1
+        chmod +x $hotscript/WinPEAS.ps1
+fi
+
+if [[ ! -f "$hotscript/WinPEAS_internet.ps1" || $force ]];then
+        echo "[+] WinPEAS internet not detected... Installing"
+        printf "IEX(New-Object Net.WebClient).downloadString('https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1')" > $hotscript/WinPEAS_internet.ps1
+        chmod +x $hotscript/WinPEAS_internet.ps1
 fi
 
 if [[ ! -f "$hotscript/WinPEAS.bat" || $force ]];then
         echo "[+] WinPEAS bat not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASbat/winPEAS.bat -q
         mv winPEAS.bat $hotscript/WinPEAS.bat
+        chmod +x $hotscript/WinPEAS.bat
 fi
 
-# Install miranda
+###### Install miranda
 if [[ ! -f "$hotscript/miranda.py" || $force ]];then
         echo "[+] Miranda not detected... Installing"
         wget https://raw.githubusercontent.com/0x90/miranda-upnp/master/src/miranda.py -q
         mv miranda.py $hotscript/miranda.py
+        chmod +x $hotscript/miranda.py
+        2to3 $hotscript/miranda.py -w $hotscript/miranda.py 2> /dev/null
+        sed -i 's/        /\t/g' $hotscript/miranda.py
+        sed -i 's/import IN/# import IN/g' $hotscript/miranda.py
+        sed -i 's/socket.sendto(data/socket.sendto(data.encode()/g' $hotscript/miranda.py
 fi
 
-# Install pspy
+###### Install pspy
 if [[ ! -f "$hotscript/pspy32" || $force ]];then
         echo "[+] Pspy32 not detected... Installing"
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32
+        chmod +x $hotscript/pspy32
 fi
 
 if [[ ! -f "$hotscript/pspy64" || $force ]];then
         echo "[+] Pspy64 not detected... Installing"
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
+        chmod +x $hotscript/pspy64
 fi
 
 
 ## Services
-# Install bloodhound
-if [[ ! -x "$(command -v bloodhound)" || $force ]];then
-        echo "[+] Bloodhound not detected... Installing"
-        sudo apt-get install bloodhound -y > /dev/null
-        tput setaf 6;echo "[~] Go to http://localhost:7474 to set new neo4j password";tput sgr0
-fi
+###### Install bloodhound
+apt_installation "bloodhound"
 
 if [[ ! -f "$hotscript/Invoke-Bloodhound.ps1" || $force ]];then
         echo "[+] Invoke-Bloodhound not detected... Installing"
@@ -503,7 +539,7 @@ if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
         sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
 fi
 
-# Install Nessus
+###### Install Nessus
 if [[ -f "/opt/nessus/sbin/nessusd" || $force ]];then
         echo "[+] Nessus not detected... Installing"
         file=$(curl -s --request GET --url 'https://www.tenable.com/downloads/api/v2/pages/nessus' | grep -o -P "Nessus-\d+\.\d+\.\d+-debian10_amd64.deb" | head -n 1)
@@ -513,6 +549,6 @@ if [[ -f "/opt/nessus/sbin/nessusd" || $force ]];then
         sudo apt-get install ./Nessus.deb -y > /dev/null
         rm Nessus.deb
         sudo systemctl start nessusd
-        tput setaf 6;echo "[~] Go to http://localhost:8834 to complete nessus installation";tput sgr0
+        tput setaf 6;echo "[~] Go to https://localhost:8834 to complete nessus installation";tput sgr0
 fi
 

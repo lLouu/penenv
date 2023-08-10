@@ -9,8 +9,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.2"
 echo "Script version : V1.1"
+echo "Suite version : V0.1.3"
 echo ""
 echo ""
 
@@ -80,7 +80,7 @@ fi
 # Check installations
 if [[ ! -x "$(command -v install_penenv)" ]];then
         echo "[+] install_penenv not detected as a command...Setting up"
-        wget https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh > installing;rm installing
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh > installing;rm installing
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install_penenv
 fi
@@ -97,7 +97,7 @@ tput setaf 4;echo "[*] Launch bloodhound using 'bloodhound' command";tput sgr0
 # Starting Nessus
 echo "[+] Starting nessusd"
 sudo systemctl start nessusd
-tput setaf 4;echo "[*] Access to nessus web interface through http://localhost:8834";tput sgr0
+tput setaf 4;echo "[*] Access to nessus web interface through https://localhost:8834";tput sgr0
 
 # Starting dnscat server
 echo "[+] Starting dnscat"
@@ -128,4 +128,5 @@ tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput
 echo ""
 tput setaf 6;echo "[~] To check running servers, do 'jobs'";tput sgr0
 tput setaf 6;echo "[~] To get to a process, do 'fg <job-id>'";tput sgr0
+tput setaf 6;echo "[~] To put back a process to background, press CTRL+Z then do 'bg'";tput sgr0
 
