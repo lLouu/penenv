@@ -18,7 +18,7 @@ apt_installation () {
         if [[ $# -eq 0 || $# -gt 3 ]];then tput setaf 1;echo "[!] DEBUG : $# argument given for apt installation, when only 1, 2 or 3 are accepted... ($@)";tput sgr0; return; fi 
         if [[ $# -eq 1 ]];then name=$1; pkg=$1; fi
         if [[ $# -eq 2 ]];then name=$2; pkg=$2; fi
-        if [[ $# -eq 3 ]];then =$2; pkg=$3; fi
+        if [[ $# -eq 3 ]];then name=$2; pkg=$3; fi
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $name not detected... Installing"
                 sudo apt-get install $pkg -y > /dev/null
