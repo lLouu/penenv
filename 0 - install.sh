@@ -1,5 +1,6 @@
 #! /bin/bash
 
+start=$(date +%s)
 
 echo "    ____             ______          ";
 echo "   / __ \___  ____  / ____/___ _   __";
@@ -21,7 +22,7 @@ apt_installation () {
         if [[ $# -eq 3 ]];then name=$2; pkg=$3; fi
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $name not detected... Installing"
-                sudo apt-get install $pkg -y > /dev/null
+                sudo apt-get install $pkg -y >> $log/install-infos.log
         fi
 }
 
@@ -29,7 +30,7 @@ go_installation () {
         if [[ $# -ne 2 ]];then tput setaf 1;echo "[!] DEBUG : $# argument given for go installation, when 2 are required... ($@)";tput sgr0; return; fi 
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $1 not detected... Installing"
-                go install $2 2> /dev/null
+                go install $2 2>> $log/install-warnings.log
                 sudo cp /home/$usr/go/bin/$1 /bin/$1
         fi
 }
@@ -98,7 +99,12 @@ if [[ $usr == "root" ]];then
         tput setaf 1;echo "[-] Running as root. Please run in rootless mode... Exiting...";tput sgr0
         exit 1
 fi
+
+log=/home/$usr/logs
 hotscript=/home/$usr/hot-script
+if [[ ! -d $log ]];then
+        mkdir $log
+fi
 if [[ ! -d $hotscript ]];then
         echo "[+] Creating hotscript folder in $hotscript"
         mkdir $hotscript
@@ -142,11 +148,12 @@ fi
 ## Languages and downloaders
 ###### Upgrade apt
 if [[ ! $no_upgrade ]];then
+        start_update=$(date +%s)
         echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
         sudo apt-get update > upgrade
         sudo apt-get upgrade -y > upgrade
         sudo apt-get autoremove -y > upgrade; rm upgrade
-        tput setaf 4;echo "[*] apt-get updated and upgraded";tput sgr0
+        tput setaf 4;echo "[*] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
 
 ###### Install python3
@@ -159,7 +166,7 @@ apt_installation "2to3"
 if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 echo "[+] pip not detected... Installing"
-                sudo apt-get install python3-pip -y > /dev/null
+                sudo apt-get install python3-pip -y >> $log/install-infos.log
         fi
         # Check if an alias is needed
         if [[ ! -x "$(command -v pip)" ]];then
@@ -170,25 +177,26 @@ fi
 
 ###### Upgrade pip
 if [[ ! $no_upgrade ]];then
+        start_update=$(date +%s)
         echo "[+] Upgrading pip and python packages... This may take a while"
-        pip install --upgrade pip -q 2> /dev/null
-        l=$(pip list --outdated | awk '{print($1, "==", $3)}' | tail -n +3)
+        pip install --upgrade pip -q 2>> $log/install-warnings.log
+        l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
         n=$(echo "$l" | wc -l | awk '{print($1)}')
         tput setaf 6;echo "[~] $n packages to upgrade";tput sgr0
         i=0
         for line in $l
         do
-                pip install $line --upgrade -q 2> /dev/null
+                pip install $line --upgrade -q 2>> $log/install-warnings.log
                 (( i = i+1 ))
-                echo -ne "$i/$n\r"
+                echo -ne "$i/$n  | currently upgrading $line...\r"
         done
-        tput setaf 4;echo "[*] pip and python packages upgraded";tput sgr0
+        tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
 
 ###### Install poetry
 if [[ ! -x "$(command -v poetry)" || $force ]];then
         echo "[+] poetry not detected... Installing"
-        curl -sSL https://install.python-poetry.org | python3 > /dev/null
+        curl -sSL https://install.python-poetry.org | python3 >> $log/install-infos.log
 fi
 
 ###### Install go
@@ -209,7 +217,13 @@ apt_installation "npm"
 ###### Install yarn
 if [[ ! -x "$(command -v yarn)" || $force ]];then
         echo "[+] Yarn not detected... Installing"
-        sudo npm install --silent --global yarn 2> /dev/null
+        sudo npm install --silent --global yarn 2>> $log/install-warnings.log
+fi
+
+###### Install rust
+if [[ ! -x "$(command -v cargo)" || $force ]];then
+        echo "[+] Rust not detected... Installing"
+        curl -s https://sh.rustup.rs -sSf | sh >>$log/install-infos.log 2>>$log/install-errors.log
 fi
 
 ###### Install make
@@ -225,7 +239,7 @@ apt_installation "kinit" "Kerberos" "krb5-user"
 ###### Install ftp module
 if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
         echo "[+] Pyftplib not detected... Installing"
-        sudo pip install pyftpdlib -q 2> /dev/null
+        sudo pip install pyftpdlib -q 2>> $log/install-warnings.log
 fi
 
 ###### Install dnsutils
@@ -235,7 +249,7 @@ apt_installation "dig" "dig" "dnsutils"
 if [[ ! -x "$(command -v google-chrome)" || $force ]];then
         echo "[+] google-chrome not detected... Installing"
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
-        sudo apt-get install ./google-chrome-stable_current_amd64.deb -y > /dev/null
+        sudo apt-get install ./google-chrome-stable_current_amd64.deb -y >> $log/install-infos.log
         rm google-chrome-stable_current_amd64.deb
 fi
 
@@ -252,8 +266,8 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
                 sudo mv /lib/python3/dist-packages/subbrute /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet > /dev/null
-        pip install -r Sublist3r/requirements.txt -q 2> /dev/null
+        sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet >> $log/install-infos.log
+        pip install -r Sublist3r/requirements.txt -q 2>> $log/install-warnings.log
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -287,22 +301,22 @@ go_installation "waybackurls" "github.com/tomnomnom/waybackurls@latest"
 ###### Install Arjun
 if [[ ! "$(pip list | grep arjun)" || $force ]];then
         echo "[+] Arjun not detected... Installing"
-        sudo pip install arjun -q 2> /dev/null
+        sudo pip install arjun -q 2>> $log/install-warnings.log
 fi
 
 ###### Install BrokenLinkChecker
 if [[ ! -x "$(command -v blc)" || $force ]];then
         echo "[+] BrokenLinkChecker not detected... Installing"
-        sudo npm install --silent --global broken-link-checker 2> /dev/null
+        sudo npm install --silent --global broken-link-checker 2>> $log/install-warnings.log
 fi
 
 ###### Install dirscrapper
 if [[ ! -x "$(command -v dirscapper)" || $force ]];then
         echo "[+] Dirscapper not detected... Installing"
-        git clone https://github.com/Cillian-Collins/dirscraper.git --quiet > /dev/null
+        git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >> $log/install-infos.log
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
-        pip install -r ./dirscraper/requirements.txt
+        pip install -r ./dirscraper/requirements.txt -q 2>> $log/install-warnings.log
         rm -R ./dirscraper
 fi
 
@@ -333,14 +347,14 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
                 sudo mv /lib/wappalyzer /lib/wappalyzer-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        git clone https://github.com/wappalyzer/wappalyzer.git --quiet > /dev/null
+        git clone https://github.com/wappalyzer/wappalyzer.git --quiet >> $log/install-infos.log
         sudo mv wappalyzer /lib/wappalyzer
         workingdir=$(pwd)
         cd /lib/wappalyzer
         # correct minor sourcecode error
-        sudo sed -i 's/this.analyzedURLS[url.href]?.status/this.analyzedURLS[url.href].status/g' /lib/wappalyzer/src/drivers/npm/drivers.js
-        yarn install --silent 2>/dev/null >/dev/null
-        yarn run link --silent 2>/dev/null >/dev/null
+        sudo sed -i 's/this.analyzedURLS[url.href]?.status/this.analyzedURLS[url.href].status/g' /lib/wappalyzer/src/drivers/npm/driver.js
+        yarn install --silent 2>>$log/install-errors.log >>$log/install-infos.log
+        yarn run link --silent 2>>$log/install-errors.log >>$log/install-infos.log
         cd $workingdir
         printf "#! /bin/sh\nsudo node /lib/wappalyzer/src/drivers/npm/cli.js \$@" > wappalyzer
         chmod +x wappalyzer
@@ -354,7 +368,7 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
                 sudo mv /lib32/testssl /lib32/testssl-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet > /dev/null
+        git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >> $log/install-infos.log
         sudo mv testssl.sh /lib32/testssl
         printf "#! /bin/sh\nsudo /lib32/testssl/testssl.sh \$@" > testssl
         chmod +x testssl
@@ -373,10 +387,10 @@ go_installation "httprobe" "github.com/tomnomnom/httprobe@latest"
 ###### Install Secretfinder
 if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         echo "[+] Secretfinder not detected... Installing"
-        git clone https://github.com/m4ll0k/SecretFinder.git --quiet > /dev/null
-        chmod +x ./SecretFinder/secretfinder.py
-        sudo mv SecretFinder/secretfinder.py /bin/secretfinder
-        pip install -r ./SecretFinder/requirements.txt
+        git clone https://github.com/m4ll0k/SecretFinder.git --quiet >> $log/install-infos.log
+        chmod +x ./SecretFinder/SecretFinder.py
+        sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
+        pip install -r ./SecretFinder/requirements.txt -q 2>> $log/install-warnings.log
         rm -R ./SecretFinder
 fi
 
@@ -387,11 +401,11 @@ apt_installation "hashcat"
 ###### Install hydra
 if [[ ! -x "$(command -v hydra)" || $force ]];then
         echo "[+] Hydra not detected... Installing"
-        git clone https://github.com/vanhauser-thc/thc-hydra --quiet > /dev/null
+        git clone https://github.com/vanhauser-thc/thc-hydra --quiet >> $log/install-infos.log
         cd thc-hydra
-        ./configure >/dev/null 2>/dev/null
-        make > /dev/null
-        sudo make install >/dev/null 2>/dev/null
+        ./configure >>$log/install-infos.log 2>>$log/install-errors.log
+        make >> $log/install-infos.log
+        sudo make install >>$log/install-infos.log 2>>$log/install-errors.log
         sudo mv hydra /bin/hydra
         cd ..
         rm -R thc-hydra
@@ -418,14 +432,26 @@ apt_installation "snmpwalk" "snmpwalk" "snmp"
 
 ### Exploits
 ###### Install Metasploit
+if [[ ! -x "$(command -v msfconsole)" || $force ]];then
+        curl -s -L https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb --output msfinstall
+        chmod +x msfinstall
+        sudo ./msfinstall >> $log/install-infos.log
+        rm msfinstall
+fi
+
+###### Install searchsploit
+if [[ ! -x "$(command -v searchsploit)" || $force ]];then
+        echo "[+] Searchsploit not detected... Installing"
+        wget https://raw.githubusercontent.com/rad10/SearchSploit.py/master/searchsploit.py -q
+        chmod +x searchsploit.py
+        mv searchsploit.py bin/searchsploit
+fi
 
 ###### Install AutoHackBruteOS
 
 ###### Install sqlmap
 
 ###### Install commix
-
-###### Install searchsploit
 
 
 ### Others
@@ -461,13 +487,13 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
                 sudo mv /lib/crackmapexec /lib/crackmapexec-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        sudo apt-get install -y libssl-dev libffi-dev python-dev-is-python3 build-essential > /dev/null
-        git clone https://github.com/mpgn/CrackMapExec --quiet > /dev/null
+        sudo apt-get install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >> $log/install-infos.log
+        git clone https://github.com/mpgn/CrackMapExec --quiet >> $log/install-infos.log
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
-        poetry install >/dev/null
-        poetry run crackmapexec >/dev/null
+        poetry install >>$log/install-infos.log
+        poetry run crackmapexec >>$log/install-infos.log
         cd $workingdir
         printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run crackmapexec \$@" > crackmapexec
         chmod +x crackmapexec
@@ -488,7 +514,7 @@ if [[ ! -x "$(command -v cupp)" || $force ]];then
         echo "[+] Cupp not detected... Installing"
         wget https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py -q
         chmod +x cupp.py
-        mv cupp.py bin/cupp
+        mv ./cupp.py bin/cupp
 fi
 
 ###### Install DDexec
@@ -496,7 +522,7 @@ if [[ ! -x "$(command -v ddexec)" || $force ]];then
         echo "[+] DDexec not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
         chmod +x DDexec.sh
-        mv DDexec.sh bin/ddexec
+        mv ./DDexec.sh bin/ddexec
 fi
 
 ###### Install mitm6
@@ -517,7 +543,7 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
                 sudo mv /lib/dnscat /lib/dnscat-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        git clone https://github.com/iagox86/dnscat2.git --quiet > /dev/null
+        git clone https://github.com/iagox86/dnscat2.git --quiet >> $log/install-infos.log
         sudo mv dnscat2 /lib/dnscat
         # correct minor sourcecode error
         sudo sed -i 's/return a.value.ptr == a.value.ptr/return a.value.ptr == b.value.ptr/g' /lib/dnscat/client/libs/ll.c
@@ -527,7 +553,7 @@ if [[ ! -f "$hotscript/dnscat" || $force ]];then
         echo "[+] Dnscat client not detected...Making"
         workingdir=$(pwd)
         cd /lib/dnscat/client
-        make > /dev/null
+        make >> $log/install-infos.log
         mv dnscat $hotscript/dnscat
         cd $workingdir
 fi
@@ -536,8 +562,8 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         echo "[+] Dnscat server not detected...Making"
         workingdir=$(pwd)
         cd /lib/dnscat/server
-        sudo gem install bundler > /dev/null
-        sudo bundler install 2>/dev/null >/dev/null
+        sudo gem install bundler >> $log/install-infos.log
+        sudo bundler install 2>>$log/install-errors.log >>$log/install-infos.log
         cd $workingdir
         
         echo "[+] Creating command..."
@@ -579,7 +605,7 @@ if [[ ! -f "$hotscript/miranda.py" || $force ]];then
         wget https://raw.githubusercontent.com/0x90/miranda-upnp/master/src/miranda.py -q
         mv miranda.py $hotscript/miranda.py
         chmod +x $hotscript/miranda.py
-        2to3 $hotscript/miranda.py -w $hotscript/miranda.py 2> /dev/null
+        2to3 $hotscript/miranda.py -w $hotscript/miranda.py >/dev/null 2>>$log/install-warnings.log
         sed -i 's/        /\t/g' $hotscript/miranda.py
         sed -i 's/import IN/# import IN/g' $hotscript/miranda.py
         sed -i 's/socket.sendto(data/socket.sendto(data.encode()/g' $hotscript/miranda.py
@@ -621,9 +647,10 @@ if [[ -f "/opt/nessus/sbin/nessusd" || $force ]];then
         curl -s --request GET \
                --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/$file" \
                --output 'Nessus.deb'
-        sudo apt-get install ./Nessus.deb -y > /dev/null
+        sudo apt-get install ./Nessus.deb -y >> $log/install-infos.log
         rm Nessus.deb
         sudo systemctl start nessusd
         tput setaf 6;echo "[~] Go to https://localhost:8834 to complete nessus installation";tput sgr0
 fi
 
+tput setaf 6;echo "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)";tput sgr0

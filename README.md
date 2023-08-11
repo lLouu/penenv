@@ -19,14 +19,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (65/82)
+## Install (68/83)
 
 ### Penenv (3)
  - [X] install_penenv
  - [X] autoenum
  - [X] start
 
-### Lang & downloaders (13)
+### Lang & downloaders (14)
  - [X] apt upgrade
  - [X] python 3
     - [X] 2to3
@@ -38,6 +38,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] nodejs
     - [X] npm
     - [X] yarn
+ - [X] rust
  - [X] make
  - [X] git
  - [X] krb5-user
@@ -48,7 +49,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] google-chrome
  - [X] jq
 
-### Tools (37/47)
+### Tools (39/47)
 #### Web Scan
 ##### Subdomains & paths (13)
  - [X] sublist3r
@@ -90,12 +91,12 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (0/5)
- - [ ] Metasploit
+#### Exploits (2/5)
+ - [X] Metasploit
+ - [X] searchsploit
  - [ ] AutoHackBruteOS
  - [ ] sqlmap
  - [ ] commix
- - [ ] searchsploit
 
 #### Other (8/12)
  - [X] impacket
