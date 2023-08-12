@@ -192,8 +192,8 @@ if [[ ! $no_upgrade ]];then
                 (( i = i+1 ))
                 str="$i/$n  | currently upgrading $line"
                 cols=$(tput cols)
-                pad=$(printf ' %.0s' {1..$(($cols - ${#str}%$cols))})
-                ret=$(printf '\r%.0s' {1..$((${#str}/$cols + 1))})
+                pad=$(printf ' %.0s' $(seq 1 $(($cols - ${#str}%$cols))))
+                ret=$(printf '\r%.0s' $(seq 1 $((${#str}/$cols + 1))))
                 echo -ne "$str$pad$ret"
         done
         tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
