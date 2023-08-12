@@ -191,9 +191,9 @@ if [[ ! $no_upgrade ]];then
                 pip install $line --upgrade -q 2>> $log/install-warnings.log
                 (( i = i+1 ))
                 str="$i/$n  | currently upgrading $line"
-                n=$(tput cols)
-                pad=$(printf ' %.0s' {1..$((n - ${#str}%n))})
-                ret=$(printf '\r%.0s' {1..$((${#str}/n + 1))})
+                cols=$(tput cols)
+                pad=$(printf ' %.0s' {1..$(($cols - ${#str}%$cols))})
+                ret=$(printf '\r%.0s' {1..$((${#str}/$cols + 1))})
                 echo -ne "$str$pad$ret"
         done
         tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
