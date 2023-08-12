@@ -1,4 +1,6 @@
 #! /bin/bash
+# TODO : check Kerberos install, if not soft lock
+# TODO : debug not quiet apt
 
 start=$(date +%s)
 
@@ -188,7 +190,7 @@ if [[ ! $no_upgrade ]];then
         do
                 pip install $line --upgrade -q 2>> $log/install-warnings.log
                 (( i = i+1 ))
-                echo -ne "$i/$n  | currently upgrading $line...\r"
+                echo -ne "$i/$n  | currently upgrading $line...                                  \r"
         done
         tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
@@ -223,7 +225,7 @@ fi
 ###### Install rust
 if [[ ! -x "$(command -v cargo)" || $force ]];then
         echo "[+] Rust not detected... Installing"
-        curl -s https://sh.rustup.rs -sSf | sh >>$log/install-infos.log 2>>$log/install-errors.log
+        curl -s https://sh.rustup.rs -sSf | sh -s >>$log/install-infos.log 2>>$log/install-errors.log -- -y
 fi
 
 ###### Install make
@@ -444,7 +446,7 @@ if [[ ! -x "$(command -v searchsploit)" || $force ]];then
         echo "[+] Searchsploit not detected... Installing"
         wget https://raw.githubusercontent.com/rad10/SearchSploit.py/master/searchsploit.py -q
         chmod +x searchsploit.py
-        mv searchsploit.py bin/searchsploit
+        mv searchsploit.py /bin/searchsploit
 fi
 
 ###### Install AutoHackBruteOS
@@ -492,6 +494,7 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
+        poetry lock >>$log/install-infos.log
         poetry install >>$log/install-infos.log
         poetry run crackmapexec >>$log/install-infos.log
         cd $workingdir
@@ -514,7 +517,7 @@ if [[ ! -x "$(command -v cupp)" || $force ]];then
         echo "[+] Cupp not detected... Installing"
         wget https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py -q
         chmod +x cupp.py
-        mv ./cupp.py bin/cupp
+        mv cupp.py /bin/cupp
 fi
 
 ###### Install DDexec
@@ -522,7 +525,7 @@ if [[ ! -x "$(command -v ddexec)" || $force ]];then
         echo "[+] DDexec not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
         chmod +x DDexec.sh
-        mv ./DDexec.sh bin/ddexec
+        mv DDexec.sh /bin/ddexec
 fi
 
 ###### Install mitm6
