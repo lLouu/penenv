@@ -176,7 +176,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 ## OSINT
 
 Name   | Tools
---------------------------------------------------
+-------|------------------------------------------
 asn    | Amass
 cdir   | Amass
 domain | Amass, assetfinder, haktrails, waybackurl
@@ -187,7 +187,7 @@ pwd    | cewl, cupp
 ## Enumeration
 
 Name    | Tools
-------------------------------------------------------------------------------------------------------------------------
+--------|---------------------------------------------------------------------------------------------------------------
 network | nmap
 banner  | nmap, telnet
 fuzz    | ffuf, gobuster
