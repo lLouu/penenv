@@ -190,7 +190,11 @@ if [[ ! $no_upgrade ]];then
         do
                 pip install $line --upgrade -q 2>> $log/install-warnings.log
                 (( i = i+1 ))
-                echo -ne "$i/$n  | currently upgrading $line...                                  \r"
+                str="$i/$n  | currently upgrading $line"
+                n=$(tput cols)
+                pad=$(printf ' %.0s' {1..$((n - ${#str}%n))})
+                ret=$(printf '\r%.0s' {1..$((${#str}/n + 1))})
+                echo -ne "$str$pad$ret"
         done
         tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
@@ -313,7 +317,7 @@ if [[ ! -x "$(command -v blc)" || $force ]];then
 fi
 
 ###### Install dirscrapper
-if [[ ! -x "$(command -v dirscapper)" || $force ]];then
+if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         echo "[+] Dirscapper not detected... Installing"
         git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >> $log/install-infos.log
         chmod +x ./dirscraper/dirscraper.py
@@ -517,7 +521,7 @@ if [[ ! -x "$(command -v cupp)" || $force ]];then
         echo "[+] Cupp not detected... Installing"
         wget https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py -q
         chmod +x cupp.py
-        mv cupp.py /bin/cupp
+        sudo mv cupp.py /bin/cupp
 fi
 
 ###### Install DDexec
@@ -525,7 +529,7 @@ if [[ ! -x "$(command -v ddexec)" || $force ]];then
         echo "[+] DDexec not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
         chmod +x DDexec.sh
-        mv DDexec.sh /bin/ddexec
+        sudo mv DDexec.sh /bin/ddexec
 fi
 
 ###### Install mitm6
@@ -644,7 +648,7 @@ if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
 fi
 
 ###### Install Nessus
-if [[ -f "/opt/nessus/sbin/nessusd" || $force ]];then
+if [[ ! "$(systemctl status nessusd)" || $force ]];then
         echo "[+] Nessus not detected... Installing"
         file=$(curl -s --request GET --url 'https://www.tenable.com/downloads/api/v2/pages/nessus' | grep -o -P "Nessus-\d+\.\d+\.\d+-debian10_amd64.deb" | head -n 1)
         curl -s --request GET \
