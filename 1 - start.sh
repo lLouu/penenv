@@ -9,8 +9,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Script version : V1.1"
-echo "Suite version : V0.1.4"
+echo "Suite version : V0.1.5"
+echo "Script version : V1.2"
 echo ""
 echo ""
 
@@ -73,9 +73,7 @@ if [[ $usr == "root" ]];then
 fi
 log=/home/$usr/logs
 hotscript=/home/$usr/hot-script
-if [[ ! -d $log ]];then
-        mkdir $log
-fi
+session=/home/$usr/session
 
 # Check installations
 if [[ ! -x "$(command -v install_penenv)" ]];then
@@ -86,9 +84,14 @@ if [[ ! -x "$(command -v install_penenv)" ]];then
 fi
 install_penenv $ORIGINAL_ARGS
 
+if [[ ! -d $session ]];then
+       mkdir $session
+fi
+sudo rm $session/*
+
 # Starting Neo4j
 echo "[+] Starting neo4j"
-sudo neo4j console & >> $log/neo4j.log
+sudo neo4j console >> $log/neo4j.log &
 tput setaf 6;echo "[~] Log of neo4j are available in $log/neo4j";tput sgr0
 tput setaf 4;echo "[*] Access to neo4j web interface through http://localhost:7474";tput sgr0
 tput setaf 4;echo "[*] Launch bloodhound using 'bloodhound' command";tput sgr0
@@ -101,29 +104,34 @@ tput setaf 4;echo "[*] Access to nessus web interface through https://localhost:
 
 # Starting dnscat server
 echo "[+] Starting dnscat"
-sudo dnscat
-tput setaf 4;echo "[*] Access to dnscat tunnel through localhost:53";tput sgr0
-
+read "Domain > " dom
+read "Secret > " sec
+if [[ ! "$sec" ]];then sec="hellowthere";fi
+touch $session/dnscat.stdin
+touch $session/dnscat.stdout
+tail -f $session/dnscat.stdin | sudo unbuffer -p dnscat $dom --secret $sec --security=authenticated | tee $session/dnscat.stdout > /dev/null &
+tput setaf 4;echo "[*] Access to dnscat tunnel through localhost:53 with secret $sec";tput sgr0
+tput setaf 4;echo "[*] To connect while using domain request, make sure this server is an authoritative DNS";tput sgr0
+tput setaf 4;echo "[*] To get your shell after executing client dnscat, execute dnscat-shell here";tput sgr0
 
 # Start http server
 echo "[+] Starting file transfer through http"
-python3 -u -m http.server $hotscript 80 & >> $log/http.log
+python3 -u -m http.server $hotscript 80 >> $log/http.log &
 tput setaf 4;echo "[*] Access to file download through http://localhost:80/<path>";tput sgr0
 
 
 # Start ftp server
 echo "[+] Starting file transfer through ftp"
-python3 -u -m pyftpdlib -d $hotscript & >> $log/ftp.log
+python3 -u -m pyftpdlib -d $hotscript >> $log/ftp.log &
 tput setaf 4;echo "[*] Access to file transfer through ftp://localhost with your user credentials";tput sgr0
 
 
 # Start smb server
 echo "[+] Starting file transfer through smb"
-python3 -u /usr/share/doc/python-impacket/examples/smbserver.py share $hotscript -smb2support & >> $log/smb.log
+impacket-smbserver share $hotscript -smb2support >> $log/smb.log &
 tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput sgr0
 
 
-# Start responder
 
 echo ""
 tput setaf 6;echo "[~] To check running servers, do 'jobs'";tput sgr0
