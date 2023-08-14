@@ -37,6 +37,8 @@ go_installation () {
         fi
 }
 
+# }
+
 # Manage options
 branch="main"
 check="1"

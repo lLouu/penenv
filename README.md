@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (68/83)
+## Install (69/85)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -43,13 +43,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] git
  - [X] krb5-user
 
-### Commands (4)
+### Commands (5)
  - [X] pyftpdlib
  - [X] dnsutils
  - [X] google-chrome
  - [X] jq
+ - [X] expect
 
-### Tools (39/47)
+### Tools (39/48)
 #### Web Scan
 ##### Subdomains & paths (13)
  - [X] sublist3r
@@ -98,7 +99,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] sqlmap
  - [ ] commix
 
-#### Other (8/12)
+#### Other (8/13)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
@@ -111,9 +112,10 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] proxychain
  - [ ] responder
  - [ ] Evil winrm
+ - [ ] openvpn
 
 ### Scripts (5/12)
- - [X] dnscat (server & client)
+ - [X] dnscat (server & client & shell)
  - [X] LinPEAS
  - [X] WinPEAS
  - [X] miranda
@@ -137,11 +139,12 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] neo4j
  - [X] nessus
  - [X] dnscat
+ - [ ] openvpn
 
 ### File transfer servers
  - [X] http server
  - [X] ftp server
- - [ ] smb server
+ - [X] smb server
 
 ### Other servers
  - [ ] Metasploit
