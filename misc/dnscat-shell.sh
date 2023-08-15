@@ -1,3 +1,4 @@
+# TODO : up and down arrows
 
 echo "    ____             ______          ";
 echo "   / __ \___  ____  / ____/___ _   __";
@@ -68,7 +69,14 @@ closing () {
    fi
 }
 
-trap closing INT
+ctrl_c () {
+   echo ""
+   closing
+   if [[ ! $running ]];then exit 1;fi
+   echo -ne " > "
+}
+
+trap ctrl_c INT
 
 while [[ "$running" ]];do
    read -p " > " command
@@ -80,8 +88,10 @@ while [[ "$running" ]];do
          echo -ne "" > $stdout
          echo $command >> $stdin
          while [[ ! "$(sed "s/sh.*>//g" $stdout)" ]];do sleep 1; done
-         echo $(sed "s/sh.*>//g" $stdout)
+         echo $(sed "s/sh.*> //g" $stdout)
          ;;
    esac
 done
+
+echo "shell_id" >> $stdin
 
