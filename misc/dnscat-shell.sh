@@ -21,7 +21,7 @@ stdout="/home/$usr/session/dnscat.stdout"
 echo "" > $stdout
 echo "help" >> $stdin
 sleep 1
-if [[ ! "$(cat $stdout 2>/dev/null)" ]];then tput setaf 1;echo "[-] Did not find the correct pipe files... Exiting";tput sgr0;exit 1;fi
+if [[ ! "$(cat $stdout)" ]];then tput setaf 1;echo "[-] Did not find the correct pipe files... Exiting";tput sgr0;exit 1;fi
 
 echo "[+] Retrieving the last dns tunnel..."
 
@@ -73,8 +73,9 @@ while [[ "$running" ]];do
       *)
          echo "" > $stdout
          echo $command >> $stdin
-         while [[ ! $(cat $stdout 2>/dev/null) ]];do sleep 1; done
-         echo $(cat $stdout 2>/dev/null | head -n +2)
+         sed -i "s/sh.*>//g" $stdout
+         while [[ ! $(cat $stdout) ]];do sleep 1;sed -i "s/sh.*>//g" $stdout; done
+         echo $(cat $stdout)
          ;;
    esac
 done
