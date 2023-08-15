@@ -1,4 +1,5 @@
 #! /bin/bash
+# TODO : do logging and state functions
 # TODO : check Kerberos install, if not soft lock
 # TODO : debug not quiet apt
 
@@ -36,8 +37,6 @@ go_installation () {
                 sudo cp /home/$usr/go/bin/$1 /bin/$1
         fi
 }
-
-# }
 
 # Manage options
 branch="main"
@@ -582,6 +581,13 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         printf "#! /bin/sh\nsudo ruby /lib/dnscat/server/dnscat2.rb \$@" > dnscat
         chmod +x dnscat
         sudo mv dnscat /bin/dnscat
+fi
+
+if [[ ! -x "$(command -v dnscat_shell)" || $force ]];then
+        echo "[+] dnscat_shell not detected... Installing"
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/dnscat-shell.sh -q
+        chmod +x dnscat-shell.sh
+        sudo mv dnscat-shell.sh bin/dnscat-shell
 fi
 
 ###### Install PEAS
