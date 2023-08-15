@@ -19,6 +19,7 @@ branch="main"
 check="1"
 force=""
 no_upgrade=""
+check_install="1"
 
 POSITIONAL_ARGS=()
 ORIGINAL_ARGS=$@
@@ -52,6 +53,10 @@ while [[ $# -gt 0 ]]; do
       echo "[*] -nu | --no-upgrade - Disable apt and pip upgrading"
       echo "[*] -h | --help - Get help"
       ;;
+    -ni|--no-install)
+      check_install=""
+      shift
+      ;;
     -*|--*)
       tput setaf 1;echo "[-] Unknown option $1... Exiting";tput sgr0
       exit 1
@@ -76,13 +81,15 @@ hotscript=/home/$usr/hot-script
 session=/home/$usr/session
 
 # Check installations
-if [[ ! -x "$(command -v install_penenv)" ]];then
-        echo "[+] install_penenv not detected as a command...Setting up"
-        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh > installing;rm installing
-        chmod +x 0\ -\ install.sh
-        sudo mv 0\ -\ install.sh /bin/install_penenv
+if [[ $check_install ]];then
+  if [[ ! -x "$(command -v install_penenv)" ]];then
+          echo "[+] install_penenv not detected as a command...Setting up"
+          wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh > installing;rm installing
+          chmod +x 0\ -\ install.sh
+          sudo mv 0\ -\ install.sh /bin/install_penenv
+  fi
+  install_penenv $ORIGINAL_ARGS
 fi
-install_penenv $ORIGINAL_ARGS
 
 if [[ ! -d $session ]];then
        mkdir $session
