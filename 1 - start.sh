@@ -9,7 +9,7 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.5"
+echo "Suite version : V0.1.6"
 echo "Script version : V1.2"
 echo ""
 echo ""
@@ -99,9 +99,9 @@ sudo rm $session/*
 # Starting Neo4j
 echo "[+] Starting neo4j"
 sudo neo4j console >> $log/neo4j.log &
-tput setaf 6;echo "[~] Log of neo4j are available in $log/neo4j";tput sgr0
 tput setaf 4;echo "[*] Access to neo4j web interface through http://localhost:7474";tput sgr0
-tput setaf 4;echo "[*] Launch bloodhound using 'bloodhound' command";tput sgr0
+tput setaf 6;echo "[~] Log of neo4j are available in $log/neo4j";tput sgr0
+tput setaf 6;echo "[~] Launch bloodhound using 'bloodhound' command";tput sgr0
 
 
 # Starting Nessus
@@ -118,8 +118,8 @@ touch $session/dnscat.stdin
 touch $session/dnscat.stdout
 tail -f $session/dnscat.stdin | sudo unbuffer -p dnscat $dom --secret $sec --security=authenticated | tee $session/dnscat.stdout > /dev/null &
 tput setaf 4;echo "[*] Access to dnscat tunnel through localhost:53 with secret $sec";tput sgr0
-tput setaf 4;echo "[*] To connect while using domain request, make sure this server is an authoritative DNS";tput sgr0
-tput setaf 4;echo "[*] To get your shell after executing client dnscat, execute dnscat-shell here";tput sgr0
+tput setaf 6;echo "[~] To connect while using domain request, make sure this server is an authoritative DNS";tput sgr0
+tput setaf 6;echo "[~] To get your shell after executing client dnscat, execute dnscat-shell here";tput sgr0
 
 # Start http server
 echo "[+] Starting file transfer through http"
@@ -140,8 +140,8 @@ tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput
 
 
 
-echo ""
-tput setaf 6;echo "[~] To check running servers, do 'jobs'";tput sgr0
-tput setaf 6;echo "[~] To get to a process, do 'fg <job-id>'";tput sgr0
-tput setaf 6;echo "[~] To put back a process to background, press CTRL+Z then do 'bg'";tput sgr0
+# echo ""
+# tput setaf 6;echo "[~] To check running servers, do 'jobs'";tput sgr0
+# tput setaf 6;echo "[~] To get to a process, do 'fg <job-id>'";tput sgr0
+# tput setaf 6;echo "[~] To put back a process to background, press CTRL+Z then do 'bg'";tput sgr0
 

