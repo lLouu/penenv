@@ -21,7 +21,7 @@ stdout="/home/$usr/session/dnscat.stdout"
 echo "" > $stdout
 echo "help" >> $stdin
 sleep 1
-if [[ ! "$(cat $stdout)" ]];then tput setaf 1;echo "[-] Did not find the correct pipe files... Exiting";tput sgr0;exit 1;fi
+if [[ ! "$(cat $stdout 2>/dev/null)" ]];then tput setaf 1;echo "[-] Did not find the correct pipe files... Exiting";tput sgr0;exit 1;fi
 
 echo "[+] Retrieving the last dns tunnel..."
 
@@ -64,16 +64,17 @@ while [[ "$running" ]];do
    case $command in
       quit|exit|close|q|e|c)
          tput setaf 6;read -p "Do you want to close the shell (y/n) " close;tput sgr0
-         if [[ $close =~ "y|Y" ]];then
+         if [[ $close =~ "y" ]];then
             tput setaf 6;echo "[~] Closing shell...";tput sgr0
             running=""
+            echo "exit" >> $stdin
          fi
          ;;
       *)
          echo "" > $stdout
          echo $command >> $stdin
-         while [[ ! $(cat $stdout) =~ "dnscat>" ]];do sleep 1; done
-         echo $(cat $stdout | head -n +2)
+         while [[ ! $(cat $stdout 2>/dev/null) ]];do sleep 1; done
+         echo $(cat $stdout 2>/dev/null | head -n +2)
          ;;
    esac
 done
