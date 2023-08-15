@@ -135,7 +135,7 @@ tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:2121";tpu
 
 # Start smb server
 echo "[+] Starting file transfer through smb"
-impacket-smbserver share $hotscript -smb2support >> $log/smb.log &
+sudo impacket-smbserver share $hotscript -smb2support >> $log/smb.log &
 tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput sgr0
 
 
