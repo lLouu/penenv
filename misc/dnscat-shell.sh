@@ -87,8 +87,8 @@ while [[ "$running" ]];do
       *)
          echo -ne "" > $stdout
          echo $command >> $stdin
-         while [[ ! "$(sed "s/sh.*>//g" $stdout)" ]];do sleep 1; done
-         echo $(sed "s/sh.*> //g" $stdout)
+         while [[ ! '$(sed "s/sh.*> //g" $stdout)' ]];do sleep 1; done
+         sed "s/sh.*> //g" $stdout
          ;;
    esac
 done
