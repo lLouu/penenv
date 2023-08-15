@@ -55,10 +55,10 @@ echo "" > $stdout
 
 running="ok"
 while [[ "$running" ]];do
-   read " > " command
+   read -p " > " command
    case $command in
       quit|exit|close|q|e|c)
-         tput setaf 6;read "Do you want to close the shell (y/n) " close;tput sgr0
+         tput setaf 6;read -p "Do you want to close the shell (y/n) " close;tput sgr0
          if [[ $close ~= "y|Y" ]];then
             tput setaf 6;echo "[~] Closing shell...";tput sgr0
             running=""

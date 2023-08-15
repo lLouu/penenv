@@ -583,8 +583,8 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         sudo mv dnscat /bin/dnscat
 fi
 
-if [[ ! -x "$(command -v dnscat_shell)" || $force ]];then
-        echo "[+] dnscat_shell not detected... Installing"
+if [[ ! -x "$(command -v dnscat-shell)" || $force ]];then
+        echo "[+] dnscat shell not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/dnscat-shell.sh -q
         chmod +x dnscat-shell.sh
         sudo mv dnscat-shell.sh /bin/dnscat-shell

@@ -111,8 +111,8 @@ tput setaf 4;echo "[*] Access to nessus web interface through https://localhost:
 
 # Starting dnscat server
 echo "[+] Starting dnscat"
-read "Domain > " dom
-read "Secret > " sec
+read -p "Domain > " dom
+read -p "Secret > " sec
 if [[ ! "$sec" ]];then sec="hellowthere";fi
 touch $session/dnscat.stdin
 touch $session/dnscat.stdout
@@ -123,14 +123,14 @@ tput setaf 4;echo "[*] To get your shell after executing client dnscat, execute 
 
 # Start http server
 echo "[+] Starting file transfer through http"
-python3 -u -m http.server $hotscript 80 >> $log/http.log &
-tput setaf 4;echo "[*] Access to file download through http://localhost:80/<path>";tput sgr0
+sudo python3 -u -m http.server --directory $hotscript 8080 >> $log/http.log &
+tput setaf 4;echo "[*] Access to file download through http://localhost:8080/<path>";tput sgr0
 
 
 # Start ftp server
 echo "[+] Starting file transfer through ftp"
-python3 -u -m pyftpdlib -d $hotscript >> $log/ftp.log &
-tput setaf 4;echo "[*] Access to file transfer through ftp://localhost with your user credentials";tput sgr0
+sudo python3 -u -m pyftpdlib -d $hotscript 2>> $log/ftp.log &
+tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:2121";tput sgr0
 
 
 # Start smb server

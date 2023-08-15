@@ -1,2 +1,7 @@
 #! /bin/sh
-python -c "import hashlib,binascii; print(binascii.hexlify(hashlib.new(\"md4\", \"$1\".encode(\"utf-16le\")).digest()).decode())"
+if [[ $# -eq 0 ]];then
+   read -p "Password > " pwd
+else
+   pwd=$1
+fi
+python -c "import hashlib,binascii; print(binascii.hexlify(hashlib.new(\"md4\", \"$pwd\".encode(\"utf-16le\")).digest()).decode())"
