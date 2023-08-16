@@ -1,6 +1,5 @@
 #! /bin/bash
 # TODO : do logging and state functions
-# TODO : check Kerberos install, if not soft lock
 # TODO : parrallelyzing tasks
 
 start=$(date +%s)
@@ -13,7 +12,7 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.7"
+echo "Suite version : V0.2.0"
 echo "Script version : V1.5"
 echo ""
 echo ""
@@ -25,7 +24,7 @@ apt_installation () {
         if [[ $# -eq 3 ]];then name=$2; pkg=$3; fi
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $name not detected... Installing"
-                sudo apt-get install $pkg -y 2>>$log/install-errors.log >>$log/install-infos.log
+                sudo DEBIAN_FRONTEND=noninteractive apt-get install $pkg -yq 2>>$log/install-errors.log >>$log/install-infos.log
         fi
 }
 
