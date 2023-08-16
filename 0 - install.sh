@@ -156,9 +156,12 @@ fi
 
 if [[ $check ]];then
         tput setaf 6;echo "[~] Checking done... Reloading command";tput sgr0
-        echo "";
+        cd /home/$usr
+        sudo rm -R $artifacts
+        tput setaf 6;echo "[~] Chekings Artifacts removed";tput sgr0
+        echo ""
         install-penenv $ORIGINAL_ARGS -nc
-        stop
+        exit 1
 fi
 
 ## Languages and downloaders
@@ -252,10 +255,10 @@ apt_installation "make"
 ###### Install mono
 if [[ ! -x "$(command -v mozroots)" || $force ]];then
         echo "[+] Mono not detected... Installing"
-        sudo apt install -yq dirmngr ca-certificates gnupg >$log/install-infos.log 2>>$log/install-errors.log 
-        sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF 2>$log/install-warnings.log >$log/install-infos.log
+        sudo apt install -yq dirmngr ca-certificates gnupg >>$log/install-infos.log 2>>$log/install-errors.log 
+        sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF 2>>$log/install-warnings.log >>$log/install-infos.log
         echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >/dev/null
-        sudo apt install -yq mono-devel >$log/install-infos.log 2>>$log/install-errors.log 
+        sudo apt install -yq mono-devel >>$log/install-infos.log 2>>$log/install-errors.log 
 fi
 
 ###### Install git
@@ -349,7 +352,7 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
         pip install -r ./dirscraper/requirements.txt -q 2>> $log/install-warnings.log
-        rm -R ./dirscraper
+        sudo rm -R ./dirscraper
 fi
 
 ###### Install Haktrails
@@ -371,7 +374,7 @@ go_installation "ffuf" "github.com/ffuf/ffuf/v2@latest"
 ###### Install x8
 if [[ ! -x "$(command -v x8)" || $force ]];then
         echo "[+] x8 not detected... Installing"
-        cargo install x8 >>$log/install-infos.log 2>$log/install-errors.log
+        cargo install x8 >>$log/install-infos.log 2>>$log/install-errors.log
 fi
 
 ### Others
@@ -426,7 +429,7 @@ if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         chmod +x ./SecretFinder/SecretFinder.py
         sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
         pip install -r ./SecretFinder/requirements.txt -q 2>> $log/install-warnings.log
-        rm -R ./SecretFinder
+        sudo rm -R ./SecretFinder
 fi
 
 ### Bruteforce
@@ -443,7 +446,7 @@ if [[ ! -x "$(command -v hydra)" || $force ]];then
         sudo make install >>$log/install-infos.log 2>>$log/install-errors.log
         sudo mv hydra /bin/hydra
         cd ..
-        rm -R thc-hydra
+        sudo rm -R thc-hydra
 fi
 
 ###### Install john
@@ -505,7 +508,7 @@ if [[ ! -x "$(command -v sqlmap)" || $force ]];then
                 sudo mv /lib/sqlmap /lib/sqlmap-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git sqlmap-dev --quiet >> $log/install-infos.log
+        git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >> $log/install-infos.log
         pip install -r sqlmap/requirements.txt -q 2>> $log/install-warnings.log
         sudo mv sqlmap /lib/sqlmap
         printf "#! /bin/sh\nsudo python3 /lib/sqlmap/sqlmap.py \$@" > sqlmap
@@ -521,9 +524,9 @@ if [[ ! -x "$(command -v commix)" || $force ]];then
                 sudo mv /lib/commix /lib/commix-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        git clone https://github.com/commixproject/commix.git commix --quiet >> $log/install-infos.log
+        git clone https://github.com/commixproject/commix.git --quiet >> $log/install-infos.log
         sudo mv commix /lib/commix
-        printf "#! /bin/sh\nsudo python3 /lib/commix/commix.py \$@" > sqlmap
+        printf "#! /bin/sh\nsudo python3 /lib/commix/commix.py \$@" > commix
         chmod +x commix
         sudo mv commix /bin/commix
 fi
@@ -748,7 +751,7 @@ if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
         echo "[+] Mimipenguin not detected... Installing"
         sudo git clone https://github.com/huntergregal/mimipenguin.git --quiet >> $log/install-infos.log
         cd mimipenguin
-        sudo make >> $log/install-infos.log
+        sudo make >> $log/install-infos.log 2>>$log/install-warnings.log
         sudo mv mimipenguin $hotscript/mimipenguin
         sudo mv mimipenguin.py $hotscript/mimipenguin.py
         sudo mv mimipenguin.sh $hotscript/mimipenguin.sh
