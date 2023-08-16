@@ -252,10 +252,10 @@ apt_installation "make"
 ###### Install mono
 if [[ ! -x "$(command -v mozroots)" || $force ]];then
         echo "[+] Mono not detected... Installing"
-        sudo apt install -yq dirmngr ca-certificates gnupg >$log/install-infos.log
-        sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF >$log/install-infos.log
-        echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >$log/install-infos.log
-        sudo apt install -yq mono-devel >$log/install-infos.log
+        sudo apt install -yq dirmngr ca-certificates gnupg >$log/install-infos.log 2>>$log/install-errors.log 
+        sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF 2>$log/install-warnings.log >$log/install-infos.log
+        echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >/dev/null
+        sudo apt install -yq mono-devel >$log/install-infos.log 2>>$log/install-errors.log 
 fi
 
 ###### Install git
@@ -609,22 +609,22 @@ if [[ ! -x "$(command -v mitm6)" || $force ]];then
         echo "[+] mitm6 not detected... Installing"
         sudo git clone https://github.com/dirkjanm/mitm6.git --quiet >> $log/install-infos.log
         pip install -r mitm6/requirements.txt -q 2>> $log/install-warnings.log
-        chmod +x mitm6/mitm6/mitm6.py
+        sudo chmod +x mitm6/mitm6/mitm6.py
         sudo mv mitm6/mitm6/mitm6.py /bin/mitm6
         sudo rm -R mitm6
 fi
 
 ###### Install proxychain
-if [[ ! -x "$(command -v proxychain)" || $force ]];then
+if [[ ! -x "$(command -v proxychains)" || $force ]];then
         echo "[+] Proxychain not detected... Installing"
         git clone https://github.com/haad/proxychains.git --quiet >> $log/install-infos.log
         cd proxychains
         ./configure >>$log/install-infos.log 2>>$log/install-errors.log
         make >> $log/install-infos.log
         sudo make install >>$log/install-infos.log 2>>$log/install-errors.log
-        sudo mv proxychains /bin/proxychains
+        sudo mv proxychains4 /bin/proxychains
         cd ..
-        rm -R proxychains
+        sudo rm -R proxychains
 fi
 
 ###### Install responder
@@ -660,7 +660,7 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
 fi
 
 if [[ ! -f "$hotscript/dnscat" || $force ]];then
-        echo "[+] Dnscat client not detected...Making"
+        echo "[+] Dnscat client not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/client
         make >> $log/install-infos.log
@@ -669,7 +669,7 @@ if [[ ! -f "$hotscript/dnscat" || $force ]];then
 fi
 
 if [[ ! -x "$(command -v dnscat)" || $force ]];then
-        echo "[+] Dnscat server not detected...Making"
+        echo "[+] Dnscat server not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/server
         sudo gem install bundler >> $log/install-infos.log
@@ -745,16 +745,15 @@ fi
 
 ###### Install mimipenguin
 if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
-        echo "[+] Mimipenguin not detected...Making"
+        echo "[+] Mimipenguin not detected... Installing"
         sudo git clone https://github.com/huntergregal/mimipenguin.git --quiet >> $log/install-infos.log
         cd mimipenguin
-        make >> $log/install-infos.log
-        chmod +x mimipenguin*
-        mv mimipenguin $hotscript/mimipenguin
-        mv mimipenguin.py $hotscript/mimipenguin.py
-        mv mimipenguin.sh $hotscript/mimipenguin.sh
+        sudo make >> $log/install-infos.log
+        sudo mv mimipenguin $hotscript/mimipenguin
+        sudo mv mimipenguin.py $hotscript/mimipenguin.py
+        sudo mv mimipenguin.sh $hotscript/mimipenguin.sh
         cd ..
-        rm -R mimipenguin
+        sudo rm -R mimipenguin
 fi
 
 ###### Install linux-exploit-suggester-2
