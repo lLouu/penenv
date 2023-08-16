@@ -102,7 +102,7 @@ fi
 if [[ ! -d $session ]];then
        mkdir $session
 fi
-sudo rm $session/*
+sudo rm $session/* 2>/dev/null
 
 ## Services
 # Starting Neo4j
@@ -136,15 +136,17 @@ echo ""
 
 # Starting openvpn servers
 echo "[+] Starting openvpn"
-tput setaf 6;echo "[~] Give vpn file path to launch, then give no input, or give 'exit' to pursue";tput sgr0
+tput setaf 6;echo "[~] Give vpn file path to launch, then give no input to pursue the script";tput sgr0
 
 vpnfile="continue"
-while [[ $vpnfile && $vpnfile -ne "exit" && $vpnfile -ne "done" ]];do
+while [[ $vpnfile ]];do
   read -e -p "VPN File > " vpnfile
-  if [[ -f $vpnfile ]];then
-    sudo openvpn $vpnfile 2>&1 >>$log/openvpn-$(basename $vpnfile).log &
-  else
-    tput setaf 1;echo "[!] Please give a valid file path";tput sgr0
+  if [[ $vpnfile ]];then
+    if [[ -f $vpnfile ]];then
+      sudo openvpn $vpnfile 2>&1 >>$log/openvpn-$(basename $vpnfile).log &
+    else
+      tput setaf 1;echo "[!] Please give a valid file path";tput sgr0
+    fi
   fi
 done
 
@@ -155,21 +157,21 @@ echo ""
 echo ""
 # Start http server
 echo "[+] Starting file transfer through http"
-sudo python3 -u -m http.server --directory $hotscript 8080 >> $log/http.log &
+sudo python3 -u -m http.server --directory $hotscript 8080 2>&1 >> $log/http.log &
 tput setaf 4;echo "[*] Access to file download through http://localhost:8080/<path>";tput sgr0
 
 echo ""
 
 # Start ftp server
 echo "[+] Starting file transfer through ftp"
-sudo python3 -u -m pyftpdlib -d $hotscript 2>> $log/ftp.log &
+sudo python3 -u -m pyftpdlib -d $hotscript 2>&1 >> $log/ftp.log &
 tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:2121";tput sgr0
 
 echo ""
 
 # Start smb server
 echo "[+] Starting file transfer through smb"
-sudo impacket-smbserver share $hotscript -smb2support >> $log/smb.log &
+sudo impacket-smbserver share $hotscript -smb2support 2>&1 >> $log/smb.log &
 tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput sgr0
 
 

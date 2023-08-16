@@ -1,7 +1,7 @@
 #! /bin/bash
 # TODO : do logging and state functions
 # TODO : check Kerberos install, if not soft lock
-# TODO : debug not quiet apt
+# TODO : parrallelyzing tasks
 
 start=$(date +%s)
 
@@ -25,7 +25,7 @@ apt_installation () {
         if [[ $# -eq 3 ]];then name=$2; pkg=$3; fi
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $name not detected... Installing"
-                sudo apt-get install $pkg -y >> $log/install-infos.log
+                sudo apt-get install $pkg -y 2>>$log/install-errors.log >>$log/install-infos.log
         fi
 }
 
@@ -460,14 +460,14 @@ if [[ ! -x "$(command -v msfconsole)" || $force ]];then
         echo "[+] Metasploit not detected... Installing"
         curl -s -L https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb --output msfinstall
         chmod +x msfinstall
-        sudo ./msfinstall >> $log/install-infos.log
+        sudo ./msfinstall 2>>$log/install-warnings.log >> $log/install-infos.log
         rm msfinstall
 fi
 
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
         echo "[+] Upgrading metasploit... This may take a while"
-        sudo msfupdate >/dev/null 2>/dev/null
+        sudo msfupdate >>$log/install-infos.log 2>>$log/install-warnings.log
         tput setaf 4;echo "[*] Metasploit data upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
 
@@ -476,7 +476,7 @@ if [[ ! -x "$(command -v searchsploit)" || $force ]];then
         echo "[+] Searchsploit not detected... Installing"
         wget https://raw.githubusercontent.com/rad10/SearchSploit.py/master/searchsploit.py -q
         chmod +x searchsploit.py
-        mv searchsploit.py /bin/searchsploit
+        sudo mv searchsploit.py /bin/searchsploit
 fi
 
 ###### Install AutoHackBruteOS
@@ -601,8 +601,6 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         sudo gem install bundler >> $log/install-infos.log
         sudo bundler install 2>>$log/install-errors.log >>$log/install-infos.log
         cd $workingdir
-        
-        echo "[+] Creating command..."
         printf "#! /bin/sh\nsudo ruby /lib/dnscat/server/dnscat2.rb \$@" > dnscat
         chmod +x dnscat
         sudo mv dnscat /bin/dnscat
@@ -684,7 +682,7 @@ if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
 fi
 
 ###### Install Nessus
-if [[ ! "$(systemctl status nessusd)" || $force ]];then
+if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
         echo "[+] Nessus not detected... Installing"
         file=$(curl -s --request GET --url 'https://www.tenable.com/downloads/api/v2/pages/nessus' | grep -o -P "Nessus-\d+\.\d+\.\d+-debian10_amd64.deb" | head -n 1)
         curl -s --request GET \
