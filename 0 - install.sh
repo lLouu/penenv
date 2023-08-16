@@ -12,8 +12,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.2.0"
-echo "Script version : V1.5"
+echo "Suite version : V0.2.1"
+echo "Script version : V1.6"
 echo ""
 echo ""
 
@@ -249,6 +249,15 @@ fi
 ###### Install make
 apt_installation "make"
 
+###### Install mono
+if [[ ! -x "$(command -v mozroots)" || $force ]];then
+        echo "[+] Mono not detected... Installing"
+        sudo apt install -yq dirmngr ca-certificates gnupg >$log/install-infos.log
+        sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF >$log/install-infos.log
+        echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >$log/install-infos.log
+        sudo apt install -yq mono-devel >$log/install-infos.log
+fi
+
 ###### Install git
 apt_installation "git"
 
@@ -360,7 +369,10 @@ apt_installation "whatweb"
 go_installation "ffuf" "github.com/ffuf/ffuf/v2@latest"
 
 ###### Install x8
-
+if [[ ! -x "$(command -v x8)" || $force ]];then
+        echo "[+] x8 not detected... Installing"
+        cargo install x8 >>$log/install-infos.log 2>$log/install-errors.log
+fi
 
 ### Others
 ###### Install wappalyzer
@@ -479,10 +491,42 @@ if [[ ! -x "$(command -v searchsploit)" || $force ]];then
 fi
 
 ###### Install AutoHackBruteOS
+if [[ ! -x "$(command -v AutoHackBruteOS)" || $force ]];then
+        echo "[+] AutoHackBruteOS not detected... Installing"
+        (echo "#! /usr/bin/env ruby" && curl -L -s https://raw.githubusercontent.com/carlospolop/AutoHackBruteOs/master/AutoHackBruteOs.rc) > AutoHackBruteOs.rc
+        chmod +x AutoHackBruteOs.rc
+        sudo mv AutoHackBruteOs.rc /bin/AutoHackBruteOs
+fi
 
 ###### Install sqlmap
+if [[ ! -x "$(command -v sqlmap)" || $force ]];then
+        echo "[+] sqlmap not detected... Installing"
+        if [[ -d "/lib/sqlmap" ]];then
+                sudo mv /lib/sqlmap /lib/sqlmap-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+        fi
+        git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git sqlmap-dev --quiet >> $log/install-infos.log
+        pip install -r sqlmap/requirements.txt -q 2>> $log/install-warnings.log
+        sudo mv sqlmap /lib/sqlmap
+        printf "#! /bin/sh\nsudo python3 /lib/sqlmap/sqlmap.py \$@" > sqlmap
+        chmod +x sqlmap
+        sudo mv sqlmap /bin/sqlmap
+fi
+
 
 ###### Install commix
+if [[ ! -x "$(command -v commix)" || $force ]];then
+        echo "[+] commix not detected... Installing"
+        if [[ -d "/lib/commix" ]];then
+                sudo mv /lib/commix /lib/commix-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+        fi
+        git clone https://github.com/commixproject/commix.git commix --quiet >> $log/install-infos.log
+        sudo mv commix /lib/commix
+        printf "#! /bin/sh\nsudo python3 /lib/commix/commix.py \$@" > sqlmap
+        chmod +x commix
+        sudo mv commix /bin/commix
+fi
 
 
 ### Others
@@ -561,10 +605,41 @@ fi
 apt_installation "openvpn"
 
 ###### Install mitm6
+if [[ ! -x "$(command -v mitm6)" || $force ]];then
+        echo "[+] mitm6 not detected... Installing"
+        sudo git clone https://github.com/dirkjanm/mitm6.git --quiet >> $log/install-infos.log
+        pip install -r mitm6/requirements.txt -q 2>> $log/install-warnings.log
+        chmod +x mitm6/mitm6/mitm6.py
+        sudo mv mitm6/mitm6/mitm6.py /bin/mitm6
+        sudo rm -R mitm6
+fi
 
 ###### Install proxychain
+if [[ ! -x "$(command -v proxychain)" || $force ]];then
+        echo "[+] Proxychain not detected... Installing"
+        git clone https://github.com/haad/proxychains.git --quiet >> $log/install-infos.log
+        cd proxychains
+        ./configure >>$log/install-infos.log 2>>$log/install-errors.log
+        make >> $log/install-infos.log
+        sudo make install >>$log/install-infos.log 2>>$log/install-errors.log
+        sudo mv proxychains /bin/proxychains
+        cd ..
+        rm -R proxychains
+fi
 
 ###### Install responder
+if [[ ! -x "$(command -v responder)" || $force ]];then
+        echo "[+] responder not detected... Installing"
+        if [[ -d "/lib/responder" ]];then
+                sudo mv /lib/responder /lib/responder-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /lib/responder to /lib/responder-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+        fi
+        git clone https://github.com/lgandx/Responder.git --quiet >> $log/install-infos.log
+        sudo mv Responder /lib/responder
+        printf "#! /bin/sh\nsudo python3 /lib/responder/Responder.py \$@" > sqlmap
+        chmod +x responder
+        sudo mv responder /bin/responder
+fi
 
 ###### Install Evil winrm
 
@@ -663,6 +738,37 @@ if [[ ! -f "$hotscript/pspy64" || $force ]];then
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
         chmod +x $hotscript/pspy64
 fi
+
+###### Install rubeus
+
+###### Install mimikatz
+
+###### Install mimipenguin
+if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
+        echo "[+] Mimipenguin not detected...Making"
+        sudo git clone https://github.com/huntergregal/mimipenguin.git --quiet >> $log/install-infos.log
+        cd mimipenguin
+        make >> $log/install-infos.log
+        chmod +x mimipenguin*
+        mv mimipenguin $hotscript/mimipenguin
+        mv mimipenguin.py $hotscript/mimipenguin.py
+        mv mimipenguin.sh $hotscript/mimipenguin.sh
+        cd ..
+        rm -R mimipenguin
+fi
+
+###### Install linux-exploit-suggester-2
+if [[ ! -f "$hotscript/linux-exploit-suggester-2.pl" || $force ]];then
+        echo "[+] Linux exploit suggester 2 not detected... Installing"
+        wget https://raw.githubusercontent.com/jondonas/linux-exploit-suggester-2/master/linux-exploit-suggester-2.pl -q
+        mv linux-exploit-suggester-2.pl $hotscript/linux-exploit-suggester-2.pl
+fi
+
+###### Install watson
+
+###### Install powersploit
+
+###### Install evilSSDP
 
 
 ## Services

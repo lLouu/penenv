@@ -19,14 +19,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (71/86)
+## Install (81/87)
 
 ### Penenv (3)
  - [X] install_penenv
  - [X] autoenum
  - [X] start
 
-### Lang & downloaders (14)
+### Lang & downloaders (15)
  - [X] apt upgrade
  - [X] python 3
     - [X] 2to3
@@ -39,7 +39,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
     - [X] npm
     - [X] yarn
  - [X] rust
- - [X] make
+ - C
+    - [X] make
+    - [X] mono
  - [X] git
  - [X] krb5-user
 
@@ -50,8 +52,8 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] jq
  - [X] expect
 
-### Tools (40/48)
-#### Web Scan
+### Tools (48/49)
+#### Web Scan (23)
 ##### Subdomains & paths (13)
  - [X] sublist3r
  - [X] assetfinder
@@ -67,11 +69,11 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] dirscapper
  - [X] haktrails
  - [X] hakrawler
-##### Fuzzers (3/4)
+##### Fuzzers (4)
  - [X] gobuster
  - [X] whatweb
  - [X] ffuf
- - [ ] x8
+ - [X] x8
 ##### Others (6)
  - [X] wappalyzer
  - [X] testssl
@@ -92,14 +94,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (2/5)
+#### Exploits (5)
  - [X] Metasploit & Upgrade
  - [X] searchsploit
- - [ ] AutoHackBruteOS
- - [ ] sqlmap
- - [ ] commix
+ - [X] AutoHackBruteOS
+ - [X] sqlmap
+ - [X] commix
 
-#### Other (9/13)
+#### Other (12/13)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
@@ -109,24 +111,24 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] cupp
  - [X] DDexec
  - [X] openvpn
- - [ ] mitm6
- - [ ] proxychain
- - [ ] responder
+ - [X] mitm6
+ - [X] proxychain
+ - [X] responder
  - [ ] Evil winrm
 
-### Scripts (5/12)
+### Scripts (7/12)
  - [X] dnscat (server & client & shell)
  - [X] LinPEAS
  - [X] WinPEAS
  - [X] miranda
  - [X] pspy
- - [ ] mimikatz
- - [ ] evilSSDP
- - [ ] linux-exploit-suggester-2
- - [ ] mimipenguin
- - [ ] powersploit
- - [ ] watson
  - [ ] rubeus
+ - [ ] mimikatz
+ - [X] mimipenguin
+ - [X] linux-exploit-suggester-2
+ - [ ] watson
+ - [ ] powersploit
+ - [ ] evilSSDP
 
 ### Services (3)
  - [X] bloodhound
