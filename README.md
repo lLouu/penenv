@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (81/87)
+## Install (82/88)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -116,7 +116,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] responder
  - [ ] Evil winrm
 
-### Scripts (7/12)
+### Scripts (8/13)
  - [X] dnscat (server & client & shell)
  - [X] LinPEAS
  - [X] WinPEAS
@@ -126,6 +126,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] mimikatz
  - [X] mimipenguin
  - [X] linux-exploit-suggester-2
+ - [X] wesng
  - [ ] watson
  - [ ] powersploit
  - [ ] evilSSDP

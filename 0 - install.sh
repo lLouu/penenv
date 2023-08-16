@@ -169,9 +169,9 @@ fi
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
         echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
-        sudo apt-get update > upgrade
-        sudo apt-get upgrade -y > upgrade
-        sudo apt-get autoremove -y > upgrade; rm upgrade
+        sudo apt-get update > /dev/null
+        sudo apt-get upgrade -y > /dev/null
+        sudo apt-get autoremove -y > /dev/null
         tput setaf 4;echo "[*] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
 
@@ -764,6 +764,13 @@ if [[ ! -f "$hotscript/linux-exploit-suggester-2.pl" || $force ]];then
         echo "[+] Linux exploit suggester 2 not detected... Installing"
         wget https://raw.githubusercontent.com/jondonas/linux-exploit-suggester-2/master/linux-exploit-suggester-2.pl -q
         mv linux-exploit-suggester-2.pl $hotscript/linux-exploit-suggester-2.pl
+fi
+
+###### Install wesng
+if [[ ! "$(command -v wes)" || $force ]];then
+        echo "[+] Wesng not detected... Installing"
+        sudo pip install wesng -q 2>> $log/install-warnings.log
+        wes --update >> $log/install-infos.log
 fi
 
 ###### Install watson

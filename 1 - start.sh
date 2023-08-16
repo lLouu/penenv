@@ -90,13 +90,13 @@ session=/home/$usr/session
 
 # Check installations
 if [[ $check_install ]];then
-  if [[ ! -x "$(command -v install_penenv)" ]];then
-          echo "[+] install_penenv not detected as a command...Setting up"
+  if [[ ! -x "$(command -v install-penenv)" ]];then
+          echo "[+] install-penenv not detected as a command...Setting up"
           wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh > installing;rm installing
           chmod +x 0\ -\ install.sh
-          sudo mv 0\ -\ install.sh /bin/install_penenv
+          sudo mv 0\ -\ install.sh /bin/install-penenv
   fi
-  install_penenv $ORIGINAL_ARGS
+  install-penenv $ORIGINAL_ARGS
 fi
 
 if [[ ! -d $session ]];then
