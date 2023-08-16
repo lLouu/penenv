@@ -1,5 +1,6 @@
 #! /bin/bash
-# TODO : responder
+# TODO : check if service already running
+# TODO : check if something is using the port
 
 echo "    ____             ______          ";
 echo "   / __ \___  ____  / ____/___ _   __";
@@ -9,8 +10,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.6"
-echo "Script version : V1.2"
+echo "Suite version : V0.1.7"
+echo "Script version : V1.3"
 echo ""
 echo ""
 
@@ -70,6 +71,13 @@ done
 
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
+# Inform user
+if [[ $check_install ]];then
+  tput setaf 4;echo "[*] Environnement will be checked with install-penenv... To disable this check, add the option '--no-install' (or '-ni')";tput sgr0;
+else
+  tput setaf 4;echo "[*] Environnement will **NOT** be checked with install-penenv...";tput sgr0;
+fi
+
 # Set directory environement
 usr=$(whoami)
 if [[ $usr == "root" ]];then
@@ -96,42 +104,68 @@ if [[ ! -d $session ]];then
 fi
 sudo rm $session/*
 
+## Services
 # Starting Neo4j
 echo "[+] Starting neo4j"
 sudo neo4j console >> $log/neo4j.log &
 tput setaf 4;echo "[*] Access to neo4j web interface through http://localhost:7474";tput sgr0
-tput setaf 6;echo "[~] Log of neo4j are available in $log/neo4j";tput sgr0
 tput setaf 6;echo "[~] Launch bloodhound using 'bloodhound' command";tput sgr0
 
+echo ""
 
 # Starting Nessus
 echo "[+] Starting nessusd"
 sudo systemctl start nessusd
 tput setaf 4;echo "[*] Access to nessus web interface through https://localhost:8834";tput sgr0
 
+echo ""
+
 # Starting dnscat server
 echo "[+] Starting dnscat"
-read -p "Domain > " dom
-read -p "Secret > " sec
+read -e -p "Domain > " dom
+read -e -p "Secret > " sec
 if [[ ! "$sec" ]];then sec="hellowthere";fi
 touch $session/dnscat.stdin
 touch $session/dnscat.stdout
 tail -f $session/dnscat.stdin | sudo unbuffer -p dnscat $dom --secret $sec --security=authenticated | tee $session/dnscat.stdout > /dev/null &
 tput setaf 4;echo "[*] Access to dnscat tunnel through localhost:53 with secret $sec";tput sgr0
 tput setaf 6;echo "[~] To connect while using domain request, make sure this server is an authoritative DNS";tput sgr0
-tput setaf 6;echo "[~] To get your shell after executing client dnscat, execute dnscat-shell here";tput sgr0
+tput setaf 6;echo "[~] To get your shell after executing client dnscat, execute dnscat-shell";tput sgr0
 
+echo ""
+
+# Starting openvpn servers
+echo "[+] Starting openvpn"
+tput setaf 6;echo "[~] Give vpn file path to launch, then give no input, or give 'exit' to pursue";tput sgr0
+
+vpnfile="continue"
+while [[ $vpnfile && $vpnfile -ne "exit" && $vpnfile -ne "done" ]];do
+  read -e -p "VPN File > " vpnfile
+  if [[ -f $vpnfile ]];then
+    sudo openvpn $vpnfile 2>&1 >>$log/openvpn-$(basename $vpnfile).log &
+  else
+    tput setaf 1;echo "[!] Please give a valid file path";tput sgr0
+  fi
+done
+
+
+
+## File transfers
+echo ""
+echo ""
 # Start http server
 echo "[+] Starting file transfer through http"
 sudo python3 -u -m http.server --directory $hotscript 8080 >> $log/http.log &
 tput setaf 4;echo "[*] Access to file download through http://localhost:8080/<path>";tput sgr0
 
+echo ""
 
 # Start ftp server
 echo "[+] Starting file transfer through ftp"
 sudo python3 -u -m pyftpdlib -d $hotscript 2>> $log/ftp.log &
 tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:2121";tput sgr0
 
+echo ""
 
 # Start smb server
 echo "[+] Starting file transfer through smb"
@@ -139,9 +173,4 @@ sudo impacket-smbserver share $hotscript -smb2support >> $log/smb.log &
 tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput sgr0
 
 
-
-# echo ""
-# tput setaf 6;echo "[~] To check running servers, do 'jobs'";tput sgr0
-# tput setaf 6;echo "[~] To get to a process, do 'fg <job-id>'";tput sgr0
-# tput setaf 6;echo "[~] To put back a process to background, press CTRL+Z then do 'bg'";tput sgr0
 

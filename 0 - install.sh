@@ -13,8 +13,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.6"
-echo "Script version : V1.4"
+echo "Suite version : V0.1.7"
+echo "Script version : V1.5"
 echo ""
 echo ""
 
@@ -93,7 +93,7 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 # Inform user
 if [[ $branch != "main" && $check ]];then tput setaf 4;echo "[*] $branch will be the used github branch for installation";tput sgr0;fi
 if [[ $force ]];then tput setaf 4;echo "[*] installation will be forced for every components";tput sgr0; fi
-if [[ $no_upgrade ]];then tput setaf 4;echo "[*] apt and pip will not be upgraded";tput sgr0; fi
+if [[ $no_upgrade ]];then tput setaf 4;echo "[*] apt, pip and metasploit will not be upgraded";tput sgr0; fi
 echo ""
 
 # Set directory environement
@@ -112,6 +112,20 @@ if [[ ! -d $hotscript ]];then
         echo "[+] Creating hotscript folder in $hotscript"
         mkdir $hotscript
 fi
+
+# Trap ctrl+Z to remove artifacts before exiting
+artifacts="/home/$usr/artifacts-$(date +%s)"
+mkdir $artifacts
+cd $artifacts
+stop () {
+        cd /home/$usr
+        sudo rm -R $artifacts
+        tput setaf 6;echo "[~] Artifacts removed";tput sgr0
+        echo ""
+        exit 1
+}
+trap stop INT
+
 
 # colors
 apt_installation "tput" "tput" "ncurses-bin"
@@ -145,7 +159,7 @@ if [[ $check ]];then
         tput setaf 6;echo "[~] Checking done... Reloading command";tput sgr0
         echo "";
         install-penenv $ORIGINAL_ARGS -nc
-        exit 1
+        stop
 fi
 
 ## Languages and downloaders
@@ -443,10 +457,18 @@ apt_installation "snmpwalk" "snmpwalk" "snmp"
 ### Exploits
 ###### Install Metasploit
 if [[ ! -x "$(command -v msfconsole)" || $force ]];then
+        echo "[+] Metasploit not detected... Installing"
         curl -s -L https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb --output msfinstall
         chmod +x msfinstall
         sudo ./msfinstall >> $log/install-infos.log
         rm msfinstall
+fi
+
+if [[ ! $no_upgrade ]];then
+        start_update=$(date +%s)
+        echo "[+] Upgrading metasploit... This may take a while"
+        sudo msfupdate >/dev/null 2>/dev/null
+        tput setaf 4;echo "[*] Metasploit data upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi
 
 ###### Install searchsploit
@@ -535,6 +557,9 @@ if [[ ! -x "$(command -v ddexec)" || $force ]];then
         chmod +x DDexec.sh
         sudo mv DDexec.sh /bin/ddexec
 fi
+
+###### Install openvpn
+apt_installation "openvpn"
 
 ###### Install mitm6
 
@@ -672,3 +697,5 @@ if [[ ! "$(systemctl status nessusd)" || $force ]];then
 fi
 
 tput setaf 6;echo "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)";tput sgr0
+
+stop

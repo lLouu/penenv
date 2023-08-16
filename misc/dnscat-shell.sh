@@ -1,4 +1,10 @@
-# TODO : up and down arrows
+#! /bin/bash
+# TODO: add complete shell access of dnscat
+# => download
+# => upload
+# => shell with exec
+# => proxy chainning
+
 
 echo "    ____             ______          ";
 echo "   / __ \___  ____  / ____/___ _   __";
@@ -8,8 +14,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.1.6"
-echo "Script version : V0.2"
+echo "Suite version : V0.1.7"
+echo "Script version : V1.0"
 echo ""
 echo ""
 
@@ -22,7 +28,7 @@ stdout="/home/$usr/session/dnscat.stdout"
 echo -ne "" > $stdout
 echo "help" >> $stdin
 sleep 1
-if [[ ! "$(cat $stdout)" ]];then tput setaf 1;echo "[-] Did not find the correct pipe files... Exiting";tput sgr0;exit 1;fi
+if [[ ! "$(cat $stdout)" ]];then tput setaf 1;echo "[-] Did not find working pipe files... Exiting";tput sgr0;exit 1;fi
 
 echo "[+] Retrieving the last dns tunnel..."
 
@@ -79,7 +85,7 @@ ctrl_c () {
 trap ctrl_c INT
 
 while [[ "$running" ]];do
-   read -p " > " command
+   read -e -p " > " command
    case $command in
       quit|exit|close|q|e|c)
          closing

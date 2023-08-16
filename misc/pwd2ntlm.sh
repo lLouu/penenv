@@ -1,6 +1,6 @@
 #! /bin/sh
 if [[ $# -eq 0 ]];then
-   read -p "Password > " pwd
+   read -e -p "Password > " pwd
 else
    pwd=$1
 fi
