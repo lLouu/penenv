@@ -570,9 +570,9 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
-        poetry lock >>$log/install-infos.log
-        poetry install >>$log/install-infos.log
-        poetry run crackmapexec >>$log/install-infos.log
+        poetry lock >>$log/install-infos.log 2>>$log/install-errors.log
+        poetry install >>$log/install-infos.log 2>>$log/install-errors.log
+        poetry run crackmapexec >>$log/install-infos.log 2>>$log/install-errors.log
         cd $workingdir
         printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run crackmapexec \$@" > crackmapexec
         chmod +x crackmapexec
@@ -639,7 +639,7 @@ if [[ ! -x "$(command -v responder)" || $force ]];then
         fi
         git clone https://github.com/lgandx/Responder.git --quiet >> $log/install-infos.log
         sudo mv Responder /lib/responder
-        printf "#! /bin/sh\nsudo python3 /lib/responder/Responder.py \$@" > sqlmap
+        printf "#! /bin/sh\nsudo python3 /lib/responder/Responder.py \$@" > responder
         chmod +x responder
         sudo mv responder /bin/responder
 fi
