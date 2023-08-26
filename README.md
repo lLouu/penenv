@@ -19,14 +19,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (82/88)
+## Install (86/92)
 
 ### Penenv (3)
  - [X] install_penenv
  - [X] autoenum
  - [X] start
 
-### Lang & downloaders (15)
+### Lang & downloaders (16)
  - [X] apt upgrade
  - [X] python 3
     - [X] 2to3
@@ -42,6 +42,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - C
     - [X] make
     - [X] mono
+    - [X] dotnet
  - [X] git
  - [X] krb5-user
 
@@ -52,7 +53,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] jq
  - [X] expect
 
-### Tools (48/49)
+### Tools (49/50)
 #### Web Scan (23)
 ##### Subdomains & paths (13)
  - [X] sublist3r
@@ -94,12 +95,13 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (5)
+#### Exploits (6)
  - [X] Metasploit & Upgrade
  - [X] searchsploit
  - [X] AutoHackBruteOS
  - [X] sqlmap
  - [X] commix
+ - [X] pixload
 
 #### Other (12/13)
  - [X] impacket
@@ -116,8 +118,10 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] responder
  - [ ] Evil winrm
 
-### Scripts (8/13)
+### Scripts (10/15)
  - [X] dnscat (server & client & shell)
+ - [X] Chisel
+ - [X] frp
  - [X] LinPEAS
  - [X] WinPEAS
  - [X] miranda

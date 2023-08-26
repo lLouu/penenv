@@ -10,7 +10,7 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.2.1"
+echo "Suite version : V0.2.2"
 echo "Script version : V1.3"
 echo ""
 echo ""
@@ -144,6 +144,7 @@ while [[ $vpnfile ]];do
   if [[ $vpnfile ]];then
     if [[ -f $vpnfile ]];then
       sudo openvpn $vpnfile 2>&1 >>$log/openvpn-$(basename $vpnfile).log &
+      tput setaf 4;echo "[*] Connexion to $(basename $vpnfile) done";tput sgr0
     else
       tput setaf 1;echo "[!] Please give a valid file path";tput sgr0
     fi
@@ -157,21 +158,21 @@ echo ""
 echo ""
 # Start http server
 echo "[+] Starting file transfer through http"
-sudo python3 -u -m http.server --directory $hotscript 8080 2>&1 >> $log/http.log &
+sudo python3 -u -m http.server --directory $hotscript 80 2>>$log/http.log >> $log/http.log &
 tput setaf 4;echo "[*] Access to file download through http://localhost:8080/<path>";tput sgr0
 
 echo ""
 
 # Start ftp server
 echo "[+] Starting file transfer through ftp"
-sudo python3 -u -m pyftpdlib -d $hotscript 2>&1 >> $log/ftp.log &
+sudo python3 -u -m pyftpdlib -d $hotscript 2>>$log/ftp.log >> $log/ftp.log &
 tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:2121";tput sgr0
 
 echo ""
 
 # Start smb server
 echo "[+] Starting file transfer through smb"
-sudo impacket-smbserver share $hotscript -smb2support 2>&1 >> $log/smb.log &
+sudo impacket-smbserver share $hotscript -smb2support 2>>$log/smb.log >> $log/smb.log &
 tput setaf 4;echo "[*] Access to file transfer through //<ip>/share/<path>";tput sgr0
 
 
