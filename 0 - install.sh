@@ -223,7 +223,7 @@ fi
         i=0
         for line in $l
         do
-                pip install $line --upgrade -q 2>> $log/install-warnings.log
+                (pip install $line --upgrade -q 2>> $log/install-warnings.log) &
                 (( i = i+1 ))
                 str="$i/$n  | currently upgrading $line"
                 cols=$(tput cols)
@@ -231,6 +231,7 @@ fi
                 ret=$(printf '\r%.0s' $(seq 1 $((${#str}/$cols + 1))))
                 echo -ne "$str$pad$ret"
         done
+        wait_bg
         tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
 fi) &
 
@@ -752,8 +753,8 @@ fi) &
 (if [[ ! -d "$hotscript/frp" || $force ]];then
         sudo git clone https://github.com/fatedier/frp.git --quiet >> $log/install-infos.log
         cd frp
-        ./package.sh >> $log/install-infos.log
-        mv ./bin $hotscript/frp
+        ./package.sh >>$log/install-infos.log 2>>$log/install-warnings.log
+        mv bin $hotscript/frp
         cd ..
         rm -R frp
 fi) &
