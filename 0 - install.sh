@@ -133,9 +133,11 @@ mkdir $artifacts
 cd $artifacts
 stop () {
         cd /home/$usr
-        sudo rm -R $artifacts
-        tput setaf 6;echo "[~] Artifacts removed";tput sgr0
-        echo ""
+        if [[ -d $artifacts ]];then
+                sudo rm -R $artifacts
+                tput setaf 6;echo "[~] Artifacts removed";tput sgr0
+                echo ""
+        fi
         exit 1
 }
 trap stop INT
@@ -297,6 +299,11 @@ apt_installation "git" &
 
 ###### Install krb5
 apt_installation "kinit" "Kerberos" "krb5-user" &
+
+
+wait_bg
+
+
 
 # Commands
 ###### Install ftp module
@@ -569,12 +576,9 @@ fi) &
         sudo git clone https://github.com/sighook/pixload.git --quiet >> $log/install-infos.log
         cd pixload
         make >> $log/install-infos.log 2>>$log/install-warnings.log
-        chmod +x pixload*
-        sudo mv pixload-bmp /bin
-        sudo mv pixload-gif /bin
-        sudo mv pixload-jpg /bin
-        sudo mv pixload-png /bin
-        sudo mv pixload-webp /bin
+        sudo rm pixload-*\.
+        chmod +x pixload-*
+        sudo mv pixload-* /bin
         cd ..
         sudo rm -R pixload
 fi) &
