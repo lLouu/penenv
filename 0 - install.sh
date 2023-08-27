@@ -52,7 +52,7 @@ pip_proc=()
 
 installation () {
         if [[ $# -eq 0 ]];then tput setaf 1;echo "[-] No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return;fi
-        if [[ ! $(LC_ALL=C type $1 | grep -q 'shell function') ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
+        if [[ ! "$(type $1 | grep 'function')" ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
         ($@) &
         p=$!
 }
@@ -73,21 +73,21 @@ pip_install () {
 }
 
 wait_bg () {
-        for job in bg_proc[@]
+        for job in "${bg_proc[@]}"
         do
                 wait $job
         done
 }
 
 wait_apt () {
-        for job in apt_proc[@]
+        for job in "${apt_proc[@]}"
         do
                 wait $job
         done
 }
 
 wait_pip () {
-        for job in pip_proc[@]
+        for job in "${pip_proc[@]}"
         do
                 wait $job
         done
