@@ -52,7 +52,7 @@ pip_proc=()
 
 installation () {
         if [[ $# -eq 0 ]];then tput setaf 1;echo "[-] No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return -1;fi
-        if [[ ! $(LC_ALL=C type $1 | grep -q 'shell function') ]];then tput setaf 1;echo "[-] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return -1;fi
+        if [[ ! $(LC_ALL=C type $1 | grep -q 'shell function') ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return -1;fi
         ($@) &
         return $!
 }
@@ -186,7 +186,7 @@ bg_install apt_installation "tput" "tput" "ncurses-bin"
 
 # PenEnv
 ###### Install install-penenv
-task-ipenenv(){
+task-ipenenv() {
 if [[ ! -x "$(command -v install-penenv)" || $check || $force ]];then
         echo "[+] install-penenv not detected as a command...Setting up"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh -q
@@ -197,7 +197,7 @@ fi
 bg_install task-ipenenv
 
 ###### Install autoenum
-task-autoenum(){
+task-autoenum() {
 if [[ ! -x "$(command -v autoenum)" || $check || $force ]];then
         echo "[+] autoenum not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/A%20-%20autoenum.sh -q
@@ -208,7 +208,7 @@ fi
 bg_install task-autoenum
 
 ###### Install start
-task-start(){
+task-start() {
 if [[ ! -x "$(command -v start)" || $check || $force ]];then
         echo "[+] start not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/1%20-%20start.sh -q
@@ -234,7 +234,7 @@ fi
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
         echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
-        apt-task(){
+        apt-task() {
         sudo apt-get update > /dev/null
         sudo apt-get upgrade -y > /dev/null
         sudo apt-get autoremove -y > /dev/null
@@ -308,7 +308,7 @@ bg_install apt_installation "gem" "Ruby" "ruby-dev"
 bg_install apt_installation "java" "Java" "default-jdk"
 
 ###### Install Nodejs
-task-js(){
+task-js() {
 apt_installation "node" "NodeJS" "nodejs"
 
 ###### Install npm
@@ -323,7 +323,7 @@ fi
 bg_install task-js
 
 ###### Install rust
-task-rust(){
+task-rust() {
 if [[ ! -x "$(command -v cargo)" || $force ]];then
         echo "[+] Rust not detected... Installing"
         curl -s https://sh.rustup.rs -sSf | sh -s >>$log/install-infos.log 2>>$log/install-errors.log -- -y
@@ -335,7 +335,7 @@ bg_install task-rust
 bg_install apt_installation "make"
 
 ###### Install mono
-task-mono(){
+task-mono() {
 if [[ ! -x "$(command -v mozroots)" || $force ]];then
         echo "[+] Mono not detected... Installing"
         sudo apt install -yq dirmngr ca-certificates gnupg >>$log/install-infos.log 2>>$log/install-errors.log 
@@ -347,7 +347,7 @@ fi
 bg_install task-mono
 
 ###### Install dotnet
-task-dotnet(){
+task-dotnet() {
 if [[ ! -x "$(command -v dotnet)" || $force ]];then
         wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh -q
         chmod +x ./dotnet-install.sh
@@ -369,7 +369,7 @@ wait_bg
 
 # Commands
 ###### Install ftp module
-task-ftp(){
+task-ftp() {
 if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
         echo "[+] Pyftplib not detected... Installing"
         wait_pip
@@ -382,7 +382,7 @@ bg_install task-ftp
 bg_install apt_installation "dig" "dig" "dnsutils"
 
 ###### Install google-chrome
-task-chrome(){
+task-chrome() {
 if [[ ! -x "$(command -v google-chrome)" || $force ]];then
         echo "[+] google-chrome not detected... Installing"
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
@@ -402,7 +402,7 @@ bg_install apt_installation "unbuffer" "expect"
 ## Web scan
 ### Subdomain & paths
 ###### Install sublist3r
-task-sublister(){
+task-sublister() {
 if [[ ! -x "$(command -v sublist3r)" || $force ]];then
         echo "[+] sublist3r not detected... Installing"
         if [[ -d "/lib/python3/dist-packages/subbrute" ]];then
@@ -445,7 +445,7 @@ bg_install apt_installation "dnsenum"
 bg_install go_installation "waybackurls" "github.com/tomnomnom/waybackurls@latest" 
 
 ###### Install Arjun
-task-arjun(){
+task-arjun() {
 if [[ ! "$(pip list | grep arjun)" || $force ]];then
         echo "[+] Arjun not detected... Installing"
         wait_pip
@@ -455,7 +455,7 @@ fi
 bg_install task-arjun
 
 ###### Install BrokenLinkChecker
-task-blc(){
+task-blc() {
 if [[ ! -x "$(command -v blc)" || $force ]];then
         echo "[+] BrokenLinkChecker not detected... Installing"
         sudo npm install --silent --global broken-link-checker 2>> $log/install-warnings.log
@@ -464,7 +464,7 @@ fi
 bg_install task-blc
 
 ###### Install dirscraper
-task-dirscraper(){
+task-dirscraper() {
 if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         echo "[+] Dirscapper not detected... Installing"
         git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >> $log/install-infos.log
@@ -494,7 +494,7 @@ bg_install apt_installation "whatweb"
 bg_install go_installation "ffuf" "github.com/ffuf/ffuf/v2@latest" 
 
 ###### Install x8
-task-xeight(){
+task-xeight() {
 if [[ ! -x "$(command -v x8)" || $force ]];then
         echo "[+] x8 not detected... Installing"
         cargo install x8 >>$log/install-infos.log 2>>$log/install-errors.log
@@ -504,7 +504,7 @@ bg_install task-xeight
 
 ### Others
 ###### Install wappalyzer
-task-wappalyzer(){
+task-wappalyzer() {
 if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
         echo "[+] wappalyzer not detected... Installing"
         if [[ -d "/lib/wappalyzer" ]];then
@@ -529,7 +529,7 @@ fi
 bg_install task-wappalyzer
 
 ###### Install testssl
-task-testssl(){
+task-testssl() {
 if [[ ! -x "$(command -v testssl)" || $force ]];then
         echo -e "[+] Testssl not detected... Installing"
         if [[ -d "/lib32/testssl" ]];then
@@ -555,7 +555,7 @@ bg_install apt_installation "wafw00f"
 bg_install go_installation "httprobe" "github.com/tomnomnom/httprobe@latest" 
 
 ###### Install Secretfinder
-task-secretfinder(){
+task-secretfinder() {
 if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         echo "[+] Secretfinder not detected... Installing"
         git clone https://github.com/m4ll0k/SecretFinder.git --quiet >> $log/install-infos.log
@@ -573,7 +573,7 @@ bg_install task-secretfinder
 bg_install apt_installation "hashcat"
 
 ###### Install hydra
-task-hydra(){
+task-hydra() {
 if [[ ! -x "$(command -v hydra)" || $force ]];then
         echo "[+] Hydra not detected... Installing"
         git clone https://github.com/vanhauser-thc/thc-hydra --quiet >> $log/install-infos.log
@@ -609,7 +609,7 @@ bg_install apt_installation "snmpwalk" "snmpwalk" "snmp"
 
 ### Exploits
 ###### Install Metasploit
-task-metasploit(){
+task-metasploit() {
 if [[ ! -x "$(command -v msfconsole)" || $force ]];then
         echo "[+] Metasploit not detected... Installing"
         curl -s -L https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb --output msfinstall
@@ -628,7 +628,7 @@ fi
 bg_install task-metasploit
 
 ###### Install searchsploit
-task-searchsploit(){
+task-searchsploit() {
 if [[ ! -x "$(command -v searchsploit)" || $force ]];then
         echo "[+] Searchsploit not detected... Installing"
         wget https://raw.githubusercontent.com/rad10/SearchSploit.py/master/searchsploit.py -q
@@ -639,7 +639,7 @@ fi
 bg_install task-searchsploit
 
 ###### Install AutoHackBruteOS
-task-autohackbruteos(){
+task-autohackbruteos() {
 if [[ ! -x "$(command -v AutoHackBruteOS)" || $force ]];then
         echo "[+] AutoHackBruteOS not detected... Installing"
         (echo "#! /usr/bin/env ruby" && curl -L -s https://raw.githubusercontent.com/carlospolop/AutoHackBruteOs/master/AutoHackBruteOs.rc) > AutoHackBruteOs.rc
@@ -650,7 +650,7 @@ fi
 bg_install task-autohackbruteos
 
 ###### Install sqlmap
-task-sqlmap(){
+task-sqlmap() {
 if [[ ! -x "$(command -v sqlmap)" || $force ]];then
         echo "[+] sqlmap not detected... Installing"
         if [[ -d "/lib/sqlmap" ]];then
@@ -669,7 +669,7 @@ fi
 bg_install task-sqlmap
 
 ###### Install commix
-task-commix(){
+task-commix() {
 if [[ ! -x "$(command -v commix)" || $force ]];then
         echo "[+] commix not detected... Installing"
         if [[ -d "/lib/commix" ]];then
@@ -686,7 +686,7 @@ fi
 bg_install task-commix
 
 ###### Install pixload
-task-pixload(){
+task-pixload() {
 if [[ ! -x "$(command -v pixload-png)" || $force ]];then
         echo "[+] Pixload not detected... Installing"
         sudo git clone https://github.com/sighook/pixload.git --quiet >> $log/install-infos.log
@@ -712,7 +712,7 @@ bg_install apt_installation "fierce"
 bg_install apt_installation "oscanner"
 
 ###### Install odat
-task-odat(){
+task-odat() {
 if [[ ! -x "$(command -v odat)" || $force ]];then
         echo "[+] odat not detected... Installing"
         if [[ -d "/lib32/odat_lib" ]];then
@@ -731,7 +731,7 @@ fi
 bg_install task-odat
 
 ###### Install crackmapexec
-task-crackmapexec(){
+task-crackmapexec() {
 if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         echo "[+] crackmapexec not detected... Installing"
         if [[ -d "/lib/crackmapexec" ]];then
@@ -764,7 +764,7 @@ bg_install task-crackmapexec
 bg_install apt_installation "cewl"
 
 ###### Install cupp
-task-cupp(){
+task-cupp() {
 if [[ ! -x "$(command -v cupp)" || $force ]];then
         echo "[+] Cupp not detected... Installing"
         wget https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py -q
@@ -775,7 +775,7 @@ fi
 bg_install task-cupp
 
 ###### Install DDexec
-task-ddexec(){
+task-ddexec() {
 if [[ ! -x "$(command -v ddexec)" || $force ]];then
         echo "[+] DDexec not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
@@ -789,7 +789,7 @@ bg_install task-ddexec
 bg_install apt_installation "openvpn"
 
 ###### Install mitm6
-task-mitmsix(){
+task-mitmsix() {
 if [[ ! -x "$(command -v mitm6)" || $force ]];then
         echo "[+] mitm6 not detected... Installing"
         sudo git clone https://github.com/dirkjanm/mitm6.git --quiet >> $log/install-infos.log
@@ -803,7 +803,7 @@ fi
 bg_install task-mitmsix
 
 ###### Install proxychain
-task-proxychain(){
+task-proxychain() {
 if [[ ! -x "$(command -v proxychains)" || $force ]];then
         echo "[+] Proxychain not detected... Installing"
         git clone https://github.com/haad/proxychains.git --quiet >> $log/install-infos.log
@@ -819,7 +819,7 @@ fi
 bg_install task-proxychain
 
 ###### Install responder
-task-responder(){
+task-responder() {
 if [[ ! -x "$(command -v responder)" || $force ]];then
         echo "[+] responder not detected... Installing"
         if [[ -d "/lib/responder" ]];then
@@ -841,7 +841,7 @@ bg_install task-responder
 
 ## Hot scripts
 ###### Install dnscat2 & dependencies
-task-dnscat(){
+task-dnscat() {
 if [[ ! -d "/lib/dnscat" || $force ]];then
         echo "[+] Dnscat sourcecode not detected... Installing"
         if [[ -d "/lib/dnscat" ]];then
@@ -884,7 +884,7 @@ fi}
 bg_install task-dnscat
 
 ###### Install Chisel
-task-chisel(){
+task-chisel() {
 go_installation "chisel" "github.com/jpillora/chisel@latest"
 if [[ -f "$hotscript/chisel" || $force ]];then
         sudo cp $(command -v chisel) $hotscript/chisel
@@ -893,7 +893,7 @@ fi
 bg_install task-chisel
 
 ###### Install frp
-task-frp(){
+task-frp() {
 if [[ ! -d "$hotscript/frp" || $force ]];then
         sudo git clone https://github.com/fatedier/frp.git --quiet >> $log/install-infos.log
         cd frp
@@ -906,7 +906,7 @@ fi
 bg_install task-frp
 
 ###### Install PEAS
-task-lpeas(){
+task-lpeas() {
 if [[ ! -f "$hotscript/LinPEAS.sh" || $force ]];then
         echo "[+] LinPEAS not detected... Installing"
         curl -L -s https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh --output $hotscript/LinPEAS.sh
@@ -915,7 +915,7 @@ fi
 }
 bg_install task-lpeas
 
-task-wpeasps(){
+task-wpeasps() {
 if [[ ! -f "$hotscript/WinPEAS.ps1" || $force ]];then
         echo "[+] WinPEAS powershell not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1 -q
@@ -925,7 +925,7 @@ fi
 }
 bg_install task-wpeasps
 
-task-wpeasi(){
+task-wpeasi() {
 if [[ ! -f "$hotscript/WinPEAS_internet.ps1" || $force ]];then
         echo "[+] WinPEAS internet not detected... Installing"
         printf "IEX(New-Object Net.WebClient).downloadString('https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1')" > $hotscript/WinPEAS_internet.ps1
@@ -934,7 +934,7 @@ fi
 }
 bg_install task-wpeasi
 
-task-wpeasbat(){
+task-wpeasbat() {
 if [[ ! -f "$hotscript/WinPEAS.bat" || $force ]];then
         echo "[+] WinPEAS bat not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASbat/winPEAS.bat -q
@@ -945,7 +945,7 @@ fi
 bg_install task-wpeasbat
 
 ###### Install miranda
-task-miranda(){
+task-miranda() {
 if [[ ! -f "$hotscript/miranda.py" || $force ]];then
         echo "[+] Miranda not detected... Installing"
         wget https://raw.githubusercontent.com/0x90/miranda-upnp/master/src/miranda.py -q
@@ -960,7 +960,7 @@ fi
 bg_install task-miranda
 
 ###### Install pspy
-task-pspy32(){
+task-pspy32() {
 if [[ ! -f "$hotscript/pspy32" || $force ]];then
         echo "[+] Pspy32 not detected... Installing"
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32
@@ -969,7 +969,7 @@ fi
 }
 bg_install task-pspy32
 
-task-pspy64(){
+task-pspy64() {
 if [[ ! -f "$hotscript/pspy64" || $force ]];then
         echo "[+] Pspy64 not detected... Installing"
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
@@ -983,7 +983,7 @@ bg_install task-pspy64
 ###### Install mimikatz
 
 ###### Install mimipenguin
-task-mimipenguin(){
+task-mimipenguin() {
 if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
         echo "[+] Mimipenguin not detected... Installing"
         sudo git clone https://github.com/huntergregal/mimipenguin.git --quiet >> $log/install-infos.log
@@ -999,7 +999,7 @@ fi
 bg_install task-mimipenguin
 
 ###### Install linux-exploit-suggester-2
-task-les(){
+task-les() {
 if [[ ! -f "$hotscript/linux-exploit-suggester-2.pl" || $force ]];then
         echo "[+] Linux exploit suggester 2 not detected... Installing"
         wget https://raw.githubusercontent.com/jondonas/linux-exploit-suggester-2/master/linux-exploit-suggester-2.pl -q
@@ -1009,7 +1009,7 @@ fi
 bg_install task-les
 
 ###### Install wesng
-task-wesng(){
+task-wesng() {
 if [[ ! "$(command -v wes)" || $force ]];then
         echo "[+] Wesng not detected... Installing"
         wait_pip
@@ -1030,7 +1030,7 @@ bg_install task-wesng
 ###### Install bloodhound
 bg_install apt_installation "bloodhound"
 
-task-invoke-bloodhound(){
+task-invoke-bloodhound() {
 if [[ ! -f "$hotscript/Invoke-Bloodhound.ps1" || $force ]];then
         echo "[+] Invoke-Bloodhound not detected... Installing"
         wget https://raw.githubusercontent.com/BloodHoundAD/BloodHound/master/Collectors/SharpHound.ps1 -q
@@ -1040,7 +1040,7 @@ fi
 bg_install task-invoke-bloodhound
 
 ###### Install Nessus
-task-nessus(){
+task-nessus() {
 if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
         echo "[+] Java != 11 is used... Setting it to 11.0.18"
         sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
