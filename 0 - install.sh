@@ -51,21 +51,24 @@ apt_proc=()
 pip_proc=()
 
 installation () {
-        if [[ $# -eq 0 ]];then tput setaf 1;echo "[-] No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return -1;fi
-        if [[ ! $(LC_ALL=C type $1 | grep -q 'shell function') ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return -1;fi
+        if [[ $# -eq 0 ]];then tput setaf 1;echo "[-] No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return;fi
+        if [[ ! $(LC_ALL=C type $1 | grep -q 'shell function') ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
         ($@) &
-        return $!
+        p=$!
 }
 bg_install () {
-        p=$(installation $@)
+        p=-1
+        installation $@
         if [[ $p -ne -1 ]];then bg_proc+=( $p );fi
 }
 apt_install () {
-        p=$(installation $@)
+        p=-1
+        installation $@
         if [[ $p -ne -1 ]];then apt_proc+=( $p );fi
 }
 pip_install () {
-        p=$(installation $@)
+        p=-1
+        installation $@
         if [[ $p -ne -1 ]];then pip_proc+=( $p );fi
 }
 
