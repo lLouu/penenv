@@ -20,7 +20,10 @@ echo ""
 
 
 
-
+wait_pid(){
+        if [[ $# -eq 0 ]];then return; fi
+        while [[ -e "/proc/$1" ]];do sleep 1;done
+}
 
 
 apt_installation () {
@@ -75,21 +78,21 @@ pip_install () {
 wait_bg () {
         for job in "${bg_proc[@]}"
         do
-                wait $job
+                wait_pid $job
         done
 }
 
 wait_apt () {
         for job in "${apt_proc[@]}"
         do
-                wait $job
+                wait_pid $job
         done
 }
 
 wait_pip () {
         for job in "${pip_proc[@]}"
         do
-                wait $job
+                wait_pid $job
         done
 }
 
