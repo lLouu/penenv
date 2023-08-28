@@ -55,7 +55,7 @@ pip_proc=()
 
 installation () {
         if [[ $# -eq 0 ]];then tput setaf 1;echo "[-] No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return;fi
-        if [[ ! "$(type $1 | grep 'function')" ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
+        if [[ "$(type $1 | grep 'not found')" ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
         ($@) &
         p=$!
 }
@@ -176,6 +176,10 @@ artifacts="/home/$usr/artifacts-$(date +%s)"
 mkdir $artifacts
 cd $artifacts
 stop () {
+        tput setaf 4;echo "[*] Waiting the installation to end...";tput sgr0
+        wait_bg
+        wait_apt
+        wait_pip
         cd /home/$usr
         if [[ -d $artifacts ]];then
                 sudo rm -R $artifacts
@@ -300,7 +304,11 @@ fi) &
 (if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
         echo "[+] go 1.20 not detected... Installing"
         wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -q
-        sudo tar xzf go1.20.2.linux-amd64.tar.gz   
+        sudo tar xzf go1.20.2.linux-amd64.tar.gz 
+        if [[ -d "/usr/local/go" ]];then
+                sudo mv /usr/local/go /usr/local/go-$(date +%y-%m-%d--%T).old
+                tput setaf 6;echo "[~] Moved /usr/local/go to /usr/local/go-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+        fi
         sudo mv go /usr/local
         export GOROOT=/usr/local/go 
         export GOPATH=$HOME/Projects/Proj1 
@@ -698,7 +706,7 @@ if [[ ! -x "$(command -v pixload-png)" || $force ]];then
         sudo git clone https://github.com/sighook/pixload.git --quiet >> $log/install-infos.log
         cd pixload
         make >> $log/install-infos.log 2>>$log/install-warnings.log
-        sudo rm pixload-*\.
+        sudo rm pixload-*\.*
         chmod +x pixload-*
         sudo mv pixload-* /bin
         cd ..
