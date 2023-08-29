@@ -20,7 +20,7 @@ echo ""
 
 
 
-wait_pid(){
+wait_pid() {
         if [[ $# -eq 0 ]];then return; fi
         while [[ -e "/proc/$1" ]];do sleep 1;done
 }
@@ -34,7 +34,7 @@ apt_installation () {
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 echo "[+] $name not detected... Installing"
                 wait_apt
-                sudo DEBIAN_FRONTEND=noninteractive apt-get install $pkg -yq 2>>$log/install-errors.log >>$log/install-infos.log
+                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$log/install-errors.log >>$log/install-infos.log
         fi
 }
 
@@ -54,8 +54,8 @@ apt_proc=()
 pip_proc=()
 
 installation () {
-        if [[ $# -eq 0 ]];then tput setaf 1;echo "[-] No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return;fi
-        if [[ "$(type $1 | grep 'not found')" ]];then tput setaf 1;echo "[!] $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
+        if [[ $# -eq 0 ]];then tput setaf 1;echo "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return;fi
+        if [[ "$(type $1 | grep 'not found')" ]];then tput setaf 1;echo "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
         ($@) &
         p=$!
 }
@@ -245,9 +245,9 @@ if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
         echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
         apt-task() {
-        sudo apt-get update > /dev/null
-        sudo apt-get upgrade -y > /dev/null
-        sudo apt-get autoremove -y > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=600 update > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=600 upgrade -y > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=600 autoremove -y > /dev/null
         tput setaf 4;echo "[*] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
         }
         apt_install apt-task
@@ -263,7 +263,7 @@ bg_install apt_installation "2to3"
 (if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 echo "[+] pip not detected... Installing"
-                sudo apt-get install python3-pip -y >> $log/install-infos.log
+                sudo apt-get -o DPkg::Lock::Timeout=600 install python3-pip -y >> $log/install-infos.log
         fi
         # Check if an alias is needed
         if [[ ! -x "$(command -v pip)" ]];then
@@ -352,10 +352,10 @@ bg_install apt_installation "make"
 task-mono() {
 if [[ ! -x "$(command -v mozroots)" || $force ]];then
         echo "[+] Mono not detected... Installing"
-        sudo apt install -yq dirmngr ca-certificates gnupg >>$log/install-infos.log 2>>$log/install-errors.log 
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -yq dirmngr ca-certificates gnupg >>$log/install-infos.log 2>>$log/install-errors.log 
         sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF 2>>$log/install-warnings.log >>$log/install-infos.log
         echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >/dev/null
-        sudo apt install -yq mono-devel >>$log/install-infos.log 2>>$log/install-errors.log 
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -yq mono-devel >>$log/install-infos.log 2>>$log/install-errors.log 
 fi
 }
 bg_install task-mono
@@ -400,7 +400,7 @@ task-chrome() {
 if [[ ! -x "$(command -v google-chrome)" || $force ]];then
         echo "[+] google-chrome not detected... Installing"
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
-        sudo apt-get install ./google-chrome-stable_current_amd64.deb -y >> $log/install-infos.log
+        sudo apt-get -o DPkg::Lock::Timeout=600 install ./google-chrome-stable_current_amd64.deb -y >> $log/install-infos.log
         rm google-chrome-stable_current_amd64.deb
 fi
 }
@@ -752,7 +752,7 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
                 sudo mv /lib/crackmapexec /lib/crackmapexec-$(date +%y-%m-%d--%T).old
                 tput setaf 6;echo "[~] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
         fi
-        sudo apt-get install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >> $log/install-infos.log
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >> $log/install-infos.log
         git clone https://github.com/mpgn/CrackMapExec --quiet >> $log/install-infos.log
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
@@ -1066,7 +1066,7 @@ if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
         curl -s --request GET \
                --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/$file" \
                --output 'Nessus.deb'
-        sudo apt-get install ./Nessus.deb -y >> $log/install-infos.log
+        sudo apt-get -o DPkg::Lock::Timeout=600 install ./Nessus.deb -y >> $log/install-infos.log
         rm Nessus.deb
         sudo systemctl start nessusd
         tput setaf 6;echo "[~] Go to https://localhost:8834 to complete nessus installation";tput sgr0
