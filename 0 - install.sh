@@ -161,11 +161,12 @@ wait_pip () {
 # => scrolling is managed by interaction process, that gives position throught position file
 # => if $gui/getting exists, wait, to avoid two entries getting the same id
 add_log_entry() {
-        while [[ -f "$gui/getting" ]];do sleep .1; done
-        touch $gui/getting
+        name=getting-$(date +%s%N)
+        touch $gui/$name
+        while [[ $(ls $gui | grep getting | head -n 1) -ne $name ]];do sleep .1; done
         printf '0' >> $gui/updates
         ret=$(wc -c $gui/updates | awk '{print($1)}')
-        rm $gui/getting
+        rm $gui/$name
         touch $gui/$ret
         return $ret
 }
@@ -196,9 +197,10 @@ gui_proc () {
                         pos=$(cat $gui/position)
                         force_update="true"
                 fi
-                if [[ $base -ne ${#k} ]]; then 
-                        base=${#k}
+                if [[ $base -ne ${#k} ]]; then
                         scroll="true"
+                        for i in $(seq $base ${#k}); do s+=(0); done
+                        base=${#k}
                 fi
                 # set pipe to no updates
                 sed -i "s/1/0/g" $gui/updates
