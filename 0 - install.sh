@@ -55,7 +55,7 @@ stop () {
         # report states in shell
         u=$(cat $gui/updates)
         for i in $(seq 1 ${#u});do
-                cat $gui/$i
+                if [[ -f $gui/$i ]];then cat $gui/$i;fi
                 echo ""
         done
         # restore directories
@@ -168,7 +168,7 @@ add_log_entry() {
 update_log() {
         if [[ ! -f "$gui/$1" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a log entry";return; fi
         printf "${@:2}" > $gui/$1
-        sed "s/./1/$1" $gui/updates
+        sed -i "s/./1/$1" $gui/updates
 }
 
 gui_proc () {
@@ -274,7 +274,7 @@ interactive_proc () {
                                                         cpos=$(cat $gui/position)
                                                         l=$(cat $gui/updates)
                                                         if [[ $cpos -ne -1 ]];then
-                                                                if [[ $cpos -eq ${#l} ]]; then printf -1 > $gui/position;
+                                                                if [[ $cpos -eq ${#l} ]]; then echo -ne "-1" > $gui/position;
                                                                 else printf $(( $cpos + 1 )) > $gui/position; fi
                                                         fi
 							;;
