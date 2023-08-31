@@ -56,6 +56,7 @@ stop () {
         u=$(cat $gui/updates)
         for i in $(seq 1 ${#u});do
                 cat $gui/$i
+                echo ""
         done
         # restore directories
         cd /home/$usr
@@ -72,7 +73,7 @@ trap stop INT
 gui="$artifacts/pipe"
 mkdir $gui
 touch $gui/updates
-printf "-1" > $gui/position
+echo -ne "-1" > $gui/position
 
 # Common installation protocols
 apt_installation () {
@@ -159,9 +160,9 @@ wait_pip () {
 # => the log entry content is in $gui/$log_entry_id
 # => scrolling is managed by interaction process, that gives position throught position file
 add_log_entry() {
-        touch $gui/$ret
         printf '0' >> $gui/updates
         ret=$(wc -c $gui/updates | awk '{print($1)}')
+        touch $gui/$ret
         return $ret
 }
 update_log() {
@@ -171,11 +172,11 @@ update_log() {
 }
 
 gui_proc () {
-        tput smcup
-        tput civis
         add_log_entry
         b=$ret
         update_log $b "$(banner)"
+        tput smcup
+        tput civis
         s=()
         pos=-1
         up=-1
@@ -235,6 +236,7 @@ gui_proc () {
                 row=0
                 for i in $(seq $up $down);do
                         if [[ $force_update || "$(echo ${to_update[@]} | grep $i)" ]]; then
+                                content=$(cat $gui/$i)
                                 for j in $(seq 1 ${v[$i]});do
                                         tput cup $(( $j + $row - 1 )) 0
                                         tput ed
