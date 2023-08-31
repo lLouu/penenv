@@ -159,9 +159,13 @@ wait_pip () {
 # => .update gives a char for each log entry, it is by default 0, putting it to 1 means the log entry has been updated
 # => the log entry content is in $gui/$log_entry_id
 # => scrolling is managed by interaction process, that gives position throught position file
+# => if $gui/getting exists, wait, to avoid two entries getting the same id
 add_log_entry() {
+        while [[ -f "$gui/getting" ]];do sleep .1; done
+        touch $gui/getting
         printf '0' >> $gui/updates
         ret=$(wc -c $gui/updates | awk '{print($1)}')
+        rm $gui/getting
         touch $gui/$ret
         return $ret
 }
@@ -179,25 +183,27 @@ gui_proc () {
         tput civis
         s=()
         pos=-1
-        up=0
-        down=0
+        base=0
+        up=1
+        down=1
 
         while [[ true ]];do
-                # get the pipe content
+                # get the pipe content and deduce what has changed
                 k=$(cat $gui/updates)
                 force_update=""
+                scroll=""
                 if [[ $pos -ne $(cat $gui/position) ]];then
                         pos=$(cat $gui/position)
                         force_update="true"
                 fi
+                if [[ $base -ne ${#k} ]]; then 
+                        base=${#k}
+                        scroll="true"
+                fi
                 # set pipe to no updates
                 sed -i "s/1/0/g" $gui/updates
-                # get update size, and shell width
-                base=${#k}
+                # update shell width
                 width=$(tput cols)
-                # complete s if there is any new entries
-                scroll_down=""
-                while [[ $base -gt ${#s[@]} ]];do s+=(0); scroll_down="true";done
                 # find who to update, and set their allocated height
                 to_update=()
                 while [[ $k =~ 1 ]]; do
@@ -222,28 +228,27 @@ gui_proc () {
                                 store=$(($store - ${s[$(($down + 1))]}))
                         done
                 fi
-                if [[ $pos -eq -1 && $scroll_down ]];then
+                if [[ $scroll && $pos -eq -1 ]];then
                         store=$(tput lines)
                         down=$base
                         up=$base
-                        while [[ $(($up - 1)) -ge 0 && $store -gt ${s[$(($up - 1))]} ]];do
+                        while [[ $(($up - 1)) -ge 1 && $store -gt ${s[$(($up - 1))]} ]];do
                                 up=$(($up - 1))
                                 store=$(($store - ${s[$up]}))
                         done
-                        force_update="true"
                 fi
                 # update screen
                 row=0
                 for i in $(seq $up $down);do
-                        if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${v[$i]} -gt 0 ]]; then
+                        if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
                                 content=$(cat $gui/$i)
-                                for j in $(seq 1 $weight);do content="$content ";done
-                                for j in $(seq 1 ${v[$i]});do
+                                for j in $(seq 1 $width);do content="$content ";done
+                                for j in $(seq 1 ${s[$i]});do
                                         tput cup $(( $j + $row - 1 )) 0
-                                        echo ${content:$(( $weight * $(($i - 1)) )):$weight}
+                                        echo ${content:$(( $width * $(($j - 1)) )):$width}
                                 done
                         fi
-                        row=$(( $row + ${v[$i]} ))
+                        row=$(( $row + ${s[$i]} ))
                 done
 
                 sleep 0.2
