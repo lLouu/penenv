@@ -19,6 +19,61 @@ banner (){
         echo ""
 }
 
+# Set directory environement
+usr=$(whoami)
+if [[ $usr == "root" ]];then
+        add_log_entry; update_log $ret "[-] Running as root. Please run in rootless mode... Exiting..."
+        exit 1
+fi
+
+log=/home/$usr/logs
+hotscript=/home/$usr/hot-script
+if [[ ! -d $log ]];then
+        mkdir $log
+fi
+if [[ ! -d $hotscript ]];then
+        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
+        mkdir $hotscript
+fi
+
+# Trap ctrl+Z to remove artifacts and restore shell before exiting
+artifacts="/home/$usr/artifacts-$(date +%s)"
+mkdir $artifacts
+cd $artifacts
+stop () {
+        # wait proccesses
+        add_log_entry; update_log $ret "[*] Waiting the installation to end..."
+        wait_bg
+        wait_apt
+        wait_pip
+        update_log $ret "[+] All launched installation process has ended"
+        # kill gui & interactive proc
+        kill $guiproc_id
+        kill $interactiveproc_id
+        tput cnorm
+        tput rmcup
+        # report states in shell
+        u=$(cat $gui/updates)
+        for i in $(seq 1 ${#u});do
+                cat $gui/$i
+        done
+        # restore directories
+        cd /home/$usr
+        if [[ -d $artifacts ]];then
+                sudo rm -R $artifacts
+                tput setaf 6;echo "[~] Artifacts removed";tput sgr0
+                echo ""
+        fi
+        if [[ $# -eq 0 ]];then exit 1; fi
+}
+trap stop INT
+
+# Set gui pipes
+gui="$artifacts/pipe"
+mkdir $gui
+touch $gui/updates
+printf "-1" > $gui/position
+
 # Common installation protocols
 apt_installation () {
         if [[ $# -eq 0 || $# -gt 3 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for apt installation, when only 1, 2 or 3 are accepted... ($@)"; return; fi 
@@ -102,17 +157,17 @@ wait_pip () {
 # => works with pipe in artifacts
 # => .update gives a char for each log entry, it is by default 0, putting it to 1 means the log entry has been updated
 # => the log entry content is in $gui/$log_entry_id
-# => scrolling is managed by interaction process, that gives position throught .position file
+# => scrolling is managed by interaction process, that gives position throught position file
 add_log_entry() {
         touch $gui/$ret
-        printf '0' >> $gui/.updates
-        ret=$(wc -c $gui/.updates | awk '{print($1)}')
+        printf '0' >> $gui/updates
+        ret=$(wc -c $gui/updates | awk '{print($1)}')
         return $ret
 }
 update_log() {
         if [[ ! -f "$gui/$1" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a log entry";return; fi
         printf "${@:2}" > $gui/$1
-        sed "s/./1/$1" $gui/.updates
+        sed "s/./1/$1" $gui/updates
 }
 
 gui_proc () {
@@ -128,14 +183,14 @@ gui_proc () {
 
         while [[ true ]];do
                 # get the pipe content
-                k=$(cat $gui/.updates)
+                k=$(cat $gui/updates)
                 force_update=""
-                if [[ $pos -ne $(cat $gui/.position) ]];then
-                        pos=$(cat $gui/.position)
+                if [[ $pos -ne $(cat $gui/position) ]];then
+                        pos=$(cat $gui/position)
                         force_update="true"
                 fi
                 # set pipe to no updates
-                sed -i "s/1/0/g" $gui/.updates
+                sed -i "s/1/0/g" $gui/updates
                 # get update size, and shell width
                 base=${#k}
                 width=$(tput cols)
@@ -206,19 +261,19 @@ interactive_proc () {
 					case "$input"
 					in
 						A)  # Up Arrow
-                                                        cpos=$(cat $gui/.position)
-                                                        l=$(cat $gui/.updates)
+                                                        cpos=$(cat $gui/position)
+                                                        l=$(cat $gui/updates)
                                                         if [[ $cpos -ne 0 ]];then
-                                                                if [[ $cpos -eq -1 ]]; then printf ${#l} > $gui/.position;
-                                                                else printf $(( $cpos - 1 )) > $gui/.position; fi
+                                                                if [[ $cpos -eq -1 ]]; then printf ${#l} > $gui/position;
+                                                                else printf $(( $cpos - 1 )) > $gui/position; fi
                                                         fi
 							;;
 						B)  # Down Arrow
-                                                        cpos=$(cat $gui/.position)
-                                                        l=$(cat $gui/.updates)
+                                                        cpos=$(cat $gui/position)
+                                                        l=$(cat $gui/updates)
                                                         if [[ $cpos -ne -1 ]];then
-                                                                if [[ $cpos -eq ${#l} ]]; then printf -1 > $gui/.position;
-                                                                else printf $(( $cpos + 1 )) > $gui/.position; fi
+                                                                if [[ $cpos -eq ${#l} ]]; then printf -1 > $gui/position;
+                                                                else printf $(( $cpos + 1 )) > $gui/position; fi
                                                         fi
 							;;
 					esac
@@ -228,61 +283,6 @@ interactive_proc () {
 		esac
         done
 }
-
-# Set directory environement
-usr=$(whoami)
-if [[ $usr == "root" ]];then
-        add_log_entry; update_log $ret "[-] Running as root. Please run in rootless mode... Exiting..."
-        exit 1
-fi
-
-log=/home/$usr/logs
-hotscript=/home/$usr/hot-script
-if [[ ! -d $log ]];then
-        mkdir $log
-fi
-if [[ ! -d $hotscript ]];then
-        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
-        mkdir $hotscript
-fi
-
-# Trap ctrl+Z to remove artifacts and restore shell before exiting
-artifacts="/home/$usr/artifacts-$(date +%s)"
-mkdir $artifacts
-cd $artifacts
-stop () {
-        # wait proccesses
-        add_log_entry; update_log $ret "[*] Waiting the installation to end..."
-        wait_bg
-        wait_apt
-        wait_pip
-        update_log $ret "[+] All launched installation process has ended"
-        # kill gui & interactive proc
-        kill $guiproc_id
-        kill $interactiveproc_id
-        tput cnorm
-        tput rmcup
-        # report states in shell
-        u=$(cat $gui/.updates)
-        for i in $(seq 1 ${#u});do
-                cat $gui/$i
-        done
-        # restore directories
-        cd /home/$usr
-        if [[ -d $artifacts ]];then
-                sudo rm -R $artifacts
-                tput setaf 6;echo "[~] Artifacts removed";tput sgr0
-                echo ""
-        fi
-        if [[ $# -eq 0 ]];then exit 1; fi
-}
-trap stop INT
-
-# Set gui pipes
-gui="$artifacts/pipe"
-mkdir $gui
-touch $gui/.updates
-printf "-1" > $gui/.position
 
 # launch gui & interactive manager
 gui_proc &
