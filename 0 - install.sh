@@ -1,61 +1,60 @@
 #! /bin/bash
 # TODO : sudo ticket BEFORE creating artifact folder
 #        and such as sudo is asked only once
-# TODO : do logging and state functions
 
 start=$(date +%s)
 
-echo "    ____             ______          ";
-echo "   / __ \___  ____  / ____/___ _   __";
-echo "  / /_/ / _ \/ __ \/ __/ / __ \ | / /";
-echo " / ____/  __/ / / / /___/ / / / |/ / ";
-echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
-echo "                                     ";
-echo ""
-echo "Author : lLou_"
-echo "Suite version : V0.2.3"
-echo "Script version : V1.8"
-echo ""
-echo ""
-
-
-
-wait_pid() {
-        if [[ $# -eq 0 ]];then return; fi
-        while [[ -e "/proc/$1" ]];do sleep 1;done
+banner (){
+        echo "    ____             ______          ";
+        echo "   / __ \___  ____  / ____/___ _   __";
+        echo "  / /_/ / _ \/ __ \/ __/ / __ \ | / /";
+        echo " / ____/  __/ / / / /___/ / / / |/ / ";
+        echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
+        echo "                                     ";
+        echo ""
+        echo "Author : lLou_"
+        echo "Suite version : V0.2.4 beta"
+        echo "Script version : V2.0 beta"
+        echo ""
+        echo ""
 }
 
-
+# Common installation protocols
 apt_installation () {
-        if [[ $# -eq 0 || $# -gt 3 ]];then tput setaf 1;echo "[!] DEBUG : $# argument given for apt installation, when only 1, 2 or 3 are accepted... ($@)";tput sgr0; return; fi 
+        if [[ $# -eq 0 || $# -gt 3 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for apt installation, when only 1, 2 or 3 are accepted... ($@)"; return; fi 
         if [[ $# -eq 1 ]];then name=$1; pkg=$1; fi
         if [[ $# -eq 2 ]];then name=$2; pkg=$2; fi
         if [[ $# -eq 3 ]];then name=$2; pkg=$3; fi
         if [[ ! -x "$(command -v $1)" || $force ]];then
-                echo "[+] $name not detected... Installing"
+                add_log_entry; update_log $ret "[*] $name not detected... Waiting apt upgrade"
                 wait_apt
+                update_log $ret "[~] $name not detected... Installing"
+                # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed (thanks to parrallelization)
                 sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$log/install-errors.log >>$log/install-infos.log
+                update_log $ret "[+] $name Installed"
         fi
 }
 
 go_installation () {
-        if [[ $# -ne 2 ]];then tput setaf 1;echo "[!] DEBUG : $# argument given for go installation, when 2 are required... ($@)";tput sgr0; return; fi 
+        if [[ $# -ne 2 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for go installation, when 2 are required... ($@)"; return; fi 
         if [[ ! -x "$(command -v $1)" || $force ]];then
-                echo "[+] $1 not detected... Installing"
+                add_log_entry; update_log $ret "[~] $1 not detected... Installing"
                 go install $2 2>> $log/install-warnings.log
                 sudo cp /home/$usr/go/bin/$1 /bin/$1
+                update_log $ret "[+] $1 Installed"
         fi
 }
 
 
+# Parrallelization function
+bg_proc=() # array of process to wait for complete installation
+apt_proc=() # process for apt upgrade
+pip_proc=() # process for pip upgrade
 
-bg_proc=()
-apt_proc=()
-pip_proc=()
-
+# // functions
 installation () {
-        if [[ $# -eq 0 ]];then tput setaf 1;echo "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";tput sgr0;return;fi
-        if [[ "$(type $1 | grep 'not found')" ]];then tput setaf 1;echo "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";tput sgr0;return;fi
+        if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
+        if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
         ($@) &
         p=$!
 }
@@ -75,26 +74,221 @@ pip_install () {
         if [[ $p -ne -1 ]];then pip_proc+=( $p );fi
 }
 
+# wait for process to end
+wait_pid() {
+        if [[ $# -eq 0 ]];then return; fi
+        while [[ -e "/proc/$1" ]];do sleep 1;done
+}
 wait_bg () {
         for job in "${bg_proc[@]}"
         do
                 wait_pid $job
         done
 }
-
 wait_apt () {
         for job in "${apt_proc[@]}"
         do
                 wait_pid $job
         done
 }
-
 wait_pip () {
         for job in "${pip_proc[@]}"
         do
                 wait_pid $job
         done
 }
+
+# GUI management
+# => works with pipe in artifacts
+# => .update gives a char for each log entry, it is by default 0, putting it to 1 means the log entry has been updated
+# => the log entry content is in $gui/$log_entry_id
+# => scrolling is managed by interaction process, that gives position throught .position file
+add_log_entry() {
+        touch $gui/$ret
+        printf '0' >> $gui/.updates
+        ret=$(wc -c $gui/.updates | awk '{print($1)}')
+        return $ret
+}
+update_log() {
+        if [[ ! -f "$gui/$1" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a log entry";return; fi
+        printf "${@:2}" > $gui/$1
+        sed "s/./1/$1" $gui/.updates
+}
+
+gui_proc () {
+        tput smcup
+        tput civis
+        add_log_entry
+        b=$ret
+        update_log $b "$(banner)"
+        s=()
+        pos=-1
+        up=-1
+        down=-1
+
+        while [[ true ]];do
+                # get the pipe content
+                k=$(cat $gui/.updates)
+                force_update=""
+                if [[ $pos -ne $(cat $gui/.position) ]];then
+                        pos=$(cat $gui/.position)
+                        force_update="true"
+                fi
+                # set pipe to no updates
+                sed -i "s/1/0/g" $gui/.updates
+                # get update size, and shell width
+                base=${#k}
+                width=$(tput cols)
+                # complete s if there is any new entries
+                scroll_down=""
+                while [[ $base -ne ${#s} ]];do s=$(( $s + (0) )); scroll_down="true";done
+                # find who to update, and set their allocated height
+                to_update=()
+                while [[ $k =~ 1 ]]; do
+                        k=${k#*1} # remove every char until the first 1 in line
+                        n=$(( $base - ${#k} )) # n corresponds to the id of the entry to update
+                        to_update=$(( $to_update + ($n) ))
+                        if [[ -f "$gui/$n" ]]; then content=$(cat $gui/$n); else touch $gui/$n; content=""; fi
+                        # get the height of the entry
+                        if [[ $content ]];then h=$(( (${#content} - 1) / $width + 1 )); else h=0; fi
+                        if [[ ${s[$n]} -ne $h ]];then
+                                s[$n]=$h
+                                k=$(echo $k | sed "s/0/1/g")
+                        fi
+                done
+                # update screen range
+                if [[ $force_update ]];then
+                        store=$(tput lines)
+                        down=$pos
+                        up=$pos
+                        while [[ $store -gt ${s[$(($down + 1))]} ]];do
+                                down=$(($down + 1))
+                                store=$(($store - ${s[$(($down + 1))]}))
+                        done
+                fi
+                if [[ $pos -eq -1 && $scroll_down ]];then
+                        store=$(tput lines)
+                        down=$base
+                        up=$base
+                        while [[ $store -gt ${s[$(($up - 1))]} ]];do
+                                up=$(($up - 1))
+                                store=$(($store - ${s[$(($up - 1))]}))
+                        done
+                        force_update="true"
+                fi
+                # update screen
+                row=0
+                for i in $(seq $up $down);do
+                        if [[ $force_update || "$(echo ${to_update[@]} | grep $i)" ]]; then
+                                for j in $(seq 1 ${v[$i]});do
+                                        tput cup $(( $j + $row - 1 )) 0
+                                        tput ed
+                                        echo ${content:$(( $weight * ($i - 1) )):$weight}
+                                done
+                        fi
+                        row=$(( $row + ${v[$i]} ))
+                done
+
+                sleep 0.2
+        done
+}
+
+interactive_proc () {
+        while [[ true ]];do
+                read -rsn1 input
+		case "$input"
+		in
+			$'\x1B')  # ESC ASCII code (https://dirask.com/posts/ASCII-Table-pJ3Y0j)
+				read -rsn1 -t 0.1 input
+				if [ "$input" = "[" ]  # occurs before arrow code
+				then
+					read -rsn1 -t 0.1 input
+					case "$input"
+					in
+						A)  # Up Arrow
+                                                        cpos=$(cat $gui/.position)
+                                                        l=$(cat $gui/.updates)
+                                                        if [[ $cpos -ne 0 ]];then
+                                                                if [[ $cpos -eq -1 ]]; then printf ${#l} > $gui/.position;
+                                                                else printf $(( $cpos - 1 )) > $gui/.position; fi
+                                                        fi
+							;;
+						B)  # Down Arrow
+                                                        cpos=$(cat $gui/.position)
+                                                        l=$(cat $gui/.updates)
+                                                        if [[ $cpos -ne -1 ]];then
+                                                                if [[ $cpos -eq ${#l} ]]; then printf -1 > $gui/.position;
+                                                                else printf $(( $cpos + 1 )) > $gui/.position; fi
+                                                        fi
+							;;
+					esac
+				fi
+				read -rsn5 -t 0.1  # flushing stdin
+				;;
+		esac
+        done
+}
+
+# Set directory environement
+usr=$(whoami)
+if [[ $usr == "root" ]];then
+        add_log_entry; update_log $ret "[-] Running as root. Please run in rootless mode... Exiting..."
+        exit 1
+fi
+
+log=/home/$usr/logs
+hotscript=/home/$usr/hot-script
+if [[ ! -d $log ]];then
+        mkdir $log
+fi
+if [[ ! -d $hotscript ]];then
+        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
+        mkdir $hotscript
+fi
+
+# Trap ctrl+Z to remove artifacts and restore shell before exiting
+artifacts="/home/$usr/artifacts-$(date +%s)"
+mkdir $artifacts
+cd $artifacts
+stop () {
+        # wait proccesses
+        add_log_entry; update_log $ret "[*] Waiting the installation to end..."
+        wait_bg
+        wait_apt
+        wait_pip
+        update_log $ret "[+] All launched installation process has ended"
+        # kill gui & interactive proc
+        kill $guiproc_id
+        kill $interactiveproc_id
+        tput cnorm
+        tput rmcup
+        # report states in shell
+        u=$(cat $gui/.updates)
+        for i in $(seq 1 ${#u});do
+                cat $gui/$i
+        done
+        # restore directories
+        cd /home/$usr
+        if [[ -d $artifacts ]];then
+                sudo rm -R $artifacts
+                tput setaf 6;echo "[~] Artifacts removed";tput sgr0
+                echo ""
+        fi
+        if [[ $# -eq 0 ]];then exit 1; fi
+}
+trap stop INT
+
+# Set gui pipes
+gui="$artifacts/pipe"
+mkdir $gui
+touch $gui/.updates
+printf "-1" > $gui/.position
+
+# launch gui & interactive manager
+gui_proc &
+guiproc_id=$!
+interactive_proc <&0 &
+interactiveproc_id=$!
 
 # Manage options
 branch="main"
@@ -149,47 +343,10 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 # Inform user
-if [[ $branch != "main" && $check ]];then tput setaf 4;echo "[*] $branch will be the used github branch for installation";tput sgr0;fi
-if [[ $force ]];then tput setaf 4;echo "[*] installation will be forced for every components";tput sgr0; fi
-if [[ $no_upgrade ]];then tput setaf 4;echo "[*] apt, pip and metasploit will not be upgraded";tput sgr0; fi
-echo ""
-
-# Set directory environement
-usr=$(whoami)
-if [[ $usr == "root" ]];then
-        tput setaf 1;echo "[-] Running as root. Please run in rootless mode... Exiting...";tput sgr0
-        exit 1
-fi
-
-log=/home/$usr/logs
-hotscript=/home/$usr/hot-script
-if [[ ! -d $log ]];then
-        mkdir $log
-fi
-if [[ ! -d $hotscript ]];then
-        echo "[+] Creating hotscript folder in $hotscript"
-        mkdir $hotscript
-fi
-
-# Trap ctrl+Z to remove artifacts before exiting
-artifacts="/home/$usr/artifacts-$(date +%s)"
-mkdir $artifacts
-cd $artifacts
-stop () {
-        tput setaf 4;echo "[*] Waiting the installation to end...";tput sgr0
-        wait_bg
-        wait_apt
-        wait_pip
-        cd /home/$usr
-        if [[ -d $artifacts ]];then
-                sudo rm -R $artifacts
-                tput setaf 6;echo "[~] Artifacts removed";tput sgr0
-                echo ""
-        fi
-        exit 1
-}
-trap stop INT
-
+if [[ $branch != "main" && $check ]];then add_log_entry; update_log $ret "[*] $branch will be the used github branch for installation";fi
+if [[ $force ]];then add_log_entry; update_log $ret "[*] installation will be forced for every components"; fi
+if [[ $no_upgrade ]];then add_log_entry; update_log $ret "[*] apt, pip and metasploit will not be upgraded"; fi
+add_log_entry; update_log $ret ""
 
 # colors
 bg_install apt_installation "tput" "tput" "ncurses-bin"
@@ -198,7 +355,7 @@ bg_install apt_installation "tput" "tput" "ncurses-bin"
 ###### Install install-penenv
 task-ipenenv() {
 if [[ ! -x "$(command -v install-penenv)" || $check || $force ]];then
-        echo "[+] install-penenv not detected as a command...Setting up"
+        add_log_entry; update_log $ret "[+] install-penenv not detected as a command...Setting up"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/0%20-%20install.sh -q
         chmod +x 0\ -\ install.sh
         sudo mv 0\ -\ install.sh /bin/install-penenv
@@ -209,7 +366,7 @@ bg_install task-ipenenv
 ###### Install autoenum
 task-autoenum() {
 if [[ ! -x "$(command -v autoenum)" || $check || $force ]];then
-        echo "[+] autoenum not detected... Installing"
+        add_log_entry; update_log $ret "[+] autoenum not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/A%20-%20autoenum.sh -q
         chmod +x A\ -\ autoenum.sh
         sudo mv A\ -\ autoenum.sh /bin/autoenum
@@ -220,7 +377,7 @@ bg_install task-autoenum
 ###### Install start
 task-start() {
 if [[ ! -x "$(command -v start)" || $check || $force ]];then
-        echo "[+] start not detected... Installing"
+        add_log_entry; update_log $ret "[+] start not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/1%20-%20start.sh -q
         chmod +x 1\ -\ start.sh
         sudo mv 1\ -\ start.sh /bin/start
@@ -229,12 +386,7 @@ fi
 bg_install task-start
 
 if [[ $check ]];then
-        wait_bg
-        tput setaf 6;echo "[~] Checking done... Reloading command";tput sgr0
-        cd /home/$usr
-        sudo rm -R $artifacts
-        tput setaf 6;echo "[~] Chekings Artifacts removed";tput sgr0
-        echo ""
+        stop --no-exit
         install-penenv $ORIGINAL_ARGS -nc
         exit 1
 fi
@@ -243,12 +395,12 @@ fi
 ###### Upgrade apt
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
-        echo "[+] Updating apt-get and upgrading installed packages... This may take a while"
+        add_log_entry; update_log $ret "[~] Updating apt-get and upgrading installed packages... This may take a while"
         apt-task() {
         sudo apt-get -o DPkg::Lock::Timeout=600 update > /dev/null
         sudo apt-get -o DPkg::Lock::Timeout=600 upgrade -y > /dev/null
         sudo apt-get -o DPkg::Lock::Timeout=600 autoremove -y > /dev/null
-        tput setaf 4;echo "[*] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
+        update_log $ret "[+] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
         }
         apt_install apt-task
 fi
@@ -262,12 +414,12 @@ bg_install apt_installation "2to3"
 ###### Install pip
 (if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
-                echo "[+] pip not detected... Installing"
+                add_log_entry; update_log $ret "[+] pip not detected... Installing"
                 sudo apt-get -o DPkg::Lock::Timeout=600 install python3-pip -y >> $log/install-infos.log
         fi
         # Check if an alias is needed
         if [[ ! -x "$(command -v pip)" ]];then
-                echo "[+] pip3 detected...Putting pip as an alias"
+                add_log_entry; update_log $ret "[+] pip3 detected...Putting pip as an alias"
                 sudo alias pip="pip3"
         fi
 fi
@@ -275,11 +427,11 @@ fi
 ###### Upgrade pip
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
-        echo "[+] Upgrading pip and python packages... This may take a while"
+        add_log_entry; update_log $ret "[~] Upgrading pip and python packages... This may take a while"
         pip install --upgrade pip -q 2>> $log/install-warnings.log
         l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
         n=$(echo "$l" | wc -l | awk '{print($1)}')
-        tput setaf 6;echo "[~] $n packages to upgrade";tput sgr0
+        update_log $ret "[~] Upgrading pip and python packages... $n packages to upgrade"
         # i=0
         for line in $l
         do
@@ -291,23 +443,23 @@ if [[ ! $no_upgrade ]];then
                 # ret=$(printf '\r%.0s' $(seq 1 $((${#str}/$cols + 1))))
                 # echo -ne "$str$pad$ret"
         done
-        tput setaf 4;echo "[*] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
+        update_log $ret "[+] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
 
 ###### Install poetry
 if [[ ! -x "$(command -v poetry)" || $force ]];then
-        echo "[+] poetry not detected... Installing"
+        add_log_entry; update_log $ret "[+] poetry not detected... Installing"
         curl -sSL https://install.python-poetry.org | python3 >> $log/install-infos.log
 fi) &
 
 ###### Install go
 (if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
-        echo "[+] go 1.20 not detected... Installing"
+        add_log_entry; update_log $ret "[+] go 1.20 not detected... Installing"
         wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -q
         sudo tar xzf go1.20.2.linux-amd64.tar.gz 
         if [[ -d "/usr/local/go" ]];then
                 sudo mv /usr/local/go /usr/local/go-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /usr/local/go to /usr/local/go-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /usr/local/go to /usr/local/go-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         sudo mv go /usr/local
         export GOROOT=/usr/local/go 
@@ -330,7 +482,7 @@ apt_installation "npm"
 
 ###### Install yarn
 if [[ ! -x "$(command -v yarn)" || $force ]];then
-        echo "[+] Yarn not detected... Installing"
+        add_log_entry; update_log $ret "[+] Yarn not detected... Installing"
         sudo npm install --silent --global yarn 2>> $log/install-warnings.log
 fi
 }
@@ -339,7 +491,7 @@ bg_install task-js
 ###### Install rust
 task-rust() {
 if [[ ! -x "$(command -v cargo)" || $force ]];then
-        echo "[+] Rust not detected... Installing"
+        add_log_entry; update_log $ret "[+] Rust not detected... Installing"
         curl -s https://sh.rustup.rs -sSf | sh -s >>$log/install-infos.log 2>>$log/install-errors.log -- -y
 fi
 }
@@ -351,7 +503,7 @@ bg_install apt_installation "make"
 ###### Install mono
 task-mono() {
 if [[ ! -x "$(command -v mozroots)" || $force ]];then
-        echo "[+] Mono not detected... Installing"
+        add_log_entry; update_log $ret "[+] Mono not detected... Installing"
         sudo apt-get -o DPkg::Lock::Timeout=600 install -yq dirmngr ca-certificates gnupg >>$log/install-infos.log 2>>$log/install-errors.log 
         sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF 2>>$log/install-warnings.log >>$log/install-infos.log
         echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >/dev/null
@@ -385,7 +537,7 @@ wait_bg
 ###### Install ftp module
 task-ftp() {
 if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
-        echo "[+] Pyftplib not detected... Installing"
+        add_log_entry; update_log $ret "[+] Pyftplib not detected... Installing"
         wait_pip
         sudo pip install pyftpdlib -q 2>> $log/install-warnings.log
 fi
@@ -398,7 +550,7 @@ bg_install apt_installation "dig" "dig" "dnsutils"
 ###### Install google-chrome
 task-chrome() {
 if [[ ! -x "$(command -v google-chrome)" || $force ]];then
-        echo "[+] google-chrome not detected... Installing"
+        add_log_entry; update_log $ret "[+] google-chrome not detected... Installing"
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
         sudo apt-get -o DPkg::Lock::Timeout=600 install ./google-chrome-stable_current_amd64.deb -y >> $log/install-infos.log
         rm google-chrome-stable_current_amd64.deb
@@ -418,10 +570,10 @@ bg_install apt_installation "unbuffer" "expect"
 ###### Install sublist3r
 task-sublister() {
 if [[ ! -x "$(command -v sublist3r)" || $force ]];then
-        echo "[+] sublist3r not detected... Installing"
+        add_log_entry; update_log $ret "[+] sublist3r not detected... Installing"
         if [[ -d "/lib/python3/dist-packages/subbrute" ]];then
                 sudo mv /lib/python3/dist-packages/subbrute /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet >> $log/install-infos.log
         wait_pip
@@ -461,7 +613,7 @@ bg_install go_installation "waybackurls" "github.com/tomnomnom/waybackurls@lates
 ###### Install Arjun
 task-arjun() {
 if [[ ! "$(pip list | grep arjun)" || $force ]];then
-        echo "[+] Arjun not detected... Installing"
+        add_log_entry; update_log $ret "[+] Arjun not detected... Installing"
         wait_pip
         sudo pip install arjun -q 2>> $log/install-warnings.log
 fi
@@ -471,7 +623,7 @@ bg_install task-arjun
 ###### Install BrokenLinkChecker
 task-blc() {
 if [[ ! -x "$(command -v blc)" || $force ]];then
-        echo "[+] BrokenLinkChecker not detected... Installing"
+        add_log_entry; update_log $ret "[+] BrokenLinkChecker not detected... Installing"
         sudo npm install --silent --global broken-link-checker 2>> $log/install-warnings.log
 fi
 }
@@ -480,7 +632,7 @@ bg_install task-blc
 ###### Install dirscraper
 task-dirscraper() {
 if [[ ! -x "$(command -v dirscraper)" || $force ]];then
-        echo "[+] Dirscapper not detected... Installing"
+        add_log_entry; update_log $ret "[+] Dirscapper not detected... Installing"
         git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >> $log/install-infos.log
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
@@ -510,7 +662,7 @@ bg_install go_installation "ffuf" "github.com/ffuf/ffuf/v2@latest"
 ###### Install x8
 task-xeight() {
 if [[ ! -x "$(command -v x8)" || $force ]];then
-        echo "[+] x8 not detected... Installing"
+        add_log_entry; update_log $ret "[+] x8 not detected... Installing"
         cargo install x8 >>$log/install-infos.log 2>>$log/install-errors.log
 fi
 }
@@ -520,10 +672,10 @@ bg_install task-xeight
 ###### Install wappalyzer
 task-wappalyzer() {
 if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
-        echo "[+] wappalyzer not detected... Installing"
+        add_log_entry; update_log $ret "[+] wappalyzer not detected... Installing"
         if [[ -d "/lib/wappalyzer" ]];then
                 sudo mv /lib/wappalyzer /lib/wappalyzer-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         git clone https://github.com/wappalyzer/wappalyzer.git --quiet >> $log/install-infos.log
         sudo mv wappalyzer /lib/wappalyzer
@@ -545,10 +697,10 @@ bg_install task-wappalyzer
 ###### Install testssl
 task-testssl() {
 if [[ ! -x "$(command -v testssl)" || $force ]];then
-        echo -e "[+] Testssl not detected... Installing"
+        add_log_entry; update_log $ret "[+] Testssl not detected... Installing"
         if [[ -d "/lib32/testssl" ]];then
                 sudo mv /lib32/testssl /lib32/testssl-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >> $log/install-infos.log
         sudo mv testssl.sh /lib32/testssl
@@ -571,7 +723,7 @@ bg_install go_installation "httprobe" "github.com/tomnomnom/httprobe@latest"
 ###### Install Secretfinder
 task-secretfinder() {
 if [[ ! -x "$(command -v secretfinder)" || $force ]];then
-        echo "[+] Secretfinder not detected... Installing"
+        add_log_entry; update_log $ret "[+] Secretfinder not detected... Installing"
         git clone https://github.com/m4ll0k/SecretFinder.git --quiet >> $log/install-infos.log
         chmod +x ./SecretFinder/SecretFinder.py
         sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
@@ -589,7 +741,7 @@ bg_install apt_installation "hashcat"
 ###### Install hydra
 task-hydra() {
 if [[ ! -x "$(command -v hydra)" || $force ]];then
-        echo "[+] Hydra not detected... Installing"
+        add_log_entry; update_log $ret "[+] Hydra not detected... Installing"
         git clone https://github.com/vanhauser-thc/thc-hydra --quiet >> $log/install-infos.log
         cd thc-hydra
         ./configure >>$log/install-infos.log 2>>$log/install-errors.log
@@ -625,7 +777,7 @@ bg_install apt_installation "snmpwalk" "snmpwalk" "snmp"
 ###### Install Metasploit
 task-metasploit() {
 if [[ ! -x "$(command -v msfconsole)" || $force ]];then
-        echo "[+] Metasploit not detected... Installing"
+        add_log_entry; update_log $ret "[+] Metasploit not detected... Installing"
         curl -s -L https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb --output msfinstall
         chmod +x msfinstall
         sudo ./msfinstall 2>>$log/install-warnings.log >> $log/install-infos.log
@@ -634,9 +786,9 @@ fi
 
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
-        echo "[+] Upgrading metasploit... This may take a while"
+        add_log_entry; update_log $ret "[+] Upgrading metasploit... This may take a while"
         sudo msfupdate >>$log/install-infos.log 2>>$log/install-warnings.log
-        tput setaf 4;echo "[*] Metasploit data upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)";tput sgr0
+        update_log $ret "[*] Metasploit data upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
 }
 bg_install task-metasploit
@@ -644,7 +796,7 @@ bg_install task-metasploit
 ###### Install searchsploit
 task-searchsploit() {
 if [[ ! -x "$(command -v searchsploit)" || $force ]];then
-        echo "[+] Searchsploit not detected... Installing"
+        add_log_entry; update_log $ret "[+] Searchsploit not detected... Installing"
         wget https://raw.githubusercontent.com/rad10/SearchSploit.py/master/searchsploit.py -q
         chmod +x searchsploit.py
         sudo mv searchsploit.py /bin/searchsploit
@@ -655,7 +807,7 @@ bg_install task-searchsploit
 ###### Install AutoHackBruteOS
 task-autohackbruteos() {
 if [[ ! -x "$(command -v AutoHackBruteOS)" || $force ]];then
-        echo "[+] AutoHackBruteOS not detected... Installing"
+        add_log_entry; update_log $ret "[+] AutoHackBruteOS not detected... Installing"
         (echo "#! /usr/bin/env ruby" && curl -L -s https://raw.githubusercontent.com/carlospolop/AutoHackBruteOs/master/AutoHackBruteOs.rc) > AutoHackBruteOs.rc
         chmod +x AutoHackBruteOs.rc
         sudo mv AutoHackBruteOs.rc /bin/AutoHackBruteOs
@@ -666,10 +818,10 @@ bg_install task-autohackbruteos
 ###### Install sqlmap
 task-sqlmap() {
 if [[ ! -x "$(command -v sqlmap)" || $force ]];then
-        echo "[+] sqlmap not detected... Installing"
+        add_log_entry; update_log $ret "[+] sqlmap not detected... Installing"
         if [[ -d "/lib/sqlmap" ]];then
                 sudo mv /lib/sqlmap /lib/sqlmap-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >> $log/install-infos.log
         wait_pip
@@ -685,10 +837,10 @@ bg_install task-sqlmap
 ###### Install commix
 task-commix() {
 if [[ ! -x "$(command -v commix)" || $force ]];then
-        echo "[+] commix not detected... Installing"
+        add_log_entry; update_log $ret "[+] commix not detected... Installing"
         if [[ -d "/lib/commix" ]];then
                 sudo mv /lib/commix /lib/commix-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         git clone https://github.com/commixproject/commix.git --quiet >> $log/install-infos.log
         sudo mv commix /lib/commix
@@ -702,7 +854,7 @@ bg_install task-commix
 ###### Install pixload
 task-pixload() {
 if [[ ! -x "$(command -v pixload-png)" || $force ]];then
-        echo "[+] Pixload not detected... Installing"
+        add_log_entry; update_log $ret "[+] Pixload not detected... Installing"
         sudo git clone https://github.com/sighook/pixload.git --quiet >> $log/install-infos.log
         cd pixload
         make >> $log/install-infos.log 2>>$log/install-warnings.log
@@ -728,10 +880,10 @@ bg_install apt_installation "oscanner"
 ###### Install odat
 task-odat() {
 if [[ ! -x "$(command -v odat)" || $force ]];then
-        echo "[+] odat not detected... Installing"
+        add_log_entry; update_log $ret "[+] odat not detected... Installing"
         if [[ -d "/lib32/odat_lib" ]];then
                 sudo mv /lib32/odat_lib /lib32/odat_lib-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib32/odat_lib to /lib32/odat_lib-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib32/odat_lib to /lib32/odat_lib-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         wget https://github.com/quentinhardy/odat/releases/download/5.1.1/odat-linux-libc2.17-x86_64.tar.gz -q
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
@@ -747,10 +899,10 @@ bg_install task-odat
 ###### Install crackmapexec
 task-crackmapexec() {
 if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
-        echo "[+] crackmapexec not detected... Installing"
+        add_log_entry; update_log $ret "[+] crackmapexec not detected... Installing"
         if [[ -d "/lib/crackmapexec" ]];then
                 sudo mv /lib/crackmapexec /lib/crackmapexec-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >> $log/install-infos.log
         git clone https://github.com/mpgn/CrackMapExec --quiet >> $log/install-infos.log
@@ -780,7 +932,7 @@ bg_install apt_installation "cewl"
 ###### Install cupp
 task-cupp() {
 if [[ ! -x "$(command -v cupp)" || $force ]];then
-        echo "[+] Cupp not detected... Installing"
+        add_log_entry; update_log $ret "[+] Cupp not detected... Installing"
         wget https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py -q
         chmod +x cupp.py
         sudo mv cupp.py /bin/cupp
@@ -791,7 +943,7 @@ bg_install task-cupp
 ###### Install DDexec
 task-ddexec() {
 if [[ ! -x "$(command -v ddexec)" || $force ]];then
-        echo "[+] DDexec not detected... Installing"
+        add_log_entry; update_log $ret "[+] DDexec not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
         chmod +x DDexec.sh
         sudo mv DDexec.sh /bin/ddexec
@@ -805,7 +957,7 @@ bg_install apt_installation "openvpn"
 ###### Install mitm6
 task-mitmsix() {
 if [[ ! -x "$(command -v mitm6)" || $force ]];then
-        echo "[+] mitm6 not detected... Installing"
+        add_log_entry; update_log $ret "[+] mitm6 not detected... Installing"
         sudo git clone https://github.com/dirkjanm/mitm6.git --quiet >> $log/install-infos.log
         wait_pip
         pip install -r mitm6/requirements.txt -q 2>> $log/install-warnings.log
@@ -819,7 +971,7 @@ bg_install task-mitmsix
 ###### Install proxychain
 task-proxychain() {
 if [[ ! -x "$(command -v proxychains)" || $force ]];then
-        echo "[+] Proxychain not detected... Installing"
+        add_log_entry; update_log $ret "[+] Proxychain not detected... Installing"
         git clone https://github.com/haad/proxychains.git --quiet >> $log/install-infos.log
         cd proxychains
         ./configure >>$log/install-infos.log 2>>$log/install-errors.log
@@ -835,10 +987,10 @@ bg_install task-proxychain
 ###### Install responder
 task-responder() {
 if [[ ! -x "$(command -v responder)" || $force ]];then
-        echo "[+] responder not detected... Installing"
+        add_log_entry; update_log $ret "[+] responder not detected... Installing"
         if [[ -d "/lib/responder" ]];then
                 sudo mv /lib/responder /lib/responder-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/responder to /lib/responder-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/responder to /lib/responder-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         git clone https://github.com/lgandx/Responder.git --quiet >> $log/install-infos.log
         sudo mv Responder /lib/responder
@@ -857,10 +1009,10 @@ bg_install task-responder
 ###### Install dnscat2 & dependencies
 task-dnscat() {
 if [[ ! -d "/lib/dnscat" || $force ]];then
-        echo "[+] Dnscat sourcecode not detected... Installing"
+        add_log_entry; update_log $ret "[+] Dnscat sourcecode not detected... Installing"
         if [[ -d "/lib/dnscat" ]];then
                 sudo mv /lib/dnscat /lib/dnscat-$(date +%y-%m-%d--%T).old
-                tput setaf 6;echo "[~] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation";tput sgr0
+                add_log_entry; update_log $ret "[~] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation"
         fi
         git clone https://github.com/iagox86/dnscat2.git --quiet >> $log/install-infos.log
         sudo mv dnscat2 /lib/dnscat
@@ -869,7 +1021,7 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
 fi
 
 if [[ ! -f "$hotscript/dnscat" || $force ]];then
-        echo "[+] Dnscat client not detected... Making"
+        add_log_entry; update_log $ret "[+] Dnscat client not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/client
         make >> $log/install-infos.log
@@ -878,7 +1030,7 @@ if [[ ! -f "$hotscript/dnscat" || $force ]];then
 fi
 
 if [[ ! -x "$(command -v dnscat)" || $force ]];then
-        echo "[+] Dnscat server not detected... Making"
+        add_log_entry; update_log $ret "[+] Dnscat server not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/server
         sudo gem install bundler >> $log/install-infos.log
@@ -890,7 +1042,7 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
 fi
 
 if [[ ! -x "$(command -v dnscat-shell)" || $force ]];then
-        echo "[+] dnscat shell not detected... Installing"
+        add_log_entry; update_log $ret "[+] dnscat shell not detected... Installing"
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/dnscat-shell.sh -q
         chmod +x dnscat-shell.sh
         sudo mv dnscat-shell.sh /bin/dnscat-shell
@@ -922,7 +1074,7 @@ bg_install task-frp
 ###### Install PEAS
 task-lpeas() {
 if [[ ! -f "$hotscript/LinPEAS.sh" || $force ]];then
-        echo "[+] LinPEAS not detected... Installing"
+        add_log_entry; update_log $ret "[+] LinPEAS not detected... Installing"
         curl -L -s https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh --output $hotscript/LinPEAS.sh
         chmod +x $hotscript/LinPEAS.sh
 fi
@@ -931,7 +1083,7 @@ bg_install task-lpeas
 
 task-wpeasps() {
 if [[ ! -f "$hotscript/WinPEAS.ps1" || $force ]];then
-        echo "[+] WinPEAS powershell not detected... Installing"
+        add_log_entry; update_log $ret "[+] WinPEAS powershell not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1 -q
         mv winPEAS.ps1 $hotscript/WinPEAS.ps1
         chmod +x $hotscript/WinPEAS.ps1
@@ -941,7 +1093,7 @@ bg_install task-wpeasps
 
 task-wpeasi() {
 if [[ ! -f "$hotscript/WinPEAS_internet.ps1" || $force ]];then
-        echo "[+] WinPEAS internet not detected... Installing"
+        add_log_entry; update_log $ret "[+] WinPEAS internet not detected... Installing"
         printf "IEX(New-Object Net.WebClient).downloadString('https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1')" > $hotscript/WinPEAS_internet.ps1
         chmod +x $hotscript/WinPEAS_internet.ps1
 fi
@@ -950,7 +1102,7 @@ bg_install task-wpeasi
 
 task-wpeasbat() {
 if [[ ! -f "$hotscript/WinPEAS.bat" || $force ]];then
-        echo "[+] WinPEAS bat not detected... Installing"
+        add_log_entry; update_log $ret "[+] WinPEAS bat not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASbat/winPEAS.bat -q
         mv winPEAS.bat $hotscript/WinPEAS.bat
         chmod +x $hotscript/WinPEAS.bat
@@ -961,7 +1113,7 @@ bg_install task-wpeasbat
 ###### Install miranda
 task-miranda() {
 if [[ ! -f "$hotscript/miranda.py" || $force ]];then
-        echo "[+] Miranda not detected... Installing"
+        add_log_entry; update_log $ret "[+] Miranda not detected... Installing"
         wget https://raw.githubusercontent.com/0x90/miranda-upnp/master/src/miranda.py -q
         mv miranda.py $hotscript/miranda.py
         chmod +x $hotscript/miranda.py
@@ -976,7 +1128,7 @@ bg_install task-miranda
 ###### Install pspy
 task-pspy32() {
 if [[ ! -f "$hotscript/pspy32" || $force ]];then
-        echo "[+] Pspy32 not detected... Installing"
+        add_log_entry; update_log $ret "[+] Pspy32 not detected... Installing"
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy32 --output $hotscript/pspy32
         chmod +x $hotscript/pspy32
 fi
@@ -985,7 +1137,7 @@ bg_install task-pspy32
 
 task-pspy64() {
 if [[ ! -f "$hotscript/pspy64" || $force ]];then
-        echo "[+] Pspy64 not detected... Installing"
+        add_log_entry; update_log $ret "[+] Pspy64 not detected... Installing"
         curl -L -s https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64 --output $hotscript/pspy64
         chmod +x $hotscript/pspy64
 fi
@@ -999,7 +1151,7 @@ bg_install task-pspy64
 ###### Install mimipenguin
 task-mimipenguin() {
 if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
-        echo "[+] Mimipenguin not detected... Installing"
+        add_log_entry; update_log $ret "[+] Mimipenguin not detected... Installing"
         sudo git clone https://github.com/huntergregal/mimipenguin.git --quiet >> $log/install-infos.log
         cd mimipenguin
         sudo make >> $log/install-infos.log 2>>$log/install-warnings.log
@@ -1015,7 +1167,7 @@ bg_install task-mimipenguin
 ###### Install linux-exploit-suggester-2
 task-les() {
 if [[ ! -f "$hotscript/linux-exploit-suggester-2.pl" || $force ]];then
-        echo "[+] Linux exploit suggester 2 not detected... Installing"
+        add_log_entry; update_log $ret "[+] Linux exploit suggester 2 not detected... Installing"
         wget https://raw.githubusercontent.com/jondonas/linux-exploit-suggester-2/master/linux-exploit-suggester-2.pl -q
         mv linux-exploit-suggester-2.pl $hotscript/linux-exploit-suggester-2.pl
 fi
@@ -1025,7 +1177,7 @@ bg_install task-les
 ###### Install wesng
 task-wesng() {
 if [[ ! "$(command -v wes)" || $force ]];then
-        echo "[+] Wesng not detected... Installing"
+        add_log_entry; update_log $ret "[+] Wesng not detected... Installing"
         wait_pip
         sudo pip install wesng -q 2>> $log/install-warnings.log
         wes --update >> $log/install-infos.log
@@ -1046,7 +1198,7 @@ bg_install apt_installation "bloodhound"
 
 task-invoke-bloodhound() {
 if [[ ! -f "$hotscript/Invoke-Bloodhound.ps1" || $force ]];then
-        echo "[+] Invoke-Bloodhound not detected... Installing"
+        add_log_entry; update_log $ret "[+] Invoke-Bloodhound not detected... Installing"
         wget https://raw.githubusercontent.com/BloodHoundAD/BloodHound/master/Collectors/SharpHound.ps1 -q
         mv SharpHound.ps1 $hotscript/Invoke-Bloodhound.ps1
 fi
@@ -1056,12 +1208,12 @@ bg_install task-invoke-bloodhound
 ###### Install Nessus
 task-nessus() {
 if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
-        echo "[+] Java != 11 is used... Setting it to 11.0.18"
+        add_log_entry; update_log $ret "[+] Java != 11 is used... Setting it to 11.0.18"
         sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
 fi
 
 if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
-        echo "[+] Nessus not detected... Installing"
+        add_log_entry; update_log $ret "[+] Nessus not detected... Installing"
         file=$(curl -s --request GET --url 'https://www.tenable.com/downloads/api/v2/pages/nessus' | grep -o -P "Nessus-\d+\.\d+\.\d+-debian10_amd64.deb" | head -n 1)
         curl -s --request GET \
                --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/$file" \
@@ -1069,12 +1221,12 @@ if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
         sudo apt-get -o DPkg::Lock::Timeout=600 install ./Nessus.deb -y >> $log/install-infos.log
         rm Nessus.deb
         sudo systemctl start nessusd
-        tput setaf 6;echo "[~] Go to https://localhost:8834 to complete nessus installation";tput sgr0
+        update_log $ret "[~] Go to https://localhost:8834 to complete nessus installation"
 fi}
 bg_install task-nessus
 
 wait_bg
 
-tput setaf 6;echo "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)";tput sgr0
+add_log_entry; update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"
 
 stop
