@@ -179,8 +179,8 @@ gui_proc () {
         tput civis
         s=()
         pos=-1
-        up=-1
-        down=-1
+        up=0
+        down=0
 
         while [[ true ]];do
                 # get the pipe content
@@ -197,13 +197,13 @@ gui_proc () {
                 width=$(tput cols)
                 # complete s if there is any new entries
                 scroll_down=""
-                while [[ $base -ne ${#s} ]];do s=$(( $s + (0) )); scroll_down="true";done
+                while [[ $base -gt ${#s[@]} ]];do s+=(0); scroll_down="true";done
                 # find who to update, and set their allocated height
                 to_update=()
                 while [[ $k =~ 1 ]]; do
                         k=${k#*1} # remove every char until the first 1 in line
                         n=$(( $base - ${#k} )) # n corresponds to the id of the entry to update
-                        to_update=$(( $to_update + ($n) ))
+                        to_update+=($n)
                         if [[ -f "$gui/$n" ]]; then content=$(cat $gui/$n); else touch $gui/$n; content=""; fi
                         # get the height of the entry
                         if [[ $content ]];then h=$(( (${#content} - 1) / $width + 1 )); else h=0; fi
@@ -217,7 +217,7 @@ gui_proc () {
                         store=$(tput lines)
                         down=$pos
                         up=$pos
-                        while [[ $store -gt ${s[$(($down + 1))]} ]];do
+                        while [[ $(($down + 1)) -le ${#s[@]} && $store -gt ${s[$(($down + 1))]} ]];do
                                 down=$(($down + 1))
                                 store=$(($store - ${s[$(($down + 1))]}))
                         done
@@ -226,21 +226,21 @@ gui_proc () {
                         store=$(tput lines)
                         down=$base
                         up=$base
-                        while [[ $store -gt ${s[$(($up - 1))]} ]];do
+                        while [[ $(($up - 1)) -ge 0 && $store -gt ${s[$(($up - 1))]} ]];do
                                 up=$(($up - 1))
-                                store=$(($store - ${s[$(($up - 1))]}))
+                                store=$(($store - ${s[$up]}))
                         done
                         force_update="true"
                 fi
                 # update screen
                 row=0
                 for i in $(seq $up $down);do
-                        if [[ $force_update || "$(echo ${to_update[@]} | grep $i)" ]]; then
+                        if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${v[$i]} -gt 0 ]]; then
                                 content=$(cat $gui/$i)
+                                for j in $(seq 1 $weight);do content="$content ";done
                                 for j in $(seq 1 ${v[$i]});do
                                         tput cup $(( $j + $row - 1 )) 0
-                                        tput ed
-                                        echo ${content:$(( $weight * ($i - 1) )):$weight}
+                                        echo ${content:$(( $weight * $(($i - 1)) )):$weight}
                                 done
                         fi
                         row=$(( $row + ${v[$i]} ))
