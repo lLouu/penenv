@@ -215,9 +215,9 @@ gui_proc () {
                         if [[ -f "$gui/$n" ]]; then content=$(cat $gui/$n); else touch $gui/$n; content=""; fi
                         # get the height of the entry
                         if [[ $content ]];then
-                                while IFS= read -r line;do
+                                printf $content | while IFS= read -r line;do
                                         h=$(( (${#line} - 1) / $width + 1 ));
-                                done < $content
+                                done
                         else h=0; fi
                         if [[ ${s[$n]} -ne $h ]];then
                                 s[$n]=$h
@@ -248,7 +248,7 @@ gui_proc () {
                 for i in $(seq $up $down);do
                         if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
                                 content=$(cat $gui/$i)
-                                while IFS= read -r line;do
+                                printf $content | while IFS= read -r line;do
                                         h=$(( (${#line} - 1) / $width + 1 ));
                                         for j in $(seq 1 $width);do line="$line ";done
                                         for j in $(seq 1 $h);do
@@ -256,7 +256,7 @@ gui_proc () {
                                                 echo ${line:$(( $width * $(($j - 1)) )):$width}
                                         done
                                         row=$(( $row + $h ))
-                                done < $content
+                                done
                         else
                                 row=$(( $row + ${s[$i]} ))
                         fi
