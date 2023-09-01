@@ -214,7 +214,11 @@ gui_proc () {
                         to_update+=($n)
                         if [[ -f "$gui/$n" ]]; then content=$(cat $gui/$n); else touch $gui/$n; content=""; fi
                         # get the height of the entry
-                        if [[ $content ]];then h=$(( (${#content} - 1) / $width + 1 )); else h=0; fi
+                        if [[ $content ]];then
+                                while IFS= read -r line;do
+                                        h=$(( (${#line} - 1) / $width + 1 ));
+                                done < $content
+                        else h=0; fi
                         if [[ ${s[$n]} -ne $h ]];then
                                 s[$n]=$h
                                 k=$(echo $k | sed "s/0/1/g")
@@ -244,13 +248,18 @@ gui_proc () {
                 for i in $(seq $up $down);do
                         if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
                                 content=$(cat $gui/$i)
-                                for j in $(seq 1 $width);do content="$content ";done
-                                for j in $(seq 1 ${s[$i]});do
-                                        tput cup $(( $j + $row - 1 )) 0
-                                        echo ${content:$(( $width * $(($j - 1)) )):$width}
-                                done
+                                while IFS= read -r line;do
+                                        h=$(( (${#line} - 1) / $width + 1 ));
+                                        for j in $(seq 1 $width);do line="$line ";done
+                                        for j in $(seq 1 $h);do
+                                                tput cup $(( $j + $row - 1 )) 0
+                                                echo ${line:$(( $width * $(($j - 1)) )):$width}
+                                        done
+                                        row=$(( $row + $h ))
+                                done < $content
+                        else
+                                row=$(( $row + ${s[$i]} ))
                         fi
-                        row=$(( $row + ${s[$i]} ))
                 done
 
                 sleep 0.2
