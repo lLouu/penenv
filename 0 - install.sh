@@ -56,7 +56,6 @@ stop () {
         u=$(cat $gui/updates)
         for i in $(seq 1 ${#u});do
                 if [[ -f $gui/$i ]];then cat $gui/$i;fi
-                echo ""
         done
         # restore directories
         cd /home/$usr
