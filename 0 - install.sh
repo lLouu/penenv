@@ -212,13 +212,12 @@ gui_proc () {
                         k=${k#*1} # remove every char until the first 1 in line
                         n=$(( $base - ${#k} )) # n corresponds to the id of the entry to update
                         to_update+=($n)
-                        if [[ -f "$gui/$n" ]]; then content=$(cat $gui/$n); else touch $gui/$n; content=""; fi
+                        if [[ ! -f "$gui/$n" ]]; then touch $gui/$n; fi
                         # get the height of the entry
-                        if [[ $content ]];then
-                                printf $content | while IFS= read -r line;do
-                                        h=$(( (${#line} - 1) / $width + 1 ));
-                                done
-                        else h=0; fi
+                        h=0
+                        while IFS= read -r line;do
+                                h+=$(( (${#line} - 1) / $width + 1 ));
+                        done < $gui/$n
                         if [[ ${s[$n]} -ne $h ]];then
                                 s[$n]=$h
                                 k=$(echo $k | sed "s/0/1/g")
@@ -247,16 +246,15 @@ gui_proc () {
                 row=0
                 for i in $(seq $up $down);do
                         if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
-                                content=$(cat $gui/$i)
-                                printf $content | while IFS= read -r line;do
+                                while IFS= read -r line;do
                                         h=$(( (${#line} - 1) / $width + 1 ));
                                         for j in $(seq 1 $width);do line="$line ";done
                                         for j in $(seq 1 $h);do
                                                 tput cup $(( $j + $row - 1 )) 0
-                                                echo ${line:$(( $width * $(($j - 1)) )):$width}
+                                                echo "${line:$(( $width * $(($j - 1)) )):$width}"
                                         done
                                         row=$(( $row + $h ))
-                                done
+                                done < $gui/$i
                         else
                                 row=$(( $row + ${s[$i]} ))
                         fi
