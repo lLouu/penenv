@@ -172,7 +172,7 @@ add_log_entry() {
 }
 update_log() {
         if [[ ! -f "$gui/$1" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a log entry";return; fi
-        printf "${@:2}" > $gui/$1
+        echo "${@:2}" > $gui/$1
         sed -i "s/./1/$1" $gui/updates
 }
 
@@ -216,7 +216,7 @@ gui_proc () {
                         # get the height of the entry
                         h=0
                         while IFS= read -r line;do
-                                h+=$(( (${#line} - 1) / $width + 1 ));
+                                h=$(( (${#line} - 1) / $width + 1 + $h ));
                         done < $gui/$n
                         if [[ ${s[$n]} -ne $h ]];then
                                 s[$n]=$h
