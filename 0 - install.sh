@@ -1,6 +1,4 @@
 #! /bin/bash
-# TODO : sudo ticket BEFORE creating artifact folder
-#        and such as sudo is asked only once
 
 start=$(date +%s)
 
@@ -64,6 +62,8 @@ stop () {
                 tput setaf 6;echo "[~] Artifacts removed";tput sgr0
                 echo ""
         fi
+        # remove sudoer ticket
+        sudo rm /etc/sudoers.d/tmp
         if [[ $# -eq 0 ]];then exit 1; fi
 }
 trap stop INT
@@ -305,7 +305,8 @@ interactive_proc () {
         done
 }
 
-# launch gui & interactive manager
+# launch gui & interactive manager & get sudo ticket
+printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
 gui_proc &
 guiproc_id=$!
 interactive_proc <&0 &
@@ -570,7 +571,7 @@ wait_bg
 ###### Install ftp module
 task-ftp() {
 if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Pyftplib not detected... Waiting for pip upgrade"
+        add_log_entry; update_log $ret "[*] Pyftplib not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] Pyftplib not detected... Installing"
         sudo pip install pyftpdlib -q 2>> $log/install-warnings.log
@@ -652,7 +653,7 @@ bg_install go_installation "waybackurls" "github.com/tomnomnom/waybackurls@lates
 ###### Install Arjun
 task-arjun() {
 if [[ ! "$(pip list | grep arjun)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Arjun not detected... Waiting for pip upgrade"
+        add_log_entry; update_log $ret "[*] Arjun not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] Arjun not detected... Installing"
         sudo pip install arjun -q 2>> $log/install-warnings.log
@@ -678,7 +679,7 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >> $log/install-infos.log
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
-        update_log $ret "[~] Dirscapper not detected... Waiting pip upgrade"
+        update_log $ret "[*] Dirscapper not detected... Waiting pip upgrade"
         wait_pip
         update_log $ret "[~] Dirscapper not detected... Installing requirements"
         pip install -r ./dirscraper/requirements.txt -q 2>> $log/install-warnings.log
@@ -779,9 +780,9 @@ if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         git clone https://github.com/m4ll0k/SecretFinder.git --quiet >> $log/install-infos.log
         chmod +x ./SecretFinder/SecretFinder.py
         sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
-        update_log $ret "[+] Secretfinder not detected... Waiting pip upgrade"
+        update_log $ret "[*] Secretfinder not detected... Waiting pip upgrade"
         wait_pip
-        update_log $ret "[+] Secretfinder not detected... Installing requirements"
+        update_log $ret "[~] Secretfinder not detected... Installing requirements"
         pip install -r ./SecretFinder/requirements.txt -q 2>> $log/install-warnings.log
         sudo rm -R ./SecretFinder
         update_log $ret "[+] Secretfinder Installed"
@@ -1035,7 +1036,7 @@ task-mitmsix() {
 if [[ ! -x "$(command -v mitm6)" || $force ]];then
         add_log_entry; update_log $ret "[~] mitm6 not detected... Installing"
         sudo git clone https://github.com/dirkjanm/mitm6.git --quiet >> $log/install-infos.log
-        update_log $ret "[~] mitm6 not detected... Waiting pip upgrade"
+        update_log $ret "[*] mitm6 not detected... Waiting pip upgrade"
         wait_pip
         update_log $ret "[~] mitm6 not detected... Installing requirements"
         pip install -r mitm6/requirements.txt -q 2>> $log/install-warnings.log
