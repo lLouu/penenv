@@ -264,35 +264,41 @@ gui_proc () {
 }
 
 interactive_proc () {
+        trap stop INT
         while [[ true ]];do
                 read -rsn1 input
 		case "$input"
 		in
 			$'\x1B')  # ESC ASCII code (https://dirask.com/posts/ASCII-Table-pJ3Y0j)
 				read -rsn1 -t 0.1 input
-				if [ "$input" = "[" ]  # occurs before arrow code
-				then
-					read -rsn1 -t 0.1 input
-					case "$input"
-					in
-						A)  # Up Arrow
-                                                        cpos=$(cat $gui/position)
-                                                        l=$(cat $gui/updates)
-                                                        if [[ $cpos -ne 0 ]];then
-                                                                if [[ $cpos -eq -1 ]]; then printf ${#l} > $gui/position;
-                                                                else printf $(( $cpos - 1 )) > $gui/position; fi
-                                                        fi
-							;;
-						B)  # Down Arrow
-                                                        cpos=$(cat $gui/position)
-                                                        l=$(cat $gui/updates)
-                                                        if [[ $cpos -ne -1 ]];then
-                                                                if [[ $cpos -eq ${#l} ]]; then echo -ne "-1" > $gui/position;
-                                                                else printf $(( $cpos + 1 )) > $gui/position; fi
-                                                        fi
-							;;
-					esac
-				fi
+                                case "$input"
+                                in
+                                        [)
+                                                read -rsn1 -t 0.1 input
+                                                case "$input"
+                                                in
+                                                        A)  # Up Arrow
+                                                                cpos=$(cat $gui/position)
+                                                                l=$(cat $gui/updates)
+                                                                if [[ $cpos -ne 0 ]];then
+                                                                        if [[ $cpos -eq -1 ]]; then printf ${#l} > $gui/position;
+                                                                        else printf $(( $cpos - 1 )) > $gui/position; fi
+                                                                fi
+                                                                ;;
+                                                        B)  # Down Arrow
+                                                                cpos=$(cat $gui/position)
+                                                                l=$(cat $gui/updates)
+                                                                if [[ $cpos -ne -1 ]];then
+                                                                        if [[ $cpos -eq ${#l} ]]; then echo -ne "-1" > $gui/position;
+                                                                        else printf $(( $cpos + 1 )) > $gui/position; fi
+                                                                fi
+                                                                ;;
+                                                esac
+                                                ;;
+                                        C)
+                                                stop
+                                                ;;
+				esac
 				read -rsn5 -t 0.1  # flushing stdin
 				;;
 		esac
