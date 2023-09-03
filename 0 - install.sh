@@ -17,21 +17,11 @@ banner (){
         echo ""
 }
 
-# Set directory environement
+# Get current user
 usr=$(whoami)
 if [[ $usr == "root" ]];then
-        add_log_entry; update_log $ret "[-] Running as root. Please run in rootless mode... Exiting..."
+        echo "[-] Running as root. Please run in rootless mode... Exiting..."
         exit 1
-fi
-
-log=/home/$usr/logs
-hotscript=/home/$usr/hot-script
-if [[ ! -d $log ]];then
-        mkdir $log
-fi
-if [[ ! -d $hotscript ]];then
-        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
-        mkdir $hotscript
 fi
 
 # Trap ctrl+Z to remove artifacts and restore shell before exiting
@@ -110,6 +100,13 @@ pip_proc=() # process for pip upgrade
 installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
+        g=0
+        while [[ $g -lt 30 ]];do
+                k=$(cat /etc/meminfo | head -n 2 | awk '{print($2)}')
+                l=$(echo "$k" | head -n 1)
+                g=$(( $(echo "$k" | tail -n 1) * 100 / $l ))
+                sleep 5
+        done
         ($@) &
         p=$!
 }
@@ -369,6 +366,18 @@ if [[ $branch != "main" && $check ]];then add_log_entry; update_log $ret "[*] $b
 if [[ $force ]];then add_log_entry; update_log $ret "[*] installation will be forced for every components"; fi
 if [[ $no_upgrade ]];then add_log_entry; update_log $ret "[*] apt, pip and metasploit will not be upgraded"; fi
 add_log_entry; update_log $ret ""
+
+# Set directory environement
+log=/home/$usr/logs
+hotscript=/home/$usr/hot-script
+if [[ ! -d $log ]];then
+        add_log_entry; update_log $ret "[+] Creating log folder in $log"
+        mkdir $log
+fi
+if [[ ! -d $hotscript ]];then
+        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
+        mkdir $hotscript
+fi
 
 # colors
 bg_install apt_installation "tput" "tput" "ncurses-bin"
