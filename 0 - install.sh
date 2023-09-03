@@ -260,7 +260,7 @@ gui_proc () {
                                         for j in $(seq 1 $width);do line="$line ";done
                                         for j in $(seq 1 $h);do
                                                 tput cup $(( $j + $row - 1 )) 0
-                                                echo "${line:$(( $width * $(($j - 1)) )):$width}"
+                                                printf "${line:$(( $width * $(($j - 1)) )):$width}"
                                         done
                                         row=$(( $row + $h ))
                                 done < $gui/$i
@@ -428,7 +428,7 @@ if [[ ! -x "$(command -v start)" || $check || $force ]];then
         wget https://raw.githubusercontent.com/lLouu/penenv/$branch/1%20-%20start.sh -q
         chmod +x 1\ -\ start.sh
         sudo mv 1\ -\ start.sh /bin/start
-        update_log $ret "[~] start Installed"
+        update_log $ret "[+] start Installed"
 fi
 }
 bg_install task-start
