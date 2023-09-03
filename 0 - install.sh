@@ -107,7 +107,7 @@ installation () {
                 l=$(echo "$k" | head -n 1)
                 g=$(( $(echo "$k" | tail -n 1) * 100 / $l ))
                 if [[ $first_round ]];then first_round=""
-                else; sleep 1; fi
+                else sleep 1; fi
         done
         ($@) &
         p=$!
