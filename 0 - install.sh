@@ -101,11 +101,13 @@ installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
         g=0
+        first_round="true"
         while [[ $g -lt 30 ]];do
                 k=$(cat /proc/meminfo | head -n 2 | awk '{print($2)}')
                 l=$(echo "$k" | head -n 1)
                 g=$(( $(echo "$k" | tail -n 1) * 100 / $l ))
-                sleep 5
+                if [[ $first_round ]];then first_round=""
+                else; sleep 1; fi
         done
         ($@) &
         p=$!
@@ -173,9 +175,6 @@ update_log() {
 }
 
 gui_proc () {
-        add_log_entry
-        b=$ret
-        update_log $b "$(banner)"
         tput smcup
         tput civis
         s=()
@@ -362,6 +361,7 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 # Inform user
+add_log_entry; update_log $ret "$(banner)"
 if [[ $branch != "main" && $check ]];then add_log_entry; update_log $ret "[*] $branch will be the used github branch for installation";fi
 if [[ $force ]];then add_log_entry; update_log $ret "[*] installation will be forced for every components"; fi
 if [[ $no_upgrade ]];then add_log_entry; update_log $ret "[*] apt, pip and metasploit will not be upgraded"; fi
@@ -426,6 +426,7 @@ if [[ $check ]];then
 fi
 
 ## Languages and downloaders
+add_log_entry; update_log $ret "[*] Getting languages and downloaders..."
 ###### Upgrade apt
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
@@ -577,6 +578,7 @@ wait_bg
 
 
 # Commands
+add_log_entry; update_log $ret "[*] Getting commands..."
 ###### Install ftp module
 task-ftp() {
 if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
@@ -612,6 +614,7 @@ bg_install apt_installation "unbuffer" "expect"
 
 # Tools
 ## Web scan
+add_log_entry; update_log $ret "[*] Getting web scan tools..."
 ### Subdomain & paths
 ###### Install sublist3r
 task-sublister() {
@@ -800,6 +803,7 @@ fi
 bg_install task-secretfinder
 
 ### Bruteforce
+add_log_entry; update_log $ret "[*] Getting bruteforce tools..."
 ###### Install hashcat
 bg_install apt_installation "hashcat"
 
@@ -824,6 +828,7 @@ bg_install task-hydra
 bg_install apt_installation "john"
 
 ### Network
+add_log_entry; update_log $ret "[*] Getting network tools..."
 ###### Install nmap
 bg_install apt_installation "nmap"
 
@@ -840,6 +845,7 @@ bg_install apt_installation "snmp-check" "snmp-check" "snmpcheck"
 bg_install apt_installation "snmpwalk" "snmpwalk" "snmp"
 
 ### Exploits
+add_log_entry; update_log $ret "[*] Getting exploit tools..."
 ###### Install Metasploit
 task-metasploit() {
 if [[ ! -x "$(command -v msfconsole)" || $force ]];then
@@ -946,6 +952,7 @@ fi
 bg_install task-pixload
 
 ### Others
+add_log_entry; update_log $ret "[*] Getting other tools..."
 ###### Install impacket
 bg_install apt_installation "impacket-ntlmrelayx" "impacket" "impacket-scripts"
 
@@ -1099,6 +1106,7 @@ bg_install task-responder
 
 
 ## Hot scripts
+add_log_entry; update_log $ret "[*] Getting scripts..."
 ###### Install dnscat2 & dependencies
 task-dnscat() {
 if [[ ! -d "/lib/dnscat" || $force ]];then
@@ -1304,6 +1312,7 @@ bg_install task-wesng
 
 
 ## Services
+add_log_entry; update_log $ret "[*] Getting Services..."
 ###### Install bloodhound
 bg_install apt_installation "bloodhound"
 
