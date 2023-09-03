@@ -102,7 +102,7 @@ installation () {
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
         g=0
         while [[ $g -lt 30 ]];do
-                k=$(cat /etc/meminfo | head -n 2 | awk '{print($2)}')
+                k=$(cat /proc/meminfo | head -n 2 | awk '{print($2)}')
                 l=$(echo "$k" | head -n 1)
                 g=$(( $(echo "$k" | tail -n 1) * 100 / $l ))
                 sleep 5
