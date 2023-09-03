@@ -155,12 +155,12 @@ wait_pip () {
 # killing process
 kill_pc () {
         for p in $@;do
-                if [[ $(ps aux | awk '{print($2)}' | grep $p) ]];then kill $p;fi
+                if [[ $(ps aux | awk '{print($2)}' | grep $p) ]];then kill $p 2>/dev/null;fi
         done
 }
-kill_bg () {kill_pc ${bg_proc[@]}}
-kill_apt () {kill_pc ${apt_proc[@]}}
-kill_pip () {kill_pc ${pip_proc[@]}}
+kill_bg () { kill_pc ${bg_proc[@]}; }
+kill_apt () { kill_pc ${apt_proc[@]}; }
+kill_pip () { kill_pc ${pip_proc[@]}; }
 
 # GUI management
 # => works with pipe in artifacts
@@ -181,6 +181,7 @@ add_log_entry() {
         return $ret
 }
 update_log() {
+        if [[ ! -d $gui ]]; then return; fi
         if [[ ! -f "$gui/$1" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a log entry";return; fi
         echo "${@:2}" > $gui/$1
         sed -i "s/./1/$1" $gui/updates
