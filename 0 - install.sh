@@ -30,10 +30,10 @@ mkdir $artifacts
 cd $artifacts
 stop () {
         # wait proccesses
-        add_log_entry; update_log $ret "[*] Waiting the installation to end..."
-        wait_bg
-        wait_apt
-        wait_pip
+        add_log_entry; update_log $ret "[*] Killing remaining background process..."
+        kill_bg
+        kill_apt
+        kill_pip
         update_log $ret "[+] All launched installation process has ended"
         # kill gui & interactive proc
         kill $guiproc_id
@@ -152,6 +152,16 @@ wait_pip () {
         done
 }
 
+# killing process
+kill_pc () {
+        for p in $@;do
+                if [[ $(ps aux | awk '{print($2)}' | grep $p) ]];then kill $p;fi
+        done
+}
+kill_bg () {kill_pc ${bg_proc[@]}}
+kill_apt () {kill_pc ${apt_proc[@]}}
+kill_pip () {kill_pc ${pip_proc[@]}}
+
 # GUI management
 # => works with pipe in artifacts
 # => .update gives a char for each log entry, it is by default 0, putting it to 1 means the log entry has been updated
@@ -160,8 +170,10 @@ wait_pip () {
 # => if $gui/getting exists, wait, to avoid two entries getting the same id
 add_log_entry() {
         lname=getting-$(date +%s%N)
+        if [[ ! -d $gui ]];then return;fi
         touch $gui/$lname
-        while [[ $(ls $gui | grep getting | head -n 1) -ne $lname ]];do sleep .1; done
+        while [[ -d $gui && $(ls $gui | grep getting | head -n 1) -ne $lname ]];do sleep .1; done
+        if [[ ! -d $gui ]];then return;fi
         printf '0' >> $gui/updates
         ret=$(wc -c $gui/updates | awk '{print($1)}')
         rm $gui/$lname
@@ -175,6 +187,7 @@ update_log() {
 }
 
 gui_proc () {
+        add_log_entry
         tput smcup
         tput civis
         s=()
