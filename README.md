@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (86/92)
+## Install (86/94)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -96,7 +96,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpwalk
 
 #### Exploits (6)
- - [X] Metasploit & Upgrade
+ - [X] Metasploit & Armitage & Upgrade
  - [X] searchsploit
  - [X] AutoHackBruteOS
  - [X] sqlmap
@@ -118,7 +118,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] responder
  - [ ] Evil winrm
 
-### Scripts (10/15)
+### Scripts (10/17)
  - [X] dnscat (server & client & shell)
  - [X] Chisel
  - [X] frp
@@ -134,6 +134,8 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] watson
  - [ ] powersploit
  - [ ] evilSSDP
+ - [ ] netcat Windows
+ - [ ] ligolo-ng
 
 ### Services (3)
  - [X] bloodhound
