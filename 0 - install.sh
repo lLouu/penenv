@@ -328,13 +328,6 @@ interactive_proc () {
         done
 }
 
-# launch gui & interactive manager & get sudo ticket
-printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
-gui_proc &
-guiproc_id=$!
-interactive_proc <&0 &
-interactiveproc_id=$!
-
 # Manage options
 branch="main"
 check="1"
@@ -399,6 +392,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+
+# launch gui & interactive manager & get sudo ticket
+printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
+gui_proc &
+guiproc_id=$!
+interactive_proc <&0 &
+interactiveproc_id=$!
 
 # Inform user
 add_log_entry; update_log $ret "$(banner)"
