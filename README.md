@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (86/94)
+## Install (86/100)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -53,8 +53,8 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] jq
  - [X] expect
 
-### Tools (49/50)
-#### Web Scan (23)
+### Tools (49/56)
+#### Web Scan (23/24)
 ##### Subdomains & paths (13)
  - [X] sublist3r
  - [X] assetfinder
@@ -75,13 +75,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] whatweb
  - [X] ffuf
  - [X] x8
-##### Others (6)
+##### Others (6/7)
  - [X] wappalyzer
  - [X] testssl
  - [X] nikto
  - [X] wafw00f
  - [X] httprobe
  - [X] secretfinder
+ - [ ] wpscan
 
 #### Bruteforce (3)
  - [X] hashcat
@@ -95,15 +96,17 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (6)
+#### Exploits (6/8)
  - [X] Metasploit & Armitage & Upgrade
  - [X] searchsploit
  - [X] AutoHackBruteOS
  - [X] sqlmap
  - [X] commix
  - [X] pixload
+ - [ ] ghidra
+ - [ ] gdb
 
-#### Other (12/13)
+#### Other (12/16)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
@@ -117,6 +120,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] proxychain
  - [X] responder
  - [ ] Evil winrm
+ - [ ] BloodyAD
+ - [ ] smbmap
+ - [ ] Certipy
 
 ### Scripts (10/17)
  - [X] dnscat (server & client & shell)

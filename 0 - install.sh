@@ -1,5 +1,5 @@
 #! /bin/bash
-# TODO : review GUI
+# TODO : review GUI scrolling & input management
 # TODO : review crackmapexec install protocol - script seems to not work well
 # TODO : review web downloading
 
@@ -120,7 +120,7 @@ installation () {
         #         if [[ $first_round ]];then first_round=""
         #         else sleep 1; fi
         # done
-        while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep 1; done
+        while [[ $(ls $thread_dir | wc -l) -ge $thread ]];do sleep 1; done
 
         (file=$(date +%s%N); touch $thread_dir/$file; $@; rm $thread_dir/$file) &
         p=$!
@@ -547,9 +547,9 @@ fi) &
                 ret=$tmp
         fi
         sudo mv go /usr/local
-        export GOROOT=/usr/local/go 
-        export GOPATH=$HOME/Projects/Proj1 
-        export PATH=$GOPATH/bin:$GOROOT/bin:$PATH 
+        sudo cp /usr/local/go/bin/* /bin
+        export GOROOT=/usr/local/go
+        export PATH=$GOROOT/bin:$PATH 
         update_log $ret "[+] go 1.20 Installed"
 fi) &
 
@@ -580,6 +580,8 @@ task-rust() {
 if [[ ! -x "$(command -v cargo)" || $force ]];then
         add_log_entry; update_log $ret "[~] Rust not detected... Installing"
         curl -s https://sh.rustup.rs -sSf | sh -s >>$(get_log_file rust) 2>>$(get_log_file rust) -- -y
+        sudo cp /home/$usr/.cargo/bin/* /bin
+        export PATH=/home/$usr/.cargo/bin:$PATH
         update_log $ret "[+] Rust Installed"
 fi
 }
@@ -798,7 +800,7 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
         yarn install --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         yarn run link --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd $workingdir
-        printf "#! /bin/sh\nsudo node /lib/wappalyzer/src/drivers/npm/cli.js \$@" > wappalyzer
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo node /lib/wappalyzer/src/drivers/npm/cli.js\$args" > wappalyzer
         chmod +x wappalyzer
         sudo mv wappalyzer /bin/wappalyzer
         update_log $ret "[+] wappalyzer Installed"
@@ -818,7 +820,7 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
         fi
         git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
         sudo mv testssl.sh /lib32/testssl
-        printf "#! /bin/sh\nsudo /lib32/testssl/testssl.sh \$@" > testssl
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/testssl/testssl.sh \$args" > testssl
         chmod +x testssl
         sudo mv testssl /bin/testssl
         update_log $ret "[+] Testssl Installed"
@@ -911,6 +913,9 @@ if [[ ! -x "$(command -v msfconsole)" || ! -x "$(command -v armitage)" || $force
         chmod +x ArmitageInstaller
         sudo ./ArmitageInstaller 2>>$(get_log_file armitage) >>$(get_log_file armitage)
         rm ArmitageInstaller
+        curl -s -L https://raw.githubusercontent.com/BlackArch/msfdb/master/msfdb --output msfdb
+        chmod +x msfdb
+        sudo mv msfdb /bin
         update_log $ret "[+] Metasploit & Armitage Installed"
 fi
 
@@ -963,7 +968,7 @@ if [[ ! -x "$(command -v sqlmap)" || $force ]];then
         update_log $ret "[~] sqlmap not detected... Installing" requirements
         pip install -r sqlmap/requirements.txt -q 2>>$(get_log_file sqlmap)
         sudo mv sqlmap /lib/sqlmap
-        printf "#! /bin/sh\nsudo python3 /lib/sqlmap/sqlmap.py \$@" > sqlmap
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/sqlmap/sqlmap.py \$args" > sqlmap
         chmod +x sqlmap
         sudo mv sqlmap /bin/sqlmap
         update_log $ret "[+] sqlmap Installed"
@@ -983,7 +988,7 @@ if [[ ! -x "$(command -v commix)" || $force ]];then
         fi
         git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
         sudo mv commix /lib/commix
-        printf "#! /bin/sh\nsudo python3 /lib/commix/commix.py \$@" > commix
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/commix/commix.py \$args" > commix
         chmod +x commix
         sudo mv commix /bin/commix
         update_log $ret "[+] commix Installed"
@@ -1034,7 +1039,7 @@ if [[ ! -x "$(command -v odat)" || $force ]];then
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
         sudo rm odat-linux-libc2.17-x86_64.tar.gz
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
-        printf "#! /bin/sh\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$@" > odat
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$args" > odat
         chmod +x odat
         sudo mv odat /bin/odat
         update_log $ret "[+] odat Installed"
@@ -1061,13 +1066,13 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         poetry install >>$(get_log_file cme) 2>>$(get_log_file cme)
         poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd $workingdir
-        printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run crackmapexec \$@" > crackmapexec
+        printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run crackmapexec \$args" > crackmapexec
         chmod +x crackmapexec
         sudo mv crackmapexec /bin/crackmapexec
-        printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run crackmapexec \$@" > cme
+        printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run crackmapexec \$args" > cme
         chmod +x cme
         sudo mv cme /bin/cme
-        printf "#! /bin/sh\ncd /lib/crackmapexec\nsudo poetry run cmedb \$@" > cmedb
+        printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run cmedb \$args" > cmedb
         chmod +x cmedb
         sudo mv cmedb /bin/cmedb
         update_log $ret "[+] crackmapexec Installed"
@@ -1151,7 +1156,7 @@ if [[ ! -x "$(command -v responder)" || $force ]];then
         fi
         git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
         sudo mv Responder /lib/responder
-        printf "#! /bin/sh\nsudo python3 /lib/responder/Responder.py \$@" > responder
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/responder/Responder.py \$args" > responder
         chmod +x responder
         sudo mv responder /bin/responder
         update_log $ret "[+] responder Installed"
@@ -1199,7 +1204,7 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         sudo gem install bundler >>$(get_log_file dnscat)
         sudo bundler install 2>>$(get_log_file dnscat) >>$(get_log_file dnscat)
         cd $workingdir
-        printf "#! /bin/sh\nsudo ruby /lib/dnscat/server/dnscat2.rb \$@" > dnscat
+        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo ruby /lib/dnscat/server/dnscat2.rb \$args" > dnscat
         chmod +x dnscat
         sudo mv dnscat /bin/dnscat
         update_log $ret "[+] Dnscat server Made"
