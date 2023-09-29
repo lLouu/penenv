@@ -546,8 +546,11 @@ fi) &
                 add_log_entry; update_log $ret "[*] Moved /usr/local/go to /usr/local/go-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        sudo mv go /usr/local
-        sudo cp /usr/local/go/bin/* /bin
+        sudo mv go /usr/lib/go-1.20
+        if [[ -f "/bin/go" ]];then sudo rm /bin/go;fi
+        if [[ -f "/bin/gofmt" ]];then sudo rm /bin/gofmt;fi
+        sudo ln -s /usr/lib/go-1.20/bin/go /bin/go
+        sudo ln -s /usr/lib/go-1.20/bin/gofmt /bin/gofmt
         export GOROOT=/usr/local/go
         export PATH=$GOROOT/bin:$PATH 
         update_log $ret "[+] go 1.20 Installed"
@@ -820,9 +823,10 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
         fi
         git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
         sudo mv testssl.sh /lib32/testssl
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/testssl/testssl.sh \$args" > testssl
-        chmod +x testssl
-        sudo mv testssl /bin/testssl
+        # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/testssl/testssl.sh \$args" > testssl
+        # chmod +x testssl
+        # sudo mv testssl /bin/testssl
+        sudo ln -s /lib32/testssl/testssl.sh /bin/testssl
         update_log $ret "[+] Testssl Installed"
 fi
 }
@@ -1039,9 +1043,10 @@ if [[ ! -x "$(command -v odat)" || $force ]];then
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
         sudo rm odat-linux-libc2.17-x86_64.tar.gz
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$args" > odat
-        chmod +x odat
-        sudo mv odat /bin/odat
+        # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$args" > odat
+        # chmod +x odat
+        # sudo mv odat /bin/odat
+        sudo ln -s /lib32/odat_lib/odat-libc2.17-x86_64 /bin/odat
         update_log $ret "[+] odat Installed"
 fi
 }
