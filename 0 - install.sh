@@ -1,7 +1,6 @@
 #! /bin/bash
-# TODO : review GUI scrolling & input management
-# TODO : review crackmapexec install protocol - script seems to not work well
-# TODO : review web downloading
+# TODO : review GUI
+# TODO : add task viewer, either using threds, either using logs
 
 start=$(date +%s)
 
@@ -125,18 +124,8 @@ pip_proc=() # process for pip upgrade
 installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
-        # g=0
-        # first_round="true"
-        # while [[ $g -lt 10 ]];do
-        #         k=$(cat /proc/meminfo | head -n 2 | awk '{print($2)}')
-        #         l=$(echo "$k" | head -n 1)
-        #         g=$(( $(echo "$k" | tail -n 1) * 100 / $l ))
-        #         if [[ $first_round ]];then first_round=""
-        #         else sleep 1; fi
-        # done
         while [[ $(ls $thread_dir | wc -l) -ge $thread ]];do sleep 1; done
-
-        (file=$(date +%s%N); touch $thread_dir/$file; $@; rm $thread_dir/$file) &
+        (file=$(date +%s%N); echo "$@" > $thread_dir/$file; $@; rm $thread_dir/$file) &
         p=$!
 }
 bg_install () {
@@ -221,6 +210,8 @@ gui_proc () {
         tput civis
 
         while [[ true ]];do
+                # Observe updating to reduce gui needs ?
+                # And maybe sort such that Installing process are all the way down
                 echo "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)"
                 sleep 0.2
         done
@@ -306,6 +297,7 @@ guiproc_id=$!
 # Inform user
 add_log_entry; update_log $ret "$(banner)"
 if [[ $branch != "main" && $check ]];then add_log_entry; update_log $ret "[*] $branch will be the used github branch for installation";fi
+if [[ $thread != 5 ]];then add_log_entry; update_log $ret "[*] $thread additional active processes wil be used for parallel tasks";fi
 if [[ $force ]];then add_log_entry; update_log $ret "[*] installation will be forced for every components"; fi
 if [[ $nologs ]];then add_log_entry; update_log $ret "[*] logging is disabled"; fi
 if [[ $no_upgrade ]];then add_log_entry; update_log $ret "[*] apt, pip and metasploit will not be upgraded"; fi
@@ -939,7 +931,7 @@ bg_install task-odat
 ###### Install crackmapexec
 task-crackmapexec() {
 if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
-        add_log_entry; update_log $ret "[~] crackmapexec not detected... Installing"
+        add_log_entry; update_log $ret "[~] crackmapexec not detected... Getting Dependencies"
         if [[ -d "/lib/crackmapexec" ]];then
                 sudo mv /lib/crackmapexec /lib/crackmapexec-$(date +%y-%m-%d--%T).old
                 tmp=$ret
@@ -947,12 +939,14 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
                 ret=$tmp
         fi
         sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >>$(get_log_file cme)
+        update_log $ret "[~] crackmapexec not detected... Installing"
         git clone https://github.com/mpgn/CrackMapExec --quiet >>$(get_log_file cme)
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
         cd /lib/crackmapexec && poetry lock >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd /lib/crackmapexec && poetry install >>$(get_log_file cme) 2>>$(get_log_file cme)
+        update_log $ret "[~] crackmapexec not detected... Initialize"
         cd /lib/crackmapexec && poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd $workingdir
         printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run crackmapexec \$args" > crackmapexec
