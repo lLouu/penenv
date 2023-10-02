@@ -31,6 +31,31 @@ fi
 artifacts="/home/$usr/artifacts-$(date +%s)"
 mkdir $artifacts
 cd $artifacts
+
+# Set directory environement
+log=/home/$usr/logs
+hotscript=/home/$usr/hot-script
+if [[ ! -d $log && ! $nologs ]];then
+        add_log_entry; update_log $ret "[+] Creating log folder in $log"
+        mkdir $log
+fi
+if [[ ! -d $hotscript ]];then
+        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
+        mkdir $hotscript
+fi
+
+# Set gui pipes
+gui="$artifacts/pipe"
+mkdir $gui
+touch $gui/updates
+echo -ne "-1" > $gui/position
+
+# Set threading management
+thread_dir="$artifacts/threads"
+waiting_dir="$thread_dir/waiting"
+mkdir $thread_dir
+mkdir $waiting_dir
+
 stop () {
         # wait proccesses
         add_log_entry; update_log $ret "[*] Killing remaining background process..."
@@ -38,13 +63,12 @@ stop () {
         kill_apt
         kill_pip
         update_log $ret "[+] All launched installation process has ended"
-        # kill gui & interactive proc
+        # kill gui proc
         kill_pc $guiproc_id
-        # kill_pc $interactiveproc_id
         tput cnorm
         tput rmcup
         # report states in shell and in transcript
-        transcript=$log/_transcript
+        transcript=$log/transcript
         echo "=========================" >> $transcript
         if [[ -d $gui ]];then
                 u=$(cat $gui/updates)
@@ -64,18 +88,6 @@ stop () {
         if [[ $# -eq 0 ]];then exit 1; fi
 }
 trap stop INT
-
-# Set gui pipes
-gui="$artifacts/pipe"
-mkdir $gui
-touch $gui/updates
-echo -ne "-1" > $gui/position
-
-# Set threading management
-thread_dir="$artifacts/threads"
-waiting_dir="$thread_dir/waiting"
-mkdir $thread_dir
-mkdir $waiting_dir
 
 # Common installation protocols
 apt_installation () {
@@ -171,7 +183,7 @@ wait_pip () { wait_procs ${pip_proc[@]}; }
 # killing process
 kill_pc () {
         for p in $@;do
-                if [[ $(ps aux | awk '{print($2)}' | grep $p) ]];then kill $p 2>/dev/null;fi
+                if [[ $(ps aux | awk '{print($2)}' | grep $p) ]];then sudo kill $p 2>/dev/null;fi
         done
 }
 kill_bg () { kill_pc ${bg_proc[@]}; }
@@ -207,129 +219,18 @@ gui_proc () {
         add_log_entry
         tput smcup
         tput civis
-        s=()
-        pos=-1
-        base=0
-        up=1
-        down=1
 
         while [[ true ]];do
-                # # get the pipe content and deduce what has changed
-                # k=$(cat $gui/updates)
-                # force_update=""
-                # scroll=""
-                # if [[ $pos -ne $(cat $gui/position) ]];then
-                #         pos=$(cat $gui/position)
-                #         force_update="true"
-                # fi
-                # if [[ $base -ne ${#k} ]]; then
-                #         scroll="true"
-                #         for i in $(seq $base ${#k}); do s+=(0); done
-                #         base=${#k}
-                # fi
-                # # set pipe to no updates
-                # sed -i "s/1/0/g" $gui/updates
-                # # update shell width
-                # width=$(tput cols)
-                # # find who to update, and set their allocated height
-                # to_update=()
-                # while [[ $k =~ 1 ]]; do
-                #         k=${k#*1} # remove every char until the first 1 in line
-                #         n=$(( $base - ${#k} )) # n corresponds to the id of the entry to update
-                #         to_update+=($n)
-                #         if [[ ! -f "$gui/$n" ]]; then touch $gui/$n; fi
-                #         # get the height of the entry
-                #         h=0
-                #         while IFS= read -r line;do
-                #                 h=$(( (${#line} - 1) / $width + 1 + $h ));
-                #         done < $gui/$n
-                #         if [[ ${s[$n]} -ne $h ]];then
-                #                 s[$n]=$h
-                #                 k=$(echo $k | sed "s/0/1/g")
-                #         fi
-                # done
-                # # update screen range
-                # if [[ $force_update ]];then
-                #         store=$(tput lines)
-                #         down=$pos
-                #         up=$pos
-                #         while [[ $(($down + 1)) -le ${#s[@]} && $store -gt ${s[$(($down + 1))]} ]];do
-                #                 down=$(($down + 1))
-                #                 store=$(($store - ${s[$(($down + 1))]}))
-                #         done
-                # fi
-                # if [[ $scroll && $pos -eq -1 ]];then
-                #         store=$(tput lines)
-                #         down=$base
-                #         up=$base
-                #         while [[ $(($up - 1)) -ge 1 && $store -gt ${s[$(($up - 1))]} ]];do
-                #                 up=$(($up - 1))
-                #                 store=$(($store - ${s[$up]}))
-                #         done
-                # fi
-                # # update screen
-                # row=0
-                # for i in $(seq $up $down);do
-                #         if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
-                #                 while IFS= read -r line;do
-                #                         h=$(( (${#line} - 1) / $width + 1 ));
-                #                         for j in $(seq 1 $width);do line="$line ";done
-                #                         for j in $(seq 1 $h);do
-                #                                 tput cup $(( $j + $row - 1 )) 0
-                #                                 printf "${line:$(( $width * $(($j - 1)) )):$width}"
-                #                         done
-                #                         row=$(( $row + $h ))
-                #                 done < $gui/$i
-                #         else
-                #                 row=$(( $row + ${s[$i]} ))
-                #         fi
-                # done
-
                 echo "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)"
                 sleep 0.2
         done
 }
 
-interactive_proc () {
-        trap stop INT
-        while [[ true ]];do
-                read -rsn1 input
-		case "$input"
-		in
-			$'\x1B')  # ESC ASCII code (https://dirask.com/posts/ASCII-Table-pJ3Y0j)
-				read -rsn1 -t 0.1 input
-                                case "$input"
-                                in
-                                        [)
-                                                read -rsn1 -t 0.1 input
-                                                case "$input"
-                                                in
-                                                        A)  # Up Arrow
-                                                                cpos=$(cat $gui/position)
-                                                                l=$(cat $gui/updates)
-                                                                if [[ $cpos -ne 0 ]];then
-                                                                        if [[ $cpos -eq -1 ]]; then printf ${#l} > $gui/position;
-                                                                        else printf $(( $cpos - 1 )) > $gui/position; fi
-                                                                fi
-                                                                ;;
-                                                        B)  # Down Arrow
-                                                                cpos=$(cat $gui/position)
-                                                                l=$(cat $gui/updates)
-                                                                if [[ $cpos -ne -1 ]];then
-                                                                        if [[ $cpos -eq ${#l} ]]; then echo -ne "-1" > $gui/position;
-                                                                        else printf $(( $cpos + 1 )) > $gui/position; fi
-                                                                fi
-                                                                ;;
-                                                esac
-                                                ;;
-                                        C)
-                                                stop
-                                                ;;
-				esac
-				read -rsn5 -t 0.1  # flushing stdin
-				;;
-		esac
-        done
+# Manage log
+get_log_file () {
+        if [[ $# -ne 1 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for get_log_file, when only 1 is accepted... ($@)"; return; fi 
+        if [[ $nologs ]];then echo "/dev/null";return;fi
+        echo "$log/$1.log"
 }
 
 # Manage options
@@ -397,12 +298,10 @@ done
 
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
-# launch gui & interactive manager & get sudo ticket
+# launch gui & get sudo ticket
 printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
 gui_proc &
 guiproc_id=$!
-# interactive_proc <&0 &
-# interactiveproc_id=$!
 
 # Inform user
 add_log_entry; update_log $ret "$(banner)"
@@ -411,25 +310,6 @@ if [[ $force ]];then add_log_entry; update_log $ret "[*] installation will be fo
 if [[ $nologs ]];then add_log_entry; update_log $ret "[*] logging is disabled"; fi
 if [[ $no_upgrade ]];then add_log_entry; update_log $ret "[*] apt, pip and metasploit will not be upgraded"; fi
 add_log_entry; update_log $ret ""
-
-# Set directory environement
-log=/home/$usr/logs
-hotscript=/home/$usr/hot-script
-if [[ ! -d $log && ! $nologs ]];then
-        add_log_entry; update_log $ret "[+] Creating log folder in $log"
-        mkdir $log
-fi
-if [[ ! -d $hotscript ]];then
-        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
-        mkdir $hotscript
-fi
-
-# Manage log
-get_log_file () {
-        if [[ $# -ne 1 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for get_log_file, when only 1 is accepted... ($@)"; return; fi 
-        if [[ $nologs ]];then echo "/dev/null";return;fi
-        echo "$log/$1.log"
-}
 
 # colors
 bg_install apt_installation "tput" "tput" "ncurses-bin"
