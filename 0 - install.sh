@@ -285,9 +285,7 @@ gui_proc () {
                 #         fi
                 # done
 
-                clear
-                echo "$(for log in $(ls $gui | sort -g);do cat $gui/$log;done)"
-
+                echo "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)"
                 sleep 0.2
         done
 }
