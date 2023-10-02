@@ -14,8 +14,8 @@ banner (){
         echo "                                     ";
         echo ""
         echo "Author : lLou_"
-        echo "Suite version : V0.2.5 beta"
-        echo "Script version : V2.1 beta"
+        echo "Suite version : V0.2.6 beta"
+        echo "Script version : V2.2 beta"
         echo ""
         echo ""
 }
@@ -40,7 +40,7 @@ stop () {
         update_log $ret "[+] All launched installation process has ended"
         # kill gui & interactive proc
         kill_pc $guiproc_id
-        kill_pc $interactiveproc_id
+        # kill_pc $interactiveproc_id
         tput cnorm
         tput rmcup
         # report states in shell and in transcript
@@ -73,7 +73,9 @@ echo -ne "-1" > $gui/position
 
 # Set threading management
 thread_dir="$artifacts/threads"
+waiting_dir="$thread_dir/waiting"
 mkdir $thread_dir
+mkdir $waiting_dir
 
 # Common installation protocols
 apt_installation () {
@@ -152,18 +154,19 @@ wait_bg () {
                 wait_pid $job
         done
 }
-wait_apt () {
-        for job in "${apt_proc[@]}"
-        do
-                wait_pid $job
-        done
+wait_procs () {
+        if [[ $# -ne 0 ]];then
+                if [[ -f "$thread_dir/$file" ]];then mv $thread_dir/$file $waiting_dir/$file;fi # Put the thread in waiting mode if not the main thread
+                for job in "$@"
+                do
+                        wait_pid $job
+                done
+                while [[ $(ls $thread_dir | wc -l) -ge $thread ]];do sleep 1; done # Wait a working thread to be available again
+                if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $thread_dir/$file;fi
+        fi
 }
-wait_pip () {
-        for job in "${pip_proc[@]}"
-        do
-                wait_pid $job
-        done
-}
+wait_apt () { wait_procs ${apt_proc[@]}; }
+wait_pip () { wait_procs ${pip_proc[@]}; }
 
 # killing process
 kill_pc () {
@@ -211,76 +214,79 @@ gui_proc () {
         down=1
 
         while [[ true ]];do
-                # get the pipe content and deduce what has changed
-                k=$(cat $gui/updates)
-                force_update=""
-                scroll=""
-                if [[ $pos -ne $(cat $gui/position) ]];then
-                        pos=$(cat $gui/position)
-                        force_update="true"
-                fi
-                if [[ $base -ne ${#k} ]]; then
-                        scroll="true"
-                        for i in $(seq $base ${#k}); do s+=(0); done
-                        base=${#k}
-                fi
-                # set pipe to no updates
-                sed -i "s/1/0/g" $gui/updates
-                # update shell width
-                width=$(tput cols)
-                # find who to update, and set their allocated height
-                to_update=()
-                while [[ $k =~ 1 ]]; do
-                        k=${k#*1} # remove every char until the first 1 in line
-                        n=$(( $base - ${#k} )) # n corresponds to the id of the entry to update
-                        to_update+=($n)
-                        if [[ ! -f "$gui/$n" ]]; then touch $gui/$n; fi
-                        # get the height of the entry
-                        h=0
-                        while IFS= read -r line;do
-                                h=$(( (${#line} - 1) / $width + 1 + $h ));
-                        done < $gui/$n
-                        if [[ ${s[$n]} -ne $h ]];then
-                                s[$n]=$h
-                                k=$(echo $k | sed "s/0/1/g")
-                        fi
-                done
-                # update screen range
-                if [[ $force_update ]];then
-                        store=$(tput lines)
-                        down=$pos
-                        up=$pos
-                        while [[ $(($down + 1)) -le ${#s[@]} && $store -gt ${s[$(($down + 1))]} ]];do
-                                down=$(($down + 1))
-                                store=$(($store - ${s[$(($down + 1))]}))
-                        done
-                fi
-                if [[ $scroll && $pos -eq -1 ]];then
-                        store=$(tput lines)
-                        down=$base
-                        up=$base
-                        while [[ $(($up - 1)) -ge 1 && $store -gt ${s[$(($up - 1))]} ]];do
-                                up=$(($up - 1))
-                                store=$(($store - ${s[$up]}))
-                        done
-                fi
-                # update screen
-                row=0
-                for i in $(seq $up $down);do
-                        if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
-                                while IFS= read -r line;do
-                                        h=$(( (${#line} - 1) / $width + 1 ));
-                                        for j in $(seq 1 $width);do line="$line ";done
-                                        for j in $(seq 1 $h);do
-                                                tput cup $(( $j + $row - 1 )) 0
-                                                printf "${line:$(( $width * $(($j - 1)) )):$width}"
-                                        done
-                                        row=$(( $row + $h ))
-                                done < $gui/$i
-                        else
-                                row=$(( $row + ${s[$i]} ))
-                        fi
-                done
+                # # get the pipe content and deduce what has changed
+                # k=$(cat $gui/updates)
+                # force_update=""
+                # scroll=""
+                # if [[ $pos -ne $(cat $gui/position) ]];then
+                #         pos=$(cat $gui/position)
+                #         force_update="true"
+                # fi
+                # if [[ $base -ne ${#k} ]]; then
+                #         scroll="true"
+                #         for i in $(seq $base ${#k}); do s+=(0); done
+                #         base=${#k}
+                # fi
+                # # set pipe to no updates
+                # sed -i "s/1/0/g" $gui/updates
+                # # update shell width
+                # width=$(tput cols)
+                # # find who to update, and set their allocated height
+                # to_update=()
+                # while [[ $k =~ 1 ]]; do
+                #         k=${k#*1} # remove every char until the first 1 in line
+                #         n=$(( $base - ${#k} )) # n corresponds to the id of the entry to update
+                #         to_update+=($n)
+                #         if [[ ! -f "$gui/$n" ]]; then touch $gui/$n; fi
+                #         # get the height of the entry
+                #         h=0
+                #         while IFS= read -r line;do
+                #                 h=$(( (${#line} - 1) / $width + 1 + $h ));
+                #         done < $gui/$n
+                #         if [[ ${s[$n]} -ne $h ]];then
+                #                 s[$n]=$h
+                #                 k=$(echo $k | sed "s/0/1/g")
+                #         fi
+                # done
+                # # update screen range
+                # if [[ $force_update ]];then
+                #         store=$(tput lines)
+                #         down=$pos
+                #         up=$pos
+                #         while [[ $(($down + 1)) -le ${#s[@]} && $store -gt ${s[$(($down + 1))]} ]];do
+                #                 down=$(($down + 1))
+                #                 store=$(($store - ${s[$(($down + 1))]}))
+                #         done
+                # fi
+                # if [[ $scroll && $pos -eq -1 ]];then
+                #         store=$(tput lines)
+                #         down=$base
+                #         up=$base
+                #         while [[ $(($up - 1)) -ge 1 && $store -gt ${s[$(($up - 1))]} ]];do
+                #                 up=$(($up - 1))
+                #                 store=$(($store - ${s[$up]}))
+                #         done
+                # fi
+                # # update screen
+                # row=0
+                # for i in $(seq $up $down);do
+                #         if [[ ($force_update || "$(echo ${to_update[@]} | grep $i)") && ${s[$i]} -gt 0 ]]; then
+                #                 while IFS= read -r line;do
+                #                         h=$(( (${#line} - 1) / $width + 1 ));
+                #                         for j in $(seq 1 $width);do line="$line ";done
+                #                         for j in $(seq 1 $h);do
+                #                                 tput cup $(( $j + $row - 1 )) 0
+                #                                 printf "${line:$(( $width * $(($j - 1)) )):$width}"
+                #                         done
+                #                         row=$(( $row + $h ))
+                #                 done < $gui/$i
+                #         else
+                #                 row=$(( $row + ${s[$i]} ))
+                #         fi
+                # done
+
+                clear
+                echo "$(for log in $(ls $gui | sort -g);do cat $gui/$log;done)"
 
                 sleep 0.2
         done
@@ -397,8 +403,8 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
 gui_proc &
 guiproc_id=$!
-interactive_proc <&0 &
-interactiveproc_id=$!
+# interactive_proc <&0 &
+# interactiveproc_id=$!
 
 # Inform user
 add_log_entry; update_log $ret "$(banner)"
@@ -800,8 +806,8 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
         # correct minor sourcecode error
         sudo sed -i 's/?././g' /lib/wappalyzer/src/drivers/npm/driver.js
         sudo sed -i 's/?././g' /lib/wappalyzer/src/drivers/npm/wappalyzer.js
-        yarn install --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
-        yarn run link --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
+        cd /lib/wappalyzer && yarn install --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
+        cd /lib/wappalyzer && yarn run link --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd $workingdir
         printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo node /lib/wappalyzer/src/drivers/npm/cli.js\$args" > wappalyzer
         chmod +x wappalyzer
@@ -1067,9 +1073,9 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
-        poetry lock >>$(get_log_file cme) 2>>$(get_log_file cme)
-        poetry install >>$(get_log_file cme) 2>>$(get_log_file cme)
-        poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
+        cd /lib/crackmapexec && poetry lock >>$(get_log_file cme) 2>>$(get_log_file cme)
+        cd /lib/crackmapexec && poetry install >>$(get_log_file cme) 2>>$(get_log_file cme)
+        cd /lib/crackmapexec && poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd $workingdir
         printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run crackmapexec \$args" > crackmapexec
         chmod +x crackmapexec
@@ -1196,8 +1202,8 @@ if [[ ! -f "$hotscript/dnscat" || $force ]];then
         add_log_entry; update_log $ret "[~] Dnscat client not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/client
-        make >>$(get_log_file dnscat)
-        mv dnscat $hotscript/dnscat
+        cd /lib/dnscat/client && make >>$(get_log_file dnscat)
+        mv /lib/dnscat/client/dnscat $hotscript/dnscat
         cd $workingdir
         update_log $ret "[+] Dnscat client Made"
 fi
@@ -1206,8 +1212,8 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         add_log_entry; update_log $ret "[~] Dnscat server not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/server
-        sudo gem install bundler >>$(get_log_file dnscat)
-        sudo bundler install 2>>$(get_log_file dnscat) >>$(get_log_file dnscat)
+        cd /lib/dnscat/server && sudo gem install bundler >>$(get_log_file dnscat)
+        cd /lib/dnscat/server && sudo bundler install 2>>$(get_log_file dnscat) >>$(get_log_file dnscat)
         cd $workingdir
         printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo ruby /lib/dnscat/server/dnscat2.rb \$args" > dnscat
         chmod +x dnscat
