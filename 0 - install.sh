@@ -1150,7 +1150,8 @@ if [[ ! -x "$(command -v dnscat-shell)" || $force ]];then
         chmod +x dnscat-shell.sh
         sudo mv dnscat-shell.sh /bin/dnscat-shell
         update_log $ret "[+] dnscat shell Installed"
-fi}
+fi
+}
 bg_install task-dnscat
 
 ###### Install Chisel
@@ -1347,16 +1348,17 @@ if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
         rm Nessus.deb
         sudo systemctl start nessusd
         update_log $ret "[~] Go to https://localhost:8834 to complete nessus installation"
-fi}
+fi
+}
 bg_install task-nessus
 
-add_log_entry; update_log $ret "[~] No more task, waiting apt... (${apt_proc[@]})"
+# add_log_entry; update_log $ret "[~] No more task, waiting apt... (${apt_proc[@]})"
 wait_apt
-update_log $ret "[~] No more task, waiting pip... (${pip_proc[@]})"
+# update_log $ret "[~] No more task, waiting pip... (${pip_proc[@]})"
 wait_pip
-update_log $ret "[~] No more task, waiting bg... (${bg_proc[@]})"
+# update_log $ret "[~] No more task, waiting bg... (${bg_proc[@]})"
 wait_bg
 
-update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"
+add_log_entry; update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"
 
 stop
