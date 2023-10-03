@@ -31,18 +31,6 @@ artifacts="/home/$usr/artifacts-$(date +%s)"
 mkdir $artifacts
 cd $artifacts
 
-# Set directory environement
-log=/home/$usr/logs
-hotscript=/home/$usr/hot-script
-if [[ ! -d $log && ! $nologs ]];then
-        add_log_entry; update_log $ret "[+] Creating log folder in $log"
-        mkdir $log
-fi
-if [[ ! -d $hotscript ]];then
-        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
-        mkdir $hotscript
-fi
-
 # Set gui pipes
 gui="$artifacts/pipe"
 mkdir $gui
@@ -293,6 +281,18 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
 gui_proc &
 guiproc_id=$!
+
+# Set directory environement
+log=/home/$usr/logs
+hotscript=/home/$usr/hot-script
+if [[ ! -d $log && ! $nologs ]];then
+        add_log_entry; update_log $ret "[+] Creating log folder in $log"
+        mkdir $log
+fi
+if [[ ! -d $hotscript ]];then
+        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
+        mkdir $hotscript
+fi
 
 # Inform user
 add_log_entry; update_log $ret "$(banner)"
