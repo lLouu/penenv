@@ -114,7 +114,7 @@ pip_proc=() # process for pip upgrade
 installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
-        while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep 1; done
+        while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep .2; done
         (file=$(date +%s%N); echo "$@" > $thread_dir/$file; $@; rm $thread_dir/$file) &
         p=$!
 }
@@ -137,7 +137,7 @@ pip_install () {
 # wait for process to end
 wait_pid() {
         if [[ $# -eq 0 ]];then return; fi
-        while [[ -e "/proc/$1" ]];do sleep 1;done
+        while [[ -e "/proc/$1" ]];do sleep .2;done
 }
 wait_bg () {
         for job in "${bg_proc[@]}"
@@ -152,7 +152,7 @@ wait_procs () {
                 do
                         wait_pid $job
                 done
-                while [[ $(ls $thread_dir | wc -l) -ge $thread ]];do sleep 1; done # Wait a working thread to be available again
+                while [[ $(ls $waiting_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -ge $thread ]];do sleep .2; done # Wait a working thread to be available again
                 if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $thread_dir/$file;fi
         fi
 }
@@ -160,7 +160,7 @@ wait_apt () { wait_procs ${apt_proc[@]}; }
 wait_pip () { wait_procs ${pip_proc[@]}; }
 wait_command() {
         (for cmd in $@;do
-                while [[ ! "$(command -v $cmd)" ]];do sleep 1;done
+                while [[ ! "$(command -v $cmd)" ]];do sleep .2;done
         done) &
         wait_procs $!
 }
@@ -381,7 +381,8 @@ bg_install apt_installation "python3"
 bg_install apt_installation "2to3"
 
 ###### Install pip
-(if [[ ! -x "$(command -v pip)" || $force ]];then
+pip-task (){
+if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 add_log_entry; update_log $ret "[~] pip not detected... Installing"
                 sudo apt-get -o DPkg::Lock::Timeout=600 install python3-pip -y >>$(get_log_file pip)
@@ -411,16 +412,24 @@ if [[ ! $no_upgrade ]];then
         done
         update_log $ret "[+] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
+}
+pip_install pip-task
 
 ###### Install poetry
+poetry-task (){
 if [[ ! -x "$(command -v poetry)" || $force ]];then
-        add_log_entry; update_log $ret "[~] poetry not detected... Installing"
+        add_log_entry; update_log $ret "[*] poetry not detected... Waiting for pip update"
+        wait_pip
+        update_log $ret "[~] poetry not detected... Installing"
         curl -sSL https://install.python-poetry.org | python3 >>$(get_log_file poetry)
         update_log $ret "[+] poetry Installed"
-fi) &
+fi
+}
+bg_install poetry-task
 
 ###### Install go
-(if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
+go-task(){
+if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
         add_log_entry; update_log $ret "[~] go 1.20 not detected... Installing"
         wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -q
         sudo tar xzf go1.20.2.linux-amd64.tar.gz 
@@ -438,7 +447,9 @@ fi) &
         export GOROOT=/usr/local/go
         export PATH=$GOROOT/bin:$PATH 
         update_log $ret "[+] go 1.20 Installed"
-fi) &
+fi
+}
+bg_install go-task
 
 ###### Install Ruby
 bg_install apt_installation "gem" "Ruby" "ruby-dev"
