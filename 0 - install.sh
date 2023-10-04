@@ -155,7 +155,7 @@ wait_procs () {
                         wait_pid $job
                 done
                 if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $goback_dir/$file;fi # Put the thread in want to activate again mode
-                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -ge $thread ]];do sleep .2; done # Wait a working thread to be available again while being the first in queue
+                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -gt $thread ]];do sleep .2; done # Wait a working thread to be available again while being the first in queue
                 if [[ -f "$goback_dir/$file" ]];then mv $goback_dir/$file $thread_dir/$file;fi
         fi
 }
@@ -580,7 +580,7 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        sudo git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister)
         update_log $ret "[~] sublist3r not detected... Waiting for pip"
         wait_pip
         update_log $ret "[~] sublist3r not detected... Installing requirements"
@@ -648,7 +648,7 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         add_log_entry; update_log $ret "[*] Dirscapper not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Dirscapper not detected... Installing"
-        git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper)
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
         update_log $ret "[*] Dirscapper not detected... Waiting for pip upgrade"
@@ -702,7 +702,7 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        git clone https://github.com/wappalyzer/wappalyzer.git --quiet >>$(get_log_file wappalyzer)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/lLouu/wappalyzer.git --quiet >>$(get_log_file wappalyzer)
         sudo mv wappalyzer /lib/wappalyzer
         workingdir=$(pwd)
         cd /lib/wappalyzer
@@ -732,7 +732,7 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
+        GIT_TERMINAL_PROMPT=0 git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
         sudo mv testssl.sh /lib32/testssl
         # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/testssl/testssl.sh \$args" > testssl
         # chmod +x testssl
@@ -758,7 +758,7 @@ if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         add_log_entry; update_log $ret "[*] Secretfinder not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Secretfinder not detected... Installing"
-        git clone https://github.com/m4ll0k/SecretFinder.git --quiet >>$(get_log_file secretfinder)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/m4ll0k/SecretFinder.git --quiet >>$(get_log_file secretfinder)
         chmod +x ./SecretFinder/SecretFinder.py
         sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
         update_log $ret "[*] Secretfinder not detected... Waiting for pip upgrade"
@@ -782,7 +782,7 @@ if [[ ! -x "$(command -v hydra)" || $force ]];then
         add_log_entry; update_log $ret "[*] Hydra not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Hydra not detected... Installing"
-        git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra)
         cd thc-hydra
         ./configure >>$(get_log_file hydra) 2>>$(get_log_file hydra)
         make >>$(get_log_file hydra)
@@ -887,7 +887,7 @@ if [[ ! -x "$(command -v sqlmap)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >>$(get_log_file sqlmap)
+        GIT_TERMINAL_PROMPT=0 git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >>$(get_log_file sqlmap)
         update_log $ret "[*] sqlmap not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] sqlmap not detected... Installing" requirements
@@ -913,7 +913,7 @@ if [[ ! -x "$(command -v commix)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
         sudo mv commix /lib/commix
         printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/commix/commix.py \$args" > commix
         chmod +x commix
@@ -929,7 +929,7 @@ if [[ ! -x "$(command -v pixload-png)" || $force ]];then
         add_log_entry; update_log $ret "[*] Pixload not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Pixload not detected... Installing"
-        sudo git clone https://github.com/sighook/pixload.git --quiet >>$(get_log_file pixload)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/sighook/pixload.git --quiet >>$(get_log_file pixload)
         cd pixload
         make >>$(get_log_file pixload) 2>>$(get_log_file pixload)
         sudo rm *pod
@@ -993,7 +993,7 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         update_log $ret "[*] crackmapexec not detected... Waiting for poetry and git"
         wait_command "poetry" "git"
         update_log $ret "[~] crackmapexec not detected... Installing"
-        git clone https://github.com/mpgn/CrackMapExec --quiet >>$(get_log_file cme)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/byt3bl33d3r/CrackMapExec --quiet >>$(get_log_file cme)
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
@@ -1052,7 +1052,7 @@ if [[ ! -x "$(command -v mitm6)" || $force ]];then
         add_log_entry; update_log $ret "[*] mitm6 not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] mitm6 not detected... Installing"
-        sudo git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6)
         update_log $ret "[*] mitm6 not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] mitm6 not detected... Installing requirements"
@@ -1071,7 +1071,7 @@ if [[ ! -x "$(command -v proxychains)" || $force ]];then
         add_log_entry; update_log $ret "[*] Proxychain not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Proxychain not detected... Installing"
-        git clone https://github.com/haad/proxychains.git --quiet >>$(get_log_file proxychains)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/haad/proxychains.git --quiet >>$(get_log_file proxychains)
         cd proxychains
         ./configure >>$(get_log_file proxychains) 2>>$(get_log_file proxychains)
         make >>$(get_log_file proxychains)
@@ -1096,7 +1096,7 @@ if [[ ! -x "$(command -v responder)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/responder to /lib/responder-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
         sudo mv Responder /lib/responder
         printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/responder/Responder.py \$args" > responder
         chmod +x responder
@@ -1124,7 +1124,7 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        git clone https://github.com/iagox86/dnscat2.git --quiet >>$(get_log_file dnscat)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/iagox86/dnscat2.git --quiet >>$(get_log_file dnscat)
         sudo mv dnscat2 /lib/dnscat
         # correct minor sourcecode error
         sudo sed -i 's/return a.value.ptr == a.value.ptr/return a.value.ptr == b.value.ptr/g' /lib/dnscat/client/libs/ll.c
@@ -1183,7 +1183,7 @@ if [[ ! -d "$hotscript/frp" || $force ]];then
         add_log_entry; update_log $ret "[*] frp not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] frp not detected... Installing"
-        sudo git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp)
         cd frp
         ./package.sh >>$(get_log_file frp) 2>>$(get_log_file frp)
         mv bin $hotscript/frp
@@ -1284,7 +1284,7 @@ if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
         add_log_entry; update_log $ret "[*] Mimipenguin not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Mimipenguin not detected... Installing"
-        sudo git clone https://github.com/huntergregal/mimipenguin.git --quiet >>$(get_log_file mimipenguin)
+        GIT_TERMINAL_PROMPT=0 git clone https://github.com/huntergregal/mimipenguin.git --quiet >>$(get_log_file mimipenguin)
         cd mimipenguin
         sudo make >>$(get_log_file mimipenguin) 2>>$(get_log_file mimipenguin)
         sudo mv mimipenguin $hotscript/mimipenguin
