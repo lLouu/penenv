@@ -40,8 +40,10 @@ echo -ne "-1" > $gui/position
 # Set threading management
 thread_dir="$artifacts/threads"
 waiting_dir="$thread_dir/waiting"
+goback_dir="$waiting_dir/going_back"
 mkdir $thread_dir
 mkdir $waiting_dir
+mkdir $goback_dir
 
 stop () {
         # wait proccesses
@@ -152,8 +154,9 @@ wait_procs () {
                 do
                         wait_pid $job
                 done
-                while [[ $(ls $waiting_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -ge $thread ]];do sleep .2; done # Wait a working thread to be available again
-                if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $thread_dir/$file;fi
+                if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $goback_dir/$file;fi # Put the thread in want to activate again mode
+                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -ge $thread ]];do sleep .2; done # Wait a working thread to be available again while being the first in queue
+                if [[ -f "$goback_dir/$file" ]];then mv $goback_dir/$file $thread_dir/$file;fi
         fi
 }
 wait_apt () { wait_procs ${apt_proc[@]}; }
