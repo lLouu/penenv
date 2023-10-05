@@ -737,6 +737,7 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
         # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/testssl/testssl.sh \$args" > testssl
         # chmod +x testssl
         # sudo mv testssl /bin/testssl
+        if [[ -f "/bin/testssl" ]];then sudo rm /bin/testssl;fi
         sudo ln -s /lib32/testssl/testssl.sh /bin/testssl
         update_log $ret "[+] Testssl Installed"
 fi
@@ -971,6 +972,7 @@ if [[ ! -x "$(command -v odat)" || $force ]];then
         # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$args" > odat
         # chmod +x odat
         # sudo mv odat /bin/odat
+        if [[ -f "/bin/odat" ]];then sudo rm /bin/odat;fi
         sudo ln -s /lib32/odat_lib/odat-libc2.17-x86_64 /bin/odat
         update_log $ret "[+] odat Installed"
 fi
