@@ -13,8 +13,8 @@ banner (){
         echo "                                     ";
         echo ""
         echo "Author : lLou_"
-        echo "Suite version : V0.2.6 beta"
-        echo "Script version : V2.2 beta"
+        echo "Suite version : V0.2.6"
+        echo "Script version : V2.2"
         echo ""
         echo ""
 }

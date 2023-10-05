@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (86/100)
+## Install (86/105)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -53,9 +53,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] jq
  - [X] expect
 
-### Tools (49/56)
-#### Web Scan (23/24)
-##### Subdomains & paths (13)
+### Tools (49/59)
+#### Web Scan (23/25)
+##### Subdomains & paths (13/14)
  - [X] sublist3r
  - [X] assetfinder
  - [X] amass
@@ -70,6 +70,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] dirscapper
  - [X] haktrails
  - [X] hakrawler
+ - [ ] linkfinder
 ##### Fuzzers (4)
  - [X] gobuster
  - [X] whatweb
@@ -96,7 +97,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (6/8)
+#### Exploits (6/9)
  - [X] Metasploit & Armitage & Upgrade
  - [X] searchsploit
  - [X] AutoHackBruteOS
@@ -105,8 +106,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] pixload
  - [ ] ghidra
  - [ ] gdb
+ - [ ] Shocker
 
-#### Other (12/16)
+#### Other (12/17)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
@@ -123,8 +125,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] BloodyAD
  - [ ] smbmap
  - [ ] Certipy
+ - [ ] pydictor
 
-### Scripts (10/17)
+### Scripts (10/19)
  - [X] dnscat (server & client & shell)
  - [X] Chisel
  - [X] frp
@@ -142,6 +145,8 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [ ] evilSSDP
  - [ ] netcat Windows
  - [ ] ligolo-ng
+ - [ ] FullPowers
+ - [ ] GodPotato
 
 ### Services (3)
  - [X] bloodhound
