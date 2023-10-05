@@ -580,7 +580,7 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister)
+        GIT_ASKPASS=true git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister)
         update_log $ret "[~] sublist3r not detected... Waiting for pip"
         wait_pip
         update_log $ret "[~] sublist3r not detected... Installing requirements"
@@ -648,7 +648,7 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         add_log_entry; update_log $ret "[*] Dirscapper not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Dirscapper not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper)
+        GIT_ASKPASS=true git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper)
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
         update_log $ret "[*] Dirscapper not detected... Waiting for pip upgrade"
@@ -702,19 +702,18 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/lLouu/wappalyzer.git --quiet >>$(get_log_file wappalyzer)
+        GIT_ASKPASS=true git clone https://github.com/lLouu/wappalyzer.git --quiet >>$(get_log_file wappalyzer)
         sudo mv wappalyzer /lib/wappalyzer
         workingdir=$(pwd)
         cd /lib/wappalyzer
-        # correct minor sourcecode error
-        sudo sed -i 's/?././g' /lib/wappalyzer/src/drivers/npm/driver.js
-        sudo sed -i 's/?././g' /lib/wappalyzer/src/drivers/npm/wappalyzer.js
         cd /lib/wappalyzer && yarn install --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd /lib/wappalyzer && yarn run link --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd $workingdir
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo node /lib/wappalyzer/src/drivers/npm/cli.js\$args" > wappalyzer
-        chmod +x wappalyzer
-        sudo mv wappalyzer /bin/wappalyzer
+        new_cont=$(echo "#! /bin/node" && cat /lib/wappalyzer/src/drivers/npm/cli.js)
+        echo $new_cont > /lib/wappalyzer/src/drivers/npm/cli.js
+        sudo chmod +x /lib/wappalyzer/src/drivers/npm/cli.js
+        if [[ -f "/bin/wappalyzer" ]];then sudo rm /bin/wappalyzer;fi
+        sudo ln -s /lib/wappalyzer/src/drivers/npm/cli.js /bin/wappalyzer
         update_log $ret "[+] wappalyzer Installed"
 fi
 }
@@ -732,11 +731,8 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
+        GIT_ASKPASS=true git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
         sudo mv testssl.sh /lib32/testssl
-        # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/testssl/testssl.sh \$args" > testssl
-        # chmod +x testssl
-        # sudo mv testssl /bin/testssl
         if [[ -f "/bin/testssl" ]];then sudo rm /bin/testssl;fi
         sudo ln -s /lib32/testssl/testssl.sh /bin/testssl
         update_log $ret "[+] Testssl Installed"
@@ -759,7 +755,7 @@ if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         add_log_entry; update_log $ret "[*] Secretfinder not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Secretfinder not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/m4ll0k/SecretFinder.git --quiet >>$(get_log_file secretfinder)
+        GIT_ASKPASS=true git clone https://github.com/m4ll0k/SecretFinder.git --quiet >>$(get_log_file secretfinder)
         chmod +x ./SecretFinder/SecretFinder.py
         sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
         update_log $ret "[*] Secretfinder not detected... Waiting for pip upgrade"
@@ -783,7 +779,7 @@ if [[ ! -x "$(command -v hydra)" || $force ]];then
         add_log_entry; update_log $ret "[*] Hydra not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Hydra not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra)
+        GIT_ASKPASS=true git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra)
         cd thc-hydra
         ./configure >>$(get_log_file hydra) 2>>$(get_log_file hydra)
         make >>$(get_log_file hydra)
@@ -888,15 +884,17 @@ if [[ ! -x "$(command -v sqlmap)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >>$(get_log_file sqlmap)
+        GIT_ASKPASS=true git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >>$(get_log_file sqlmap)
         update_log $ret "[*] sqlmap not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] sqlmap not detected... Installing" requirements
         pip install -r sqlmap/requirements.txt -q 2>>$(get_log_file sqlmap)
         sudo mv sqlmap /lib/sqlmap
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/sqlmap/sqlmap.py \$args" > sqlmap
-        chmod +x sqlmap
-        sudo mv sqlmap /bin/sqlmap
+        new_cont=$(echo "#! /bin/python3" && cat /lib/sqlmap/sqlmap.py)
+        echo $new_cont > /lib/sqlmap/sqlmap.py
+        sudo chmod +x /lib/sqlmap/sqlmap.py
+        if [[ -f "/bin/sqlmap" ]];then sudo rm /bin/sqlmap;fi
+        sudo ln -s /lib/sqlmap/sqlmap.py /bin/sqlmap
         update_log $ret "[+] sqlmap Installed"
 fi
 }
@@ -914,11 +912,13 @@ if [[ ! -x "$(command -v commix)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
+        GIT_ASKPASS=true git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
         sudo mv commix /lib/commix
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/commix/commix.py \$args" > commix
-        chmod +x commix
-        sudo mv commix /bin/commix
+        new_cont=$(echo "#! /bin/python3" && cat /lib/commix/commix.py)
+        echo $new_cont > /lib/commix/commix.py
+        sudo chmod +x /lib/commix/commix.py
+        if [[ -f "/bin/commix" ]];then sudo rm /bin/commix;fi
+        sudo ln -s /lib/commix/commix.py /bin/commix
         update_log $ret "[+] commix Installed"
 fi
 }
@@ -930,7 +930,7 @@ if [[ ! -x "$(command -v pixload-png)" || $force ]];then
         add_log_entry; update_log $ret "[*] Pixload not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Pixload not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/sighook/pixload.git --quiet >>$(get_log_file pixload)
+        GIT_ASKPASS=true git clone https://github.com/sighook/pixload.git --quiet >>$(get_log_file pixload)
         cd pixload
         make >>$(get_log_file pixload) 2>>$(get_log_file pixload)
         sudo rm *pod
@@ -969,9 +969,6 @@ if [[ ! -x "$(command -v odat)" || $force ]];then
         sudo tar xzf odat-linux-libc2.17-x86_64.tar.gz
         sudo rm odat-linux-libc2.17-x86_64.tar.gz
         sudo mv odat-libc2.17-x86_64 /lib32/odat_lib
-        # printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo /lib32/odat_lib/odat-libc2.17-x86_64 \$args" > odat
-        # chmod +x odat
-        # sudo mv odat /bin/odat
         if [[ -f "/bin/odat" ]];then sudo rm /bin/odat;fi
         sudo ln -s /lib32/odat_lib/odat-libc2.17-x86_64 /bin/odat
         update_log $ret "[+] odat Installed"
@@ -995,7 +992,7 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         update_log $ret "[*] crackmapexec not detected... Waiting for poetry and git"
         wait_command "poetry" "git"
         update_log $ret "[~] crackmapexec not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/byt3bl33d3r/CrackMapExec --quiet >>$(get_log_file cme)
+        GIT_ASKPASS=true git clone https://github.com/byt3bl33d3r/CrackMapExec --quiet >>$(get_log_file cme)
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
@@ -1054,7 +1051,7 @@ if [[ ! -x "$(command -v mitm6)" || $force ]];then
         add_log_entry; update_log $ret "[*] mitm6 not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] mitm6 not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6)
+        GIT_ASKPASS=true git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6)
         update_log $ret "[*] mitm6 not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] mitm6 not detected... Installing requirements"
@@ -1073,7 +1070,7 @@ if [[ ! -x "$(command -v proxychains)" || $force ]];then
         add_log_entry; update_log $ret "[*] Proxychain not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Proxychain not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/haad/proxychains.git --quiet >>$(get_log_file proxychains)
+        GIT_ASKPASS=true git clone https://github.com/haad/proxychains.git --quiet >>$(get_log_file proxychains)
         cd proxychains
         ./configure >>$(get_log_file proxychains) 2>>$(get_log_file proxychains)
         make >>$(get_log_file proxychains)
@@ -1098,11 +1095,13 @@ if [[ ! -x "$(command -v responder)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/responder to /lib/responder-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
+        GIT_ASKPASS=true git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
         sudo mv Responder /lib/responder
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo python3 /lib/responder/Responder.py \$args" > responder
-        chmod +x responder
-        sudo mv responder /bin/responder
+        new_cont=$(echo "#! /bin/python3" && cat /lib/responder/Responder.py)
+        echo $new_cont > /lib/responder/Responder.py
+        sudo chmod +x /lib/responder/Responder.py
+        if [[ -f "/bin/responder" ]];then sudo rm /bin/responder;fi
+        sudo ln -s /lib/responder/Responder.py /bin/responder
         update_log $ret "[+] responder Installed"
 fi
 }
@@ -1126,7 +1125,7 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/iagox86/dnscat2.git --quiet >>$(get_log_file dnscat)
+        GIT_ASKPASS=true git clone https://github.com/iagox86/dnscat2.git --quiet >>$(get_log_file dnscat)
         sudo mv dnscat2 /lib/dnscat
         # correct minor sourcecode error
         sudo sed -i 's/return a.value.ptr == a.value.ptr/return a.value.ptr == b.value.ptr/g' /lib/dnscat/client/libs/ll.c
@@ -1154,9 +1153,11 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         cd /lib/dnscat/server && sudo gem install bundler >>$(get_log_file dnscat)
         cd /lib/dnscat/server && sudo bundler install 2>>$(get_log_file dnscat) >>$(get_log_file dnscat)
         cd $workingdir
-        printf "#! /bin/sh\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo ruby /lib/dnscat/server/dnscat2.rb \$args" > dnscat
-        chmod +x dnscat
-        sudo mv dnscat /bin/dnscat
+        new_cont=$(echo "#! /bin/ruby" && cat /lib/dnscat/server/dnscat2.rb)
+        echo $new_cont > /lib/dnscat/server/dnscat2.rb
+        sudo chmod +x /lib/dnscat/server/dnscat2.rb
+        if [[ -f "/bin/dnscat" ]];then sudo rm /bin/dnscat;fi
+        sudo ln -s /lib/dnscat/server/dnscat2.rb /bin/dnscat
         update_log $ret "[+] Dnscat server Made"
 fi
 
@@ -1185,7 +1186,7 @@ if [[ ! -d "$hotscript/frp" || $force ]];then
         add_log_entry; update_log $ret "[*] frp not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] frp not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp)
+        GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp)
         cd frp
         ./package.sh >>$(get_log_file frp) 2>>$(get_log_file frp)
         mv bin $hotscript/frp
@@ -1286,7 +1287,7 @@ if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
         add_log_entry; update_log $ret "[*] Mimipenguin not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Mimipenguin not detected... Installing"
-        GIT_TERMINAL_PROMPT=0 git clone https://github.com/huntergregal/mimipenguin.git --quiet >>$(get_log_file mimipenguin)
+        GIT_ASKPASS=true git clone https://github.com/huntergregal/mimipenguin.git --quiet >>$(get_log_file mimipenguin)
         cd mimipenguin
         sudo make >>$(get_log_file mimipenguin) 2>>$(get_log_file mimipenguin)
         sudo mv mimipenguin $hotscript/mimipenguin
