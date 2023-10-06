@@ -714,8 +714,6 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
         cd /lib/wappalyzer && yarn install --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd /lib/wappalyzer && yarn run link --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd $workingdir
-        new_cont=$(echo "#! /bin/node" && cat /lib/wappalyzer/src/drivers/npm/cli.js)
-        echo "$new_cont" > /lib/wappalyzer/src/drivers/npm/cli.js
         sudo chmod +x /lib/wappalyzer/src/drivers/npm/cli.js
         if [[ -f "/bin/wappalyzer" ]];then sudo rm /bin/wappalyzer;fi
         sudo ln -s /lib/wappalyzer/src/drivers/npm/cli.js /bin/wappalyzer
