@@ -684,7 +684,11 @@ bg_install go_installation "ffuf" "github.com/ffuf/ffuf/v2@latest"
 ###### Install x8
 task-xeight() {
 if [[ ! -x "$(command -v x8)" || $force ]];then
-        add_log_entry; update_log $ret "[*] x8 not detected... Waiting for rust"
+        add_log_entry; update_log $ret "[*] x8 not detected... Waiting for apt"
+        wait_apt
+        update_log $ret "[~] x8 not detected... Installing dependencies"
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev >>$(get_log_file x8)
+        update_log $ret "[*] x8 not detected... Waiting for rust"
         wait_command "cargo"
         update_log $ret "[~] x8 not detected... Installing"
         cargo install x8 >>$(get_log_file x8) 2>>$(get_log_file x8)
@@ -855,9 +859,13 @@ bg_install task-metasploit
 task-searchsploit() {
 if [[ ! -x "$(command -v searchsploit)" || $force ]];then
         add_log_entry; update_log $ret "[~] Searchsploit not detected... Installing"
-        wget https://raw.githubusercontent.com/rad10/SearchSploit.py/master/searchsploit.py -q
-        chmod +x searchsploit.py
+        GIT_ASKPASS=true git clone --depth 1 https://github.com/rad10/SearchSploit.py.git --quiet >>$(get_log_file sqlmap)
+        cd SearchSploit.py
+        sed -i 's/input//g' setup.py
+        python3 ./setup.py >>$(get_log_file sqlmap) 2>>$(get_log_file sqlmap)
         sudo mv searchsploit.py /bin/searchsploit
+        cd ..
+        sudo rm -r ./SearchSploit.py
         update_log $ret "[+] Searchsploit Installed"
 fi
 }
