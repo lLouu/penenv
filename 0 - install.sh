@@ -355,6 +355,7 @@ fi
 bg_install task-start
 
 if [[ $check ]];then
+        wait_bg
         stop --no-exit
         install-penenv $ORIGINAL_ARGS -nc
         exit 1
@@ -649,6 +650,9 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         wait_command "git"
         update_log $ret "[~] Dirscapper not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper)
+        new_cont=$(echo "#! /bin/python3" && cat ./dirscraper/dirscraper.py)
+        echo "$new_cont" > ./dirscraper/dirscraper.py
+        sed -i 's/\r//' ./dirscraper/dirscraper.py
         chmod +x ./dirscraper/dirscraper.py
         sudo mv dirscraper/dirscraper.py /bin/dirscraper
         update_log $ret "[*] Dirscapper not detected... Waiting for pip upgrade"
@@ -684,6 +688,7 @@ if [[ ! -x "$(command -v x8)" || $force ]];then
         wait_command "cargo"
         update_log $ret "[~] x8 not detected... Installing"
         cargo install x8 >>$(get_log_file x8) 2>>$(get_log_file x8)
+        sudo mv /home/$usr/.cargo/bin/x8 /bin/x8
         update_log $ret "[+] x8 Installed"
 fi
 }
@@ -710,7 +715,7 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
         cd /lib/wappalyzer && yarn run link --silent 2>>$(get_log_file wappalyzer) >>$(get_log_file wappalyzer)
         cd $workingdir
         new_cont=$(echo "#! /bin/node" && cat /lib/wappalyzer/src/drivers/npm/cli.js)
-        echo $new_cont > /lib/wappalyzer/src/drivers/npm/cli.js
+        echo "$new_cont" > /lib/wappalyzer/src/drivers/npm/cli.js
         sudo chmod +x /lib/wappalyzer/src/drivers/npm/cli.js
         if [[ -f "/bin/wappalyzer" ]];then sudo rm /bin/wappalyzer;fi
         sudo ln -s /lib/wappalyzer/src/drivers/npm/cli.js /bin/wappalyzer
@@ -891,7 +896,7 @@ if [[ ! -x "$(command -v sqlmap)" || $force ]];then
         pip install -r sqlmap/requirements.txt -q 2>>$(get_log_file sqlmap)
         sudo mv sqlmap /lib/sqlmap
         new_cont=$(echo "#! /bin/python3" && cat /lib/sqlmap/sqlmap.py)
-        echo $new_cont > /lib/sqlmap/sqlmap.py
+        echo "$new_cont" > /lib/sqlmap/sqlmap.py
         sudo chmod +x /lib/sqlmap/sqlmap.py
         if [[ -f "/bin/sqlmap" ]];then sudo rm /bin/sqlmap;fi
         sudo ln -s /lib/sqlmap/sqlmap.py /bin/sqlmap
@@ -915,7 +920,7 @@ if [[ ! -x "$(command -v commix)" || $force ]];then
         GIT_ASKPASS=true git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
         sudo mv commix /lib/commix
         new_cont=$(echo "#! /bin/python3" && cat /lib/commix/commix.py)
-        echo $new_cont > /lib/commix/commix.py
+        echo "$new_cont" > /lib/commix/commix.py
         sudo chmod +x /lib/commix/commix.py
         if [[ -f "/bin/commix" ]];then sudo rm /bin/commix;fi
         sudo ln -s /lib/commix/commix.py /bin/commix
@@ -1001,13 +1006,13 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         update_log $ret "[~] crackmapexec not detected... Initialize"
         cd /lib/crackmapexec && poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd $workingdir
-        printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run crackmapexec \$args" > crackmapexec
+        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run crackmapexec \$args" > crackmapexec
         chmod +x crackmapexec
         sudo mv crackmapexec /bin/crackmapexec
-        printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run crackmapexec \$args" > cme
+        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run crackmapexec \$args" > cme
         chmod +x cme
         sudo mv cme /bin/cme
-        printf "#! /bin/sh\ncd /lib/crackmapexec\nargs=''\nfor [[ arg in \$@ ]];do args=\"\$args '\$arg'\"\nsudo poetry run cmedb \$args" > cmedb
+        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run cmedb \$args" > cmedb
         chmod +x cmedb
         sudo mv cmedb /bin/cmedb
         update_log $ret "[+] crackmapexec Installed"
@@ -1098,7 +1103,7 @@ if [[ ! -x "$(command -v responder)" || $force ]];then
         GIT_ASKPASS=true git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
         sudo mv Responder /lib/responder
         new_cont=$(echo "#! /bin/python3" && cat /lib/responder/Responder.py)
-        echo $new_cont > /lib/responder/Responder.py
+        echo "$new_cont" > /lib/responder/Responder.py
         sudo chmod +x /lib/responder/Responder.py
         if [[ -f "/bin/responder" ]];then sudo rm /bin/responder;fi
         sudo ln -s /lib/responder/Responder.py /bin/responder
@@ -1154,7 +1159,7 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         cd /lib/dnscat/server && sudo bundler install 2>>$(get_log_file dnscat) >>$(get_log_file dnscat)
         cd $workingdir
         new_cont=$(echo "#! /bin/ruby" && cat /lib/dnscat/server/dnscat2.rb)
-        echo $new_cont > /lib/dnscat/server/dnscat2.rb
+        echo "$new_cont" > /lib/dnscat/server/dnscat2.rb
         sudo chmod +x /lib/dnscat/server/dnscat2.rb
         if [[ -f "/bin/dnscat" ]];then sudo rm /bin/dnscat;fi
         sudo ln -s /lib/dnscat/server/dnscat2.rb /bin/dnscat
