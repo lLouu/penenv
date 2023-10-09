@@ -80,16 +80,22 @@ trap stop INT
 
 # Common installation protocols
 apt_installation () {
-        if [[ $# -eq 0 || $# -gt 3 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for apt installation, when only 1, 2 or 3 are accepted... ($@)"; return; fi 
+        if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : 0 argument given for apt installation, when at least 1 is needed..."; return; fi 
         if [[ $# -eq 1 ]];then name=$1; pkg=$1; fi
         if [[ $# -eq 2 ]];then name=$2; pkg=$2; fi
-        if [[ $# -eq 3 ]];then name=$2; pkg=$3; fi
+        if [[ $# -gt 2 ]];then name=$2; fi
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 add_log_entry; update_log $ret "[*] $name not detected... Waiting for apt upgrade"
                 wait_apt
                 update_log $ret "[~] $name not detected... Installing"
                 # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed (thanks to parrallelization)
-                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                if [[ $# -le 2 ]];then
+                        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                else
+                        for pkg in ${@:3};do
+                                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                        done
+                fi
                 update_log $ret "[+] $name Installed"
         fi
 }
@@ -128,12 +134,12 @@ installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
         while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep .2; done
-        (file=$(date +%s%N); echo "$@" > $thread_dir/$file; "$@"; rm $thread_dir/$file) &
+        (file=$(date +%s%N); echo $@ > $thread_dir/$file; "$@"; rm $thread_dir/$file) &
         p=$!
 }
 bg_install () {
         p=-1
-        installation "$@"
+        installation $@
         if [[ $p -ne -1 ]];then bg_proc+=( $p );fi
 }
 apt_install () {
@@ -476,7 +482,7 @@ bg_install go-task
 bg_install apt_installation "gem" "Ruby" "ruby-dev"
 
 ###### Install Java
-bg_install apt_installation "java" "Java" '"default-jdk" "openjdk-17-jdk"'
+bg_install apt_installation "java" "Java" "default-jdk" "openjdk-17-jdk"
 
 ###### Install Nodejs
 task-js() {
@@ -552,7 +558,7 @@ task-gradle () {
                         ret=$tmp
                 fi
                 wget https://services.gradle.org/distributions/gradle-8.4-bin.zip -q
-                7z x gradle-8.4-bin.zip 2>>$(get_log_file sublister) >>$(get_log_file sublister)
+                7z x gradle-8.4-bin.zip 2>>$(get_log_file gradle) >>$(get_log_file gradle)
                 rm gradle-8.4-bin.zip
                 sudo mv gradle-8.4 /lib/gradle
                 if [[ -f "/bin/gradle" ]];then sudo rm /bin/gradle;fi
@@ -1027,7 +1033,7 @@ if [[ ! -x "$(command -v ghidra)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/ghidra to /lib/ghidra-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.4_build/ghidra_10.4_PUBLIC_20230928.zip -q
+        wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.4_build/ghidra_10.4_PUBLIC_20230928.zip -q 2>>$(get_log_file ghidra) >>$(get_log_file ghidra)
         7z x ghidra_10.4_PUBLIC_20230928.zip >>$(get_log_file ghidra) 2>>$(get_log_file ghidra)
         rm ghidra_10.4_PUBLIC_20230928.zip
         sudo mv ghidra_10.4_PUBLIC /lib/ghidra
@@ -1039,13 +1045,13 @@ fi
 bg_install task-ghidra
 
 ###### Install gdb
-bg_install 'apt_installation gdb GDB "libelf1=0.183-1 libdw1=0.183-1 gdb"'
+bg_install apt_installation "gdb" "GDB" "libelf1=0.183-1" "libdw1=0.183-1 gdb"
 
 ###### Install shocker
 task-shocker() {
 if [[ ! -x "$(command -v shocker)" || $force ]];then
         add_log_entry; update_log $ret "[~] Shocker not detected... Installing"
-        wget https://github.com/nccgroup/shocker/blob/master/shocker.py -q
+        wget https://raw.githubusercontent.com/nccgroup/shocker/master/shocker.py -q 2>>$(get_log_file shocker) >>$(get_log_file shocker)
         chmod +x shocker.py
         sudo mv shocker.py /bin/shocker
         update_log $ret "[+] Shocker Installed"
@@ -1232,6 +1238,7 @@ bg_install task-evilwinrm
 ###### Install Bloody AD
 task-bloodyad () {
         wait_apt
+        wait_pip
         sudo apt-get -o DPkg::Lock::Timeout=600 install -y libcom-err2=1.46.2-2 libkrb5-dev >>$(get_log_file bloodyAD) 2>>$(get_log_file bloodyAD)
         pip_installation bloodyAD
 }
@@ -1246,10 +1253,20 @@ bg_install pip_installation certipy-ad
 ###### Install Pydictor
 task-pydictor() {
 if [[ ! -x "$(command -v pydictor)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Pydictor not detected... Installing"
-        wget https://raw.githubusercontent.com/LandGrey/pydictor/master/pydictor.py -q
-        chmod +x pydictor.py
-        sudo mv pydictor.py /bin/pydictor
+        add_log_entry; update_log $ret "[*] Pydictor not detected... Waiting for git"
+        wait_command "git"
+        update_log $ret "[~] Pydictor not detected... Installing"
+        GIT_ASKPASS=true git clone https://github.com/LandGrey/pydictor.git --quiet >>$(get_log_file pydictor) 2>>$(get_log_file pydictor)
+        chmod +x pydictor/pydictor.py
+        if [[ -d "/lib/pydictor" ]];then
+                sudo mv /lib/pydictor /lib/pydictor-$(date +%y-%m-%d--%T).old
+                tmp=$ret
+                add_log_entry; update_log $ret "[*] Moved /lib/pydictor to /lib/pydictor-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                ret=$tmp
+        fi
+        sudo mv pydictor /lib/pydictor
+        if [[ -f "/bin/pydictor" ]];then sudo rm /bin/pydictor;fi
+        sudo ln -s /lib/pydictor/pydictor.py /bin/pydictor
         update_log $ret "[+] Pydictor Installed"
 fi
 }
@@ -1482,7 +1499,7 @@ bg_install task-powersploit
 task-netcatexe () {
         if [[ ! -f "$hotscript/nc.exe" || $force ]];then
                 add_log_entry; update_log $ret "[~] Netcat exe not detected... Installing"
-                GIT_ASKPASS=true git clone https://github.com/int0x33/nc.exe.git --quiet >>$(get_log_file sublister) 2>>$(get_log_file sublister)
+                GIT_ASKPASS=true git clone https://github.com/int0x33/nc.exe.git --quiet >>$(get_log_file netcat) 2>>$(get_log_file netcat)
                 mv nc.exe/nc.exe $hotscript/nc.exe
                 mv nc.exe/nc64.exe $hotscript/nc64.exe
                 sudo rm -r nc.exe
@@ -1499,8 +1516,8 @@ task-ligolo () {
                 update_log $ret "[~] Ligolo not detected... Installing"
                 GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ligolo-ng
-                go build -o $hotscript/ligolo cmd/agent/main.go
-                sudo go build -o /bin/ligolo cmd/proxy/main.go
+                go build -o $hotscript/ligolo cmd/agent/main.go >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
+                sudo go build -o /bin/ligolo cmd/proxy/main.go >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ..
                 sudo rm -r ligolo-ng
                 update_log $ret "[+] Ligolo Installed"
@@ -1512,7 +1529,7 @@ bg_install task-ligolo
 task-fullpowers () {
         if [[ ! -f "$hotscript/FullPowers.exe" || $force ]];then
                 add_log_entry; update_log $ret "[~] FullPowers not detected... Installing"
-                wget "https://github.com/itm4n/FullPowers/releases/download/v0.1/FullPowers.exe" -q
+                wget "https://github.com/itm4n/FullPowers/releases/download/v0.1/FullPowers.exe" -q >>$(get_log_file FullPowers) 2>>$(get_log_file FullPowers)
                 mv FullPowers.exe $hotscript/FullPowers.exe
                 update_log $ret "[+] FullPowers Installed"
         fi
@@ -1523,9 +1540,9 @@ bg_install task-fullpowers
 task-godpotato () {
         if [[ ! -f "$hotscript/godpotatoNET2.exe" || ! -f "$hotscript/godpotatoNET4.exe" || ! -f "$hotscript/godpotatoNET35.exe" || $force ]];then
                 add_log_entry; update_log $ret "[~] GodPotato not detected... Installing"
-                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET2.exe" -q -o "$hotscript/godpotatoNET2.exe"
-                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe" -q -o "$hotscript/godpotatoNET4.exe"
-                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET35.exe" -q -o "$hotscript/godpotatoNET35.exe"
+                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET2.exe" -q -o "$hotscript/godpotatoNET2.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
+                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe" -q -o "$hotscript/godpotatoNET4.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
+                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET35.exe" -q -o "$hotscript/godpotatoNET35.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
                 update_log $ret "[+] GodPotato Installed"
         fi
 }
