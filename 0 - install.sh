@@ -128,12 +128,12 @@ installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
         while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep .2; done
-        (file=$(date +%s%N); echo "$@" > $thread_dir/$file; $@; rm $thread_dir/$file) &
+        (file=$(date +%s%N); echo "$@" > $thread_dir/$file; "$@"; rm $thread_dir/$file) &
         p=$!
 }
 bg_install () {
         p=-1
-        installation $@
+        installation "$@"
         if [[ $p -ne -1 ]];then bg_proc+=( $p );fi
 }
 apt_install () {
@@ -228,7 +228,7 @@ gui_proc () {
                 ended=$(cat $gui/* | grep "\[+\]" | wc -l)
                 total=$(($ended + $waiting + $used - 1))
 
-                echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)$(echo "")Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
+                echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)\n  >  Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
                 sleep 0.2
         done
 }
@@ -556,7 +556,7 @@ task-gradle () {
                 rm gradle-8.4-bin.zip
                 sudo mv gradle-8.4 /lib/gradle
                 if [[ -f "/bin/gradle" ]];then sudo rm /bin/gradle;fi
-                ln -s /lib/gradle/bin/gradle /bin/gradle
+                sudo ln -s /lib/gradle/bin/gradle /bin/gradle
                 update_log $ret "[+] sublist3r Installed"
         fi
 }
