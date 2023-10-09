@@ -90,10 +90,10 @@ apt_installation () {
                 update_log $ret "[~] $name not detected... Installing"
                 # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed (thanks to parrallelization)
                 if [[ $# -le 2 ]];then
-                        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
                 else
                         for pkg in ${@:3};do
-                                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
                         done
                 fi
                 update_log $ret "[+] $name Installed"
@@ -1045,13 +1045,14 @@ fi
 bg_install task-ghidra
 
 ###### Install gdb
-bg_install apt_installation "gdb" "GDB" "libelf1=0.183-1" "libdw1=0.183-1 gdb"
+bg_install apt_installation "gdb" "GDB" "libelf1=0.183-1" "libdw1=0.183-1" "gdb"
 
 ###### Install shocker
 task-shocker() {
 if [[ ! -x "$(command -v shocker)" || $force ]];then
         add_log_entry; update_log $ret "[~] Shocker not detected... Installing"
         wget https://raw.githubusercontent.com/nccgroup/shocker/master/shocker.py -q 2>>$(get_log_file shocker) >>$(get_log_file shocker)
+        2to3 -x ./shocker.py 2>>$(get_log_file shocker) >>$(get_log_file shocker)
         chmod +x shocker.py
         sudo mv shocker.py /bin/shocker
         update_log $ret "[+] Shocker Installed"
@@ -1239,7 +1240,7 @@ bg_install task-evilwinrm
 task-bloodyad () {
         wait_apt
         wait_pip
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libcom-err2=1.46.2-2 libkrb5-dev >>$(get_log_file bloodyAD) 2>>$(get_log_file bloodyAD)
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -y --allow-downgrades libcom-err2=1.46.2-2 libkrb5-dev >>$(get_log_file bloodyAD) 2>>$(get_log_file bloodyAD)
         pip_installation bloodyAD
 }
 bg_install task-bloodyad
