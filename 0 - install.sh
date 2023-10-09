@@ -535,7 +535,7 @@ if [[ ! -x "$(command -v dotnet)" || $force ]];then
         chmod +x ./dotnet-install.sh
         ./dotnet-install.sh --version latest 2>>$(get_log_file dotnet) >>$(get_log_file dotnet)
         rm dotnet-install.sh
-        sudo ln -s ~/.dotnet/dotnet
+        sudo ln -s ~/.dotnet/dotnet /bin/dotnet
         update_log $ret "[+] Dotnet Installed"
 fi
 }
@@ -1046,7 +1046,9 @@ bg_install apt_installation "gdb" "GDB" "libelf1=0.183-1" "libdw1=0.183-1" "gdb"
 ###### Install shocker
 task-shocker() {
 if [[ ! -x "$(command -v shocker)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Shocker not detected... Installing"
+        add_log_entry; update_log $ret "[~] Shocker not detected... Waiting for 2to3"
+        wait_command "2to3"
+        update_log $ret "[~] Shocker not detected... Installing"
         wget https://raw.githubusercontent.com/nccgroup/shocker/master/shocker.py -q 2>>$(get_log_file shocker) >>$(get_log_file shocker)
         2to3 -w ./shocker.py 2>>$(get_log_file shocker) >>$(get_log_file shocker)
         chmod +x shocker.py
@@ -1342,8 +1344,9 @@ bg_install task-chisel
 ###### Install frp
 task-frp() {
 if [[ ! -d "$hotscript/frp" || $force ]];then
-        add_log_entry; update_log $ret "[*] frp not detected... Waiting for git and go"
+        add_log_entry; update_log $ret "[*] frp not detected... Waiting for git and go 1.20"
         wait_command "git" "go"
+        while [[ ! "$(go version)" =~ "1.20" ]];do sleep .2;done
         update_log $ret "[~] frp not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp) 2>>$(get_log_file frp)
         cd frp
