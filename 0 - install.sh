@@ -13,8 +13,8 @@ banner (){
         echo "                                     ";
         echo ""
         echo "Author : lLou_"
-        echo "Suite version : V0.2.6"
-        echo "Script version : V2.2"
+        echo "Suite version : V0.2.7"
+        echo "Script version : V2.3"
         echo ""
         echo ""
 }
@@ -91,6 +91,17 @@ apt_installation () {
                 # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed (thanks to parrallelization)
                 sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
                 update_log $ret "[+] $name Installed"
+        fi
+}
+
+pip_installation () {
+        if [[ $# -ne 1 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for apt installation, when only 1 is accepted... ($@)"; return; fi 
+        if [[ ! "$(pip list | grep $1)" || $force ]];then
+                add_log_entry; update_log $ret "[*] $1 not detected... Waiting for pip upgrade"
+                wait_pip
+                update_log $ret "[~] $1 not detected... Installing"
+                sudo pip install $1 >>$(get_log_file $1) 2>>$(get_log_file $1)
+                update_log $ret "[+] $1 Installed"
         fi
 }
 
@@ -212,6 +223,24 @@ gui_proc () {
                 # Observe updating to reduce gui needs ?
                 # And maybe sort such that Installing process are all the way down
                 echo "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)"
+
+                used=$((1 + $(ls $thread_dir | wc -l)))
+                waiting=$(($(ls waiting_dir || wc -l) + $(ls goback_dir || wc -l) - 1))
+                ended=$(ls $gui | grep [+])
+                total=$(($ended + $waiting + $used - 1))
+
+                len=$(tput cols)
+                progressbar=""
+                if [[ $len -ge 20 ]];then
+                        prc=$(($ended * 100 / $total))
+                        prm=$(($ended * 1000 / $total))
+                        dec=$(($prc*10 - $prm))
+                        border=$(($ended * $len / $total))
+                        progressbar="\n  $prc.$dec %  "
+                        for i in $(seq 10 $border);do progressbar="$progressbar#";done
+                        for i in $(seq $border $len);do progressbar="$progressbar-";done
+                fi
+                printf "Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total$progressbar"
                 sleep 0.2
         done
 }
@@ -389,7 +418,7 @@ pip-task (){
 if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 add_log_entry; update_log $ret "[~] pip not detected... Installing"
-                sudo apt-get -o DPkg::Lock::Timeout=600 install python3-pip -y >>$(get_log_file pip)
+                sudo apt-get -o DPkg::Lock::Timeout=600 install python3-pip -y >>$(get_log_file pip) 2>>$(get_log_file pip)
                 update_log $ret "[+] pip Installed"
         fi
         # Check if an alias is needed
@@ -404,14 +433,14 @@ fi
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
         add_log_entry; update_log $ret "[~] Upgrading pip and python packages..."
-        pip install --upgrade pip -q 2>>$(get_log_file pip)
+        pip install --upgrade pip -q 2>>$(get_log_file pip) >>$(get_log_file pip)
         l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
         n=$(echo "$l" | wc -l | awk '{print($1)}')
         i=0
         for line in $l
         do
                 update_log $ret "[~] Upgrading pip and python packages... $i/$n packages upgraded  | currently upgrading $line"
-                pip_install pip install $line --upgrade -q 2>>$(get_log_file pip)
+                pip_install pip install $line --upgrade -q 2>>$(get_log_file pip) >>$(get_log_file pip)
                 (( i = i+1 ))
         done
         update_log $ret "[+] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
@@ -425,7 +454,7 @@ if [[ ! -x "$(command -v poetry)" || $force ]];then
         add_log_entry; update_log $ret "[*] poetry not detected... Waiting for pip update"
         wait_pip
         update_log $ret "[~] poetry not detected... Installing"
-        curl -sSL https://install.python-poetry.org | python3 >>$(get_log_file poetry)
+        curl -sSL https://install.python-poetry.org | python3 >>$(get_log_file poetry) 2>>$(get_log_file poetry)
         update_log $ret "[+] poetry Installed"
 fi
 }
@@ -459,7 +488,7 @@ bg_install go-task
 bg_install apt_installation "gem" "Ruby" "ruby-dev"
 
 ###### Install Java
-bg_install apt_installation "java" "Java" "default-jdk"
+bg_install apt_installation "java" "Java" '"default-jdk" "openjdk-17-jdk"'
 
 ###### Install Nodejs
 task-js() {
@@ -471,7 +500,7 @@ apt_installation "npm"
 ###### Install yarn
 if [[ ! -x "$(command -v yarn)" || $force ]];then
         add_log_entry; update_log $ret "[~] Yarn not detected... Installing"
-        sudo npm install --silent --global yarn 2>>$(get_log_file yarn)
+        sudo npm install --silent --global yarn 2>>$(get_log_file yarn) >>$(get_log_file yarn)
         update_log $ret "[+] Yarn Installed"
 fi
 }
@@ -522,6 +551,29 @@ fi
 }
 bg_install task-dotnet
 
+###### Install gradle
+task-gradle () {
+        if [[ ! -x "$(command -v gradle)" || $force ]];then
+                add_log_entry; update_log $ret "[~] gradle not detected... Waiting for 7z"
+                wait_command "7z"
+                update_log $ret "[~] gradle not detected... Installing"
+                if [[ -d "/lib/gradle" ]];then
+                        sudo mv /lib/gradle /lib/gradle-$(date +%y-%m-%d--%T).old
+                        tmp=$ret
+                        add_log_entry; update_log $ret "[*] Moved /lib/gradle to /lib/gradle-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                        ret=$tmp
+                fi
+                wget https://services.gradle.org/distributions/gradle-8.4-bin.zip -q
+                7z x gradle-8.4-bin.zip 2>>$(get_log_file sublister) >>$(get_log_file sublister)
+                rm gradle-8.4-bin.zip
+                sudo mv gradle-8.4 /lib/gradle
+                if [[ -f "/bin/gradle" ]];then sudo rm /bin/gradle;fi
+                ln -s /lib/gradle/bin/gradle /bin/gradle
+                update_log $ret "[+] sublist3r Installed"
+        fi
+}
+bg_install task-gradle
+
 ###### Install git
 bg_install apt_installation "git"
 
@@ -529,20 +581,15 @@ bg_install apt_installation "git"
 bg_install apt_installation "kinit" "Kerberos" "krb5-user"
 
 
+###### Install 7z
+
+###### Install winrar
+
 
 # Commands
 add_log_entry; update_log $ret "[*] Getting commands..."
 ###### Install ftp module
-task-ftp() {
-if [[ ! "$(pip list | grep pyftpdlib)" || $force ]];then
-        add_log_entry; update_log $ret "[*] Pyftplib not detected... Waiting for pip upgrade"
-        wait_pip
-        update_log $ret "[~] Pyftplib not detected... Installing"
-        sudo pip install pyftpdlib -q 2>>$(get_log_file pyftplib)
-        update_log $ret "[+] Pyftplib Installed"
-fi
-}
-bg_install task-ftp
+bg_install pip_installation pyftpdlib
 
 ###### Install dnsutils
 bg_install apt_installation "dig" "dig" "dnsutils"
@@ -552,7 +599,7 @@ task-chrome() {
 if [[ ! -x "$(command -v google-chrome)" || $force ]];then
         add_log_entry; update_log $ret "[~] google-chrome not detected... Installing"
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
-        sudo apt-get -o DPkg::Lock::Timeout=600 install ./google-chrome-stable_current_amd64.deb -y >>$(get_log_file chrome)
+        sudo apt-get -o DPkg::Lock::Timeout=600 install ./google-chrome-stable_current_amd64.deb -y >>$(get_log_file chrome) 2>>$(get_log_file chrome)
         rm google-chrome-stable_current_amd64.deb
         update_log $ret "[+] google-chrome Installed"
 fi
@@ -581,11 +628,11 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/python3/dist-packages/subbrute to /lib/python3/dist-packages/subbrute-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister)
+        GIT_ASKPASS=true git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister) 2>>$(get_log_file sublister)
         update_log $ret "[~] sublist3r not detected... Waiting for pip"
         wait_pip
         update_log $ret "[~] sublist3r not detected... Installing requirements"
-        pip install -r Sublist3r/requirements.txt -q 2>>$(get_log_file sublister)
+        pip install -r Sublist3r/requirements.txt -q 2>>$(get_log_file sublister) >>$(get_log_file sublister)
         sudo mv Sublist3r/sublist3r.py /bin/sublist3r
         sudo mv Sublist3r/subbrute /lib/python3/dist-packages/subbrute
         sudo rm Sublist3r/*
@@ -620,16 +667,7 @@ bg_install apt_installation "dnsenum"
 bg_install go_installation "waybackurls" "github.com/tomnomnom/waybackurls@latest" 
 
 ###### Install Arjun
-task-arjun() {
-if [[ ! "$(pip list | grep arjun)" || $force ]];then
-        add_log_entry; update_log $ret "[*] Arjun not detected... Waiting for pip upgrade"
-        wait_pip
-        update_log $ret "[~] Arjun not detected... Installing"
-        sudo pip install arjun -q 2>>$(get_log_file arjun)
-        update_log $ret "[+] Arjun Installed"
-fi
-}
-bg_install task-arjun
+bg_install pip_installation arjun
 
 ###### Install BrokenLinkChecker
 task-blc() {
@@ -637,7 +675,7 @@ if [[ ! -x "$(command -v blc)" || $force ]];then
         add_log_entry; update_log $ret "[*] BrokenLinkChecker not detected... Waiting for npm"
         wait_command "npm"
         update_log $ret "[~] BrokenLinkChecker not detected... Installing"
-        sudo npm install --silent --global broken-link-checker 2>>$(get_log_file brokenlinkchecker)
+        sudo npm install --silent --global broken-link-checker 2>>$(get_log_file brokenlinkchecker) >>$(get_log_file brokenlinkchecker)
         update_log $ret "[+] BrokenLinkChecker Installed"
 fi
 }
@@ -649,7 +687,7 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         add_log_entry; update_log $ret "[*] Dirscapper not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Dirscapper not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper)
+        GIT_ASKPASS=true git clone https://github.com/Cillian-Collins/dirscraper.git --quiet >>$(get_log_file dirscraper) 2>>$(get_log_file dirscraper)
         new_cont=$(echo "#! /bin/python3" && cat ./dirscraper/dirscraper.py)
         echo "$new_cont" > ./dirscraper/dirscraper.py
         sed -i 's/\r//' ./dirscraper/dirscraper.py
@@ -658,7 +696,7 @@ if [[ ! -x "$(command -v dirscraper)" || $force ]];then
         update_log $ret "[*] Dirscapper not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] Dirscapper not detected... Installing requirements"
-        pip install -r ./dirscraper/requirements.txt -q 2>>$(get_log_file dirscraper)
+        pip install -r ./dirscraper/requirements.txt -q 2>>$(get_log_file dirscraper) >>$(get_log_file dirscraper)
         sudo rm -R ./dirscraper
         update_log $ret "[+] Dirscapper Installed"
 fi
@@ -670,6 +708,27 @@ bg_install go_installation "haktrails" "github.com/hakluke/haktrails@latest"
 
 ###### Install Hakrawler
 bg_install go_installation "hakrawler" "github.com/hakluke/hakrawler@latest" 
+
+###### Install linkfinder
+task-linkfinder () {
+        if [[ ! "$(command -v linkfinder)" || $force ]];then
+                add_log_entry; update_log $ret "[~] Linkfinder not detected... Waiting for pip"
+                wait_pip
+                update_log $ret "[~] Linkfinder not detected... Waiting for git"
+                wait_command "git"
+                update_log $ret "[~] Linkfinder not detected... Installing dependencies"
+                GIT_ASKPASS=true git clone https://github.com/GerbenJavado/LinkFinder.git --quiet >>$(get_log_file linkfinder) 2>>$(get_log_file linkfinder)
+                cd LinkFinder
+                pip install -r requirements.txt -q 2>>$(get_log_file linkfinder) >>$(get_log_file linkfinder)
+                update_log $ret "[~] Linkfinder not detected... Installing"
+                sudo python3 setup.py install 2>>$(get_log_file linkfinder) >>$(get_log_file linkfinder)
+                sudo mv linkfinder.py /bin/linkfinder
+                cd ..
+                sudo rm -r LinkFinder
+                update_log $ret "[+] Linkfinder Installed"
+        fi
+}
+bg_install task-linkfinder
 
 ### Fuzzers
 ###### Install gobuster
@@ -687,7 +746,7 @@ if [[ ! -x "$(command -v x8)" || $force ]];then
         add_log_entry; update_log $ret "[*] x8 not detected... Waiting for apt"
         wait_apt
         update_log $ret "[~] x8 not detected... Installing dependencies"
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev >>$(get_log_file x8)
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev >>$(get_log_file x8) 2>>$(get_log_file x8)
         update_log $ret "[*] x8 not detected... Waiting for rust"
         wait_command "cargo"
         update_log $ret "[~] x8 not detected... Installing"
@@ -711,7 +770,7 @@ if [[ ! -x "$(command -v wappalyzer)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/wappalyzer to /lib/wappalyzer-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone https://github.com/lLouu/wappalyzer.git --quiet >>$(get_log_file wappalyzer)
+        GIT_ASKPASS=true git clone https://github.com/lLouu/wappalyzer.git --quiet >>$(get_log_file wappalyzer) 2>>$(get_log_file wappalyzer)
         sudo mv wappalyzer /lib/wappalyzer
         workingdir=$(pwd)
         cd /lib/wappalyzer
@@ -738,7 +797,7 @@ if [[ ! -x "$(command -v testssl)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib32/testssl to /lib32/testssl-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl)
+        GIT_ASKPASS=true git clone --depth 1 https://github.com/drwetter/testssl.sh.git --quiet >>$(get_log_file testssl) 2>>$(get_log_file testssl)
         sudo mv testssl.sh /lib32/testssl
         if [[ -f "/bin/testssl" ]];then sudo rm /bin/testssl;fi
         sudo ln -s /lib32/testssl/testssl.sh /bin/testssl
@@ -762,18 +821,31 @@ if [[ ! -x "$(command -v secretfinder)" || $force ]];then
         add_log_entry; update_log $ret "[*] Secretfinder not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Secretfinder not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/m4ll0k/SecretFinder.git --quiet >>$(get_log_file secretfinder)
+        GIT_ASKPASS=true git clone https://github.com/m4ll0k/SecretFinder.git --quiet >>$(get_log_file secretfinder) 2>>$(get_log_file secretfinder)
         chmod +x ./SecretFinder/SecretFinder.py
         sudo mv SecretFinder/SecretFinder.py /bin/secretfinder
         update_log $ret "[*] Secretfinder not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] Secretfinder not detected... Installing requirements"
-        pip install -r ./SecretFinder/requirements.txt -q 2>>$(get_log_file secretfinder)
+        pip install -r ./SecretFinder/requirements.txt -q 2>>$(get_log_file secretfinder) >>$(get_log_file secretfinder)
         sudo rm -R ./SecretFinder
         update_log $ret "[+] Secretfinder Installed"
 fi
 }
 bg_install task-secretfinder
+
+###### Install wpscan
+task-wpscan () {
+if [[ ! -x "$(command -v wpscan)" || $force ]];then
+        add_log_entry; update_log $ret "[*] WPscan not detected... Waiting for Ruby to be installed"
+        wait_command "gem"
+        update_log $ret "[~] WPscan not detected... Installing"
+        sudo gem install wpscan >>$(get_log_file wpscan) 2>>$(get_log_file wpscan)
+        update_log $ret "[+] WPscan Installed"
+fi
+}
+bg_install task-wpscan
+
 
 ### Bruteforce
 add_log_entry; update_log $ret "[*] Getting bruteforce tools..."
@@ -786,10 +858,10 @@ if [[ ! -x "$(command -v hydra)" || $force ]];then
         add_log_entry; update_log $ret "[*] Hydra not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Hydra not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra)
+        GIT_ASKPASS=true git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra) 2>>$(get_log_file hydra)
         cd thc-hydra
         ./configure >>$(get_log_file hydra) 2>>$(get_log_file hydra)
-        make >>$(get_log_file hydra)
+        make >>$(get_log_file hydra) 2>>$(get_log_file hydra)
         sudo make install >>$(get_log_file hydra) 2>>$(get_log_file hydra)
         sudo mv hydra /bin/hydra
         cd ..
@@ -859,7 +931,7 @@ bg_install task-metasploit
 task-searchsploit() {
 if [[ ! -x "$(command -v searchsploit)" || $force ]];then
         add_log_entry; update_log $ret "[~] Searchsploit not detected... Installing"
-        GIT_ASKPASS=true git clone --depth 1 https://github.com/rad10/SearchSploit.py.git --quiet >>$(get_log_file sqlmap)
+        GIT_ASKPASS=true git clone --depth 1 https://github.com/rad10/SearchSploit.py.git --quiet >>$(get_log_file sqlmap) 2>>$(get_log_file sqlmap)
         cd SearchSploit.py
         sed -i 's/input//g' setup.py
         python3 ./setup.py >>$(get_log_file sqlmap) 2>>$(get_log_file sqlmap)
@@ -895,11 +967,11 @@ if [[ ! -x "$(command -v sqlmap)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/sqlmap to /lib/sqlmap-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >>$(get_log_file sqlmap)
+        GIT_ASKPASS=true git clone --depth 1 https://github.com/sqlmapproject/sqlmap.git --quiet >>$(get_log_file sqlmap) 2>>$(get_log_file sqlmap)
         update_log $ret "[*] sqlmap not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] sqlmap not detected... Installing" requirements
-        pip install -r sqlmap/requirements.txt -q 2>>$(get_log_file sqlmap)
+        pip install -r sqlmap/requirements.txt -q 2>>$(get_log_file sqlmap) >>$(get_log_file sqlmap)
         sudo mv sqlmap /lib/sqlmap
         new_cont=$(echo "#! /bin/python3" && cat /lib/sqlmap/sqlmap.py)
         echo "$new_cont" > /lib/sqlmap/sqlmap.py
@@ -923,7 +995,7 @@ if [[ ! -x "$(command -v commix)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/commix to /lib/commix-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix)
+        GIT_ASKPASS=true git clone https://github.com/commixproject/commix.git --quiet >>$(get_log_file commix) 2>>$(get_log_file commix)
         sudo mv commix /lib/commix
         new_cont=$(echo "#! /bin/python3" && cat /lib/commix/commix.py)
         echo "$new_cont" > /lib/commix/commix.py
@@ -941,7 +1013,7 @@ if [[ ! -x "$(command -v pixload-png)" || $force ]];then
         add_log_entry; update_log $ret "[*] Pixload not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Pixload not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/sighook/pixload.git --quiet >>$(get_log_file pixload)
+        GIT_ASKPASS=true git clone https://github.com/sighook/pixload.git --quiet >>$(get_log_file pixload) 2>>$(get_log_file pixload)
         cd pixload
         make >>$(get_log_file pixload) 2>>$(get_log_file pixload)
         sudo rm *pod
@@ -954,6 +1026,45 @@ if [[ ! -x "$(command -v pixload-png)" || $force ]];then
 fi
 }
 bg_install task-pixload
+
+###### Install ghidra
+task-ghidra () {
+if [[ ! -x "$(command -v ghidra)" || $force ]];then
+        add_log_entry; update_log $ret "[*] ghidra not detected... Waiting for 7z"
+        wait_command "7z"
+        update_log $ret "[~] ghidra not detected... Installing"
+        if [[ -d "/lib/ghidra" ]];then
+                sudo mv /lib/ghidra /lib/ghidra-$(date +%y-%m-%d--%T).old
+                tmp=$ret
+                add_log_entry; update_log $ret "[*] Moved /lib/ghidra to /lib/ghidra-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                ret=$tmp
+        fi
+        wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.4_build/ghidra_10.4_PUBLIC_20230928.zip -q
+        7z x ghidra_10.4_PUBLIC_20230928.zip >>$(get_log_file ghidra) 2>>$(get_log_file ghidra)
+        rm ghidra_10.4_PUBLIC_20230928.zip
+        sudo mv ghidra_10.4_PUBLIC /lib/ghidra
+        if [[ -f "/bin/ghidra" ]];then sudo rm /bin/ghidra;fi
+        sudo ln -s /lib/ghidra/ghidraRun /bin/ghidra
+        update_log $ret "[+] ghidra Installed | It will ask you Java openjdk 17 directory at first launch"
+fi
+}
+bg_install task-ghidra
+
+###### Install gdb
+bg_install 'apt_installation gdb GDB "libelf1=0.183-1 libdw1=0.183-1 gdb"'
+
+###### Install shocker
+task-shocker() {
+if [[ ! -x "$(command -v shocker)" || $force ]];then
+        add_log_entry; update_log $ret "[~] Shocker not detected... Installing"
+        wget https://github.com/nccgroup/shocker/blob/master/shocker.py -q
+        chmod +x shocker.py
+        sudo mv shocker.py /bin/shocker
+        update_log $ret "[+] Shocker Installed"
+fi
+}
+bg_install task-shocker
+
 
 ### Others
 add_log_entry; update_log $ret "[*] Getting other tools..."
@@ -999,11 +1110,11 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >>$(get_log_file cme)
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >>$(get_log_file cme) 2>>$(get_log_file cme)
         update_log $ret "[*] crackmapexec not detected... Waiting for poetry and git"
         wait_command "poetry" "git"
         update_log $ret "[~] crackmapexec not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/byt3bl33d3r/CrackMapExec --quiet >>$(get_log_file cme)
+        GIT_ASKPASS=true git clone https://github.com/byt3bl33d3r/CrackMapExec --quiet >>$(get_log_file cme) 2>>$(get_log_file cme)
         sudo mv CrackMapExec /lib/crackmapexec
         workingdir=$(pwd)
         cd /lib/crackmapexec
@@ -1062,11 +1173,11 @@ if [[ ! -x "$(command -v mitm6)" || $force ]];then
         add_log_entry; update_log $ret "[*] mitm6 not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] mitm6 not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6)
+        GIT_ASKPASS=true git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
         update_log $ret "[*] mitm6 not detected... Waiting for pip upgrade"
         wait_pip
         update_log $ret "[~] mitm6 not detected... Installing requirements"
-        pip install -r mitm6/requirements.txt -q 2>>$(get_log_file mitm6)
+        pip install -r mitm6/requirements.txt -q 2>>$(get_log_file mitm6) >>$(get_log_file mitm6)
         sudo chmod +x mitm6/mitm6/mitm6.py
         sudo mv mitm6/mitm6/mitm6.py /bin/mitm6
         sudo rm -R mitm6
@@ -1081,10 +1192,10 @@ if [[ ! -x "$(command -v proxychains)" || $force ]];then
         add_log_entry; update_log $ret "[*] Proxychain not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Proxychain not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/haad/proxychains.git --quiet >>$(get_log_file proxychains)
+        GIT_ASKPASS=true git clone https://github.com/haad/proxychains.git --quiet >>$(get_log_file proxychains) 2>>$(get_log_file proxychains)
         cd proxychains
         ./configure >>$(get_log_file proxychains) 2>>$(get_log_file proxychains)
-        make >>$(get_log_file proxychains)
+        make >>$(get_log_file proxychains) 2>>$(get_log_file proxychains)
         sudo make install >>$(get_log_file proxychains) 2>>$(get_log_file proxychains)
         sudo mv proxychains4 /bin/proxychains
         cd ..
@@ -1106,7 +1217,7 @@ if [[ ! -x "$(command -v responder)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/responder to /lib/responder-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder)
+        GIT_ASKPASS=true git clone https://github.com/lgandx/Responder.git --quiet >>$(get_log_file responder) 2>>$(get_log_file responder)
         sudo mv Responder /lib/responder
         new_cont=$(echo "#! /bin/python3" && cat /lib/responder/Responder.py)
         echo "$new_cont" > /lib/responder/Responder.py
@@ -1119,7 +1230,42 @@ fi
 bg_install task-responder
 
 ###### Install Evil winrm
+task-evilwinrm () {
+if [[ ! -x "$(command -v evil-winrm)" || $force ]];then
+        add_log_entry; update_log $ret "[*] Evil WinRM not detected... Waiting for Ruby to be installed"
+        wait_command "gem"
+        update_log $ret "[~] Evil WinRM not detected... Installing"
+        sudo gem install evil-winrm >>$(get_log_file evil-winrm) 2>>$(get_log_file evil-winrm)
+        update_log $ret "[+] Evil WinRM Installed"
+fi
+}
+bg_install task-evilwinrm
 
+###### Install Bloody AD
+task-bloodyad () {
+        wait_apt
+        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libcom-err2=1.46.2-2 libkrb5-dev >>$(get_log_file bloodyAD) 2>>$(get_log_file bloodyAD)
+        pip_installation bloodyAD
+}
+bg_install task-bloodyad
+
+###### Install smbmap
+bg_install pip_installation smbmap
+
+###### Install Certipy
+bg_install pip_installation certipy-ad
+
+###### Install Pydictor
+task-pydictor() {
+if [[ ! -x "$(command -v pydictor)" || $force ]];then
+        add_log_entry; update_log $ret "[~] Pydictor not detected... Installing"
+        wget https://raw.githubusercontent.com/LandGrey/pydictor/master/pydictor.py -q
+        chmod +x pydictor.py
+        sudo mv pydictor.py /bin/pydictor
+        update_log $ret "[+] Pydictor Installed"
+fi
+}
+bg_install task-pydictor
 
 
 ## Hot scripts
@@ -1136,7 +1282,7 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/dnscat to /lib/dnscat-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        GIT_ASKPASS=true git clone https://github.com/iagox86/dnscat2.git --quiet >>$(get_log_file dnscat)
+        GIT_ASKPASS=true git clone https://github.com/iagox86/dnscat2.git --quiet >>$(get_log_file dnscat) 2>>$(get_log_file dnscat)
         sudo mv dnscat2 /lib/dnscat
         # correct minor sourcecode error
         sudo sed -i 's/return a.value.ptr == a.value.ptr/return a.value.ptr == b.value.ptr/g' /lib/dnscat/client/libs/ll.c
@@ -1149,7 +1295,7 @@ if [[ ! -f "$hotscript/dnscat" || $force ]];then
         update_log $ret "[~] Dnscat client not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/client
-        cd /lib/dnscat/client && make >>$(get_log_file dnscat)
+        cd /lib/dnscat/client && make >>$(get_log_file dnscat) 2>>$(get_log_file dnscat)
         mv /lib/dnscat/client/dnscat $hotscript/dnscat
         cd $workingdir
         update_log $ret "[+] Dnscat client Made"
@@ -1161,7 +1307,7 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         update_log $ret "[~] Dnscat server not detected... Making"
         workingdir=$(pwd)
         cd /lib/dnscat/server
-        cd /lib/dnscat/server && sudo gem install bundler >>$(get_log_file dnscat)
+        cd /lib/dnscat/server && sudo gem install bundler >>$(get_log_file dnscat) 2>>$(get_log_file dnscat)
         cd /lib/dnscat/server && sudo bundler install 2>>$(get_log_file dnscat) >>$(get_log_file dnscat)
         cd $workingdir
         new_cont=$(echo "#! /bin/ruby" && cat /lib/dnscat/server/dnscat2.rb)
@@ -1197,7 +1343,7 @@ if [[ ! -d "$hotscript/frp" || $force ]];then
         add_log_entry; update_log $ret "[*] frp not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] frp not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp)
+        GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp) 2>>$(get_log_file frp)
         cd frp
         ./package.sh >>$(get_log_file frp) 2>>$(get_log_file frp)
         mv bin $hotscript/frp
@@ -1298,7 +1444,7 @@ if [[ ! -f "$hotscript/mimipenguin" || $force ]];then
         add_log_entry; update_log $ret "[*] Mimipenguin not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Mimipenguin not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/huntergregal/mimipenguin.git --quiet >>$(get_log_file mimipenguin)
+        GIT_ASKPASS=true git clone https://github.com/huntergregal/mimipenguin.git --quiet >>$(get_log_file mimipenguin) 2>>$(get_log_file mimipenguin)
         cd mimipenguin
         sudo make >>$(get_log_file mimipenguin) 2>>$(get_log_file mimipenguin)
         sudo mv mimipenguin $hotscript/mimipenguin
@@ -1324,22 +1470,78 @@ bg_install task-les
 
 ###### Install wesng
 task-wesng() {
-if [[ ! "$(command -v wes)" || $force ]];then
-        add_log_entry; update_log $ret "[*] Wesng not detected... Waiting for pip upgrade"
-        wait_pip
-        update_log $ret "[~] Wesng not detected... Installing"
-        sudo pip install wesng -q 2>>$(get_log_file wesng)
-        wes --update >>$(get_log_file wesng)
-        update_log $ret "[+] Wesng Installed"
-fi
+        pip_installation wesng
+        wes --update >>$(get_log_file wesng) 2>>$(get_log_file wesng)
 }
 bg_install task-wesng
 
 ###### Install watson
 
 ###### Install powersploit
+task-powersploit () {
+        if [[ ! -d "$hotscript/powersploit" || $force ]];then
+                add_log_entry; update_log $ret "[~] Powersploit not detected... Installing"
+                GIT_ASKPASS=true git clone https://github.com/PowerShellMafia/PowerSploit.git --quiet >>$(get_log_file powersploit) 2>>$(get_log_file powersploit)
+                mv PowerSploit $hotscript/powersploit
+                update_log $ret "[+] Powersploit Installed"
+        fi
+}
+bg_install task-powersploit
 
 ###### Install evilSSDP
+
+###### Install netcat exe
+task-netcatexe () {
+        if [[ ! -f "$hotscript/nc.exe" || $force ]];then
+                add_log_entry; update_log $ret "[~] Netcat exe not detected... Installing"
+                GIT_ASKPASS=true git clone https://github.com/int0x33/nc.exe.git --quiet >>$(get_log_file sublister) 2>>$(get_log_file sublister)
+                mv nc.exe/nc.exe $hotscript/nc.exe
+                mv nc.exe/nc64.exe $hotscript/nc64.exe
+                sudo rm -r nc.exe
+                update_log $ret "[+] Netcat exe Installed"
+        fi
+}
+bg_install task-netcatexe
+
+###### Install ligolo ng
+task-ligolo () {
+        if [[ ! -f "$hotscript/ligolo" || ! "$(command -v ligolo)" || $force ]];then
+                add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go"
+                wait_command "go"
+                update_log $ret "[~] Ligolo not detected... Installing"
+                GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
+                cd ligolo-ng
+                go build -o $hotscript/ligolo cmd/agent/main.go
+                sudo go build -o /bin/ligolo cmd/proxy/main.go
+                cd ..
+                sudo rm -r ligolo-ng
+                update_log $ret "[+] Ligolo Installed"
+        fi
+}
+bg_install task-ligolo
+
+###### Install FullPowers
+task-fullpowers () {
+        if [[ ! -f "$hotscript/FullPowers.exe" || $force ]];then
+                add_log_entry; update_log $ret "[~] FullPowers not detected... Installing"
+                wget "https://github.com/itm4n/FullPowers/releases/download/v0.1/FullPowers.exe" -q
+                mv FullPowers.exe $hotscript/FullPowers.exe
+                update_log $ret "[+] FullPowers Installed"
+        fi
+}
+bg_install task-fullpowers
+
+###### Install GodPotatoe
+task-godpotato () {
+        if [[ ! -f "$hotscript/godpotatoNET2.exe" || ! -f "$hotscript/godpotatoNET4.exe" || ! -f "$hotscript/godpotatoNET35.exe" || $force ]];then
+                add_log_entry; update_log $ret "[~] GodPotato not detected... Installing"
+                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET2.exe" -q -o "$hotscript/godpotatoNET2.exe"
+                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe" -q -o "$hotscript/godpotatoNET4.exe"
+                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET35.exe" -q -o "$hotscript/godpotatoNET35.exe"
+                update_log $ret "[+] GodPotato Installed"
+        fi
+}
+bg_install task-godpotato
 
 
 ## Services
@@ -1372,7 +1574,7 @@ if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
         curl -s --request GET \
                --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/$file" \
                --output 'Nessus.deb'
-        sudo apt-get -o DPkg::Lock::Timeout=600 install ./Nessus.deb -y >>$(get_log_file nessus)
+        sudo apt-get -o DPkg::Lock::Timeout=600 install ./Nessus.deb -y >>$(get_log_file nessus) 2>>$(get_log_file nessus)
         rm Nessus.deb
         sudo systemctl start nessusd
         update_log $ret "[~] Go to https://localhost:8834 to complete nessus installation"
@@ -1380,11 +1582,8 @@ fi
 }
 bg_install task-nessus
 
-# add_log_entry; update_log $ret "[~] No more task, waiting apt... (${apt_proc[@]})"
 wait_apt
-# update_log $ret "[~] No more task, waiting pip... (${pip_proc[@]})"
 wait_pip
-# update_log $ret "[~] No more task, waiting bg... (${bg_proc[@]})"
 wait_bg
 
 add_log_entry; update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"

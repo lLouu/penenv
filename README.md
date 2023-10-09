@@ -19,14 +19,14 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (86/105)
+## Install (100/106)
 
 ### Penenv (3)
  - [X] install_penenv
  - [X] autoenum
  - [X] start
 
-### Lang & downloaders (16)
+### Lang & downloaders (17/19)
  - [X] apt upgrade
  - [X] python 3
     - [X] 2to3
@@ -43,8 +43,11 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
     - [X] make
     - [X] mono
     - [X] dotnet
+    - [X] gradle
  - [X] git
  - [X] krb5-user
+ - [ ] 7z
+ - [ ] winrar
 
 ### Commands (5)
  - [X] pyftpdlib
@@ -53,9 +56,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] jq
  - [X] expect
 
-### Tools (49/59)
-#### Web Scan (23/25)
-##### Subdomains & paths (13/14)
+### Tools (60)
+#### Web Scan (26)
+##### Subdomains & paths (15)
  - [X] sublist3r
  - [X] assetfinder
  - [X] amass
@@ -70,20 +73,20 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] dirscapper
  - [X] haktrails
  - [X] hakrawler
- - [ ] linkfinder
+ - [X] linkfinder
 ##### Fuzzers (4)
  - [X] gobuster
  - [X] whatweb
  - [X] ffuf
  - [X] x8
-##### Others (6/7)
+##### Others (7)
  - [X] wappalyzer
  - [X] testssl
  - [X] nikto
  - [X] wafw00f
  - [X] httprobe
  - [X] secretfinder
- - [ ] wpscan
+ - [X] wpscan
 
 #### Bruteforce (3)
  - [X] hashcat
@@ -97,18 +100,18 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (6/9)
+#### Exploits (9)
  - [X] Metasploit & Armitage & Upgrade
  - [X] searchsploit
  - [X] AutoHackBruteOS
  - [X] sqlmap
  - [X] commix
  - [X] pixload
- - [ ] ghidra
- - [ ] gdb
- - [ ] Shocker
+ - [X] ghidra
+ - [X] gdb
+ - [X] Shocker
 
-#### Other (12/17)
+#### Other (17)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
@@ -121,13 +124,13 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] mitm6
  - [X] proxychain
  - [X] responder
- - [ ] Evil winrm
- - [ ] BloodyAD
- - [ ] smbmap
- - [ ] Certipy
- - [ ] pydictor
+ - [X] Evil winrm
+ - [X] BloodyAD
+ - [X] smbmap
+ - [X] Certipy
+ - [X] pydictor
 
-### Scripts (10/19)
+### Scripts (15/19)
  - [X] dnscat (server & client & shell)
  - [X] Chisel
  - [X] frp
@@ -141,12 +144,12 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] linux-exploit-suggester-2
  - [X] wesng
  - [ ] watson
- - [ ] powersploit
+ - [X] powersploit
  - [ ] evilSSDP
- - [ ] netcat Windows
- - [ ] ligolo-ng
- - [ ] FullPowers
- - [ ] GodPotato
+ - [X] netcat Windows
+ - [X] ligolo-ng
+ - [X] FullPowers
+ - [X] GodPotato
 
 ### Services (3)
  - [X] bloodhound

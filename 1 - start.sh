@@ -10,7 +10,7 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.2.6"
+echo "Suite version : V0.2.7"
 echo "Script version : V1.3"
 echo ""
 echo ""
