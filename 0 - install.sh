@@ -222,25 +222,13 @@ gui_proc () {
         while [[ true ]];do
                 # Observe updating to reduce gui needs ?
                 # And maybe sort such that Installing process are all the way down
-                echo "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)"
 
                 used=$((1 + $(ls $thread_dir | wc -l)))
-                waiting=$(($(ls waiting_dir || wc -l) + $(ls goback_dir || wc -l) - 1))
-                ended=$(ls $gui | grep [+])
+                waiting=$(($(ls $waiting_dir | wc -l) + $(ls $goback_dir | wc -l) - 1))
+                ended=$(cat $gui/* | grep "\[+\]" | wc -l)
                 total=$(($ended + $waiting + $used - 1))
 
-                len=$(tput cols)
-                progressbar=""
-                if [[ $len -ge 20 ]];then
-                        prc=$(($ended * 100 / $total))
-                        prm=$(($ended * 1000 / $total))
-                        dec=$(($prc*10 - $prm))
-                        border=$(($ended * $len / $total))
-                        progressbar="\n  $prc.$dec %  "
-                        for i in $(seq 10 $border);do progressbar="$progressbar#";done
-                        for i in $(seq $border $len);do progressbar="$progressbar-";done
-                fi
-                printf "Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total$progressbar"
+                echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)$(echo "")Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
                 sleep 0.2
         done
 }
