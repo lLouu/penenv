@@ -1052,7 +1052,7 @@ task-shocker() {
 if [[ ! -x "$(command -v shocker)" || $force ]];then
         add_log_entry; update_log $ret "[~] Shocker not detected... Installing"
         wget https://raw.githubusercontent.com/nccgroup/shocker/master/shocker.py -q 2>>$(get_log_file shocker) >>$(get_log_file shocker)
-        2to3 -x ./shocker.py 2>>$(get_log_file shocker) >>$(get_log_file shocker)
+        2to3 -w ./shocker.py 2>>$(get_log_file shocker) >>$(get_log_file shocker)
         chmod +x shocker.py
         sudo mv shocker.py /bin/shocker
         update_log $ret "[+] Shocker Installed"
