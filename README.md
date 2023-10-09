@@ -19,7 +19,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 
 # Content
 
-## Install (100/106)
+## Install (99/105)
 
 ### Penenv (3)
  - [X] install_penenv
@@ -56,7 +56,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] jq
  - [X] expect
 
-### Tools (60)
+### Tools (59)
 #### Web Scan (26)
 ##### Subdomains & paths (15)
  - [X] sublist3r
@@ -100,10 +100,9 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] snmpcheck
  - [X] snmpwalk
 
-#### Exploits (9)
+#### Exploits (8)
  - [X] Metasploit & Armitage & Upgrade
  - [X] searchsploit
- - [X] AutoHackBruteOS
  - [X] sqlmap
  - [X] commix
  - [X] pixload

@@ -235,7 +235,7 @@ gui_proc () {
                 total=$(($ended + $waiting + $used - 1))
 
                 echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)\n  >  Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
-                sleep 0.2
+                sleep .2
         done
 }
 
@@ -471,8 +471,6 @@ if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
         if [[ -f "/bin/gofmt" ]];then sudo rm /bin/gofmt;fi
         sudo ln -s /usr/lib/go-1.20/bin/go /bin/go
         sudo ln -s /usr/lib/go-1.20/bin/gofmt /bin/gofmt
-        export GOROOT=/usr/local/go
-        export PATH=$GOROOT/bin:$PATH 
         update_log $ret "[+] go 1.20 Installed"
 fi
 }
@@ -506,7 +504,6 @@ if [[ ! -x "$(command -v cargo)" || $force ]];then
         add_log_entry; update_log $ret "[~] Rust not detected... Installing"
         curl -s https://sh.rustup.rs -sSf | sh -s >>$(get_log_file rust) 2>>$(get_log_file rust) -- -y
         sudo cp /home/$usr/.cargo/bin/* /bin
-        export PATH=/home/$usr/.cargo/bin:$PATH
         update_log $ret "[+] Rust Installed"
 fi
 }
@@ -538,8 +535,7 @@ if [[ ! -x "$(command -v dotnet)" || $force ]];then
         chmod +x ./dotnet-install.sh
         ./dotnet-install.sh --version latest 2>>$(get_log_file dotnet) >>$(get_log_file dotnet)
         rm dotnet-install.sh
-        export DOTNET_ROOT=$HOME/.dotnet
-        export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
+        sudo ln -s ~/.dotnet/dotnet
         update_log $ret "[+] Dotnet Installed"
 fi
 }
@@ -895,11 +891,11 @@ if [[ ! -x "$(command -v msfconsole)" || ! -x "$(command -v armitage)" || $force
         update_log $ret "[*] Metasploit and Armitage not detected... Waiting for java"
         wait_command "java"
         update_log $ret "[~] Metasploit and Armitage not detected... Installing"
-        if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
+        if [[ ! "$(java --version)" =~ "openjdk 11" || $force ]];then
                 tmp=$ret
-                add_log_entry; update_log $ret "[~] Java != 11 is used... Setting it to 11.0.18"
+                add_log_entry; update_log $ret "[~] Java != 11 is used... Setting it to 11"
                 sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-                update_log $ret "[*] Java version setted to 11.0.18"
+                update_log $ret "[*] Java version setted to 11"
                 ret=$tmp
         fi
         curl -s -L https://raw.githubusercontent.com/Matt-London/Install-Armitage-on-Linux/master/ArmitageInstaller --output ArmitageInstaller
@@ -937,17 +933,17 @@ fi
 }
 bg_install task-searchsploit
 
-###### Install AutoHackBruteOS
-task-autohackbruteos() {
-if [[ ! -x "$(command -v AutoHackBruteOS)" || $force ]];then
-        add_log_entry; update_log $ret "[~] AutoHackBruteOS not detected... Installing"
-        (echo "#! /usr/bin/env ruby" && curl -L -s https://raw.githubusercontent.com/carlospolop/AutoHackBruteOs/master/AutoHackBruteOs.rc) > AutoHackBruteOs.rc
-        chmod +x AutoHackBruteOs.rc
-        sudo mv AutoHackBruteOs.rc /bin/AutoHackBruteOs
-        update_log $ret "[+] AutoHackBruteOS Installed"
-fi
-}
-bg_install task-autohackbruteos
+# ###### Install AutoHackBruteOS
+# task-autohackbruteos() {
+# if [[ ! -x "$(command -v AutoHackBruteOS)" || $force ]];then
+#         add_log_entry; update_log $ret "[~] AutoHackBruteOS not detected... Installing"
+#         (echo "#! /usr/bin/env ruby" && curl -L -s https://raw.githubusercontent.com/carlospolop/AutoHackBruteOs/master/AutoHackBruteOs.rc) > AutoHackBruteOs.rc
+#         chmod +x AutoHackBruteOs.rc
+#         sudo mv AutoHackBruteOs.rc /bin/AutoHackBruteOs
+#         update_log $ret "[+] AutoHackBruteOS Installed"
+# fi
+# }
+# bg_install task-autohackbruteos
 
 ###### Install sqlmap
 task-sqlmap() {
@@ -1346,8 +1342,8 @@ bg_install task-chisel
 ###### Install frp
 task-frp() {
 if [[ ! -d "$hotscript/frp" || $force ]];then
-        add_log_entry; update_log $ret "[*] frp not detected... Waiting for git"
-        wait_command "git"
+        add_log_entry; update_log $ret "[*] frp not detected... Waiting for git and go"
+        wait_command "git" "go"
         update_log $ret "[~] frp not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp) 2>>$(get_log_file frp)
         cd frp
@@ -1512,8 +1508,9 @@ bg_install task-netcatexe
 ###### Install ligolo ng
 task-ligolo () {
         if [[ ! -f "$hotscript/ligolo" || ! "$(command -v ligolo)" || $force ]];then
-                add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go"
+                add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go 1.20"
                 wait_command "go"
+                while [[ ! "$(go version)" =~ "1.20" ]];do sleep .2;done
                 update_log $ret "[~] Ligolo not detected... Installing"
                 GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ligolo-ng
@@ -1568,10 +1565,10 @@ bg_install task-invoke-bloodhound
 ###### Install Nessus
 task-nessus() {
 wait_command "java"
-if [[ ! "$(java --version)" =~ "openjdk 11.0.18" || $force ]];then
-        add_log_entry; update_log $ret "[~] Java != 11 is used... Setting it to 11.0.18"
+if [[ ! "$(java --version)" =~ "openjdk 11" || $force ]];then
+        add_log_entry; update_log $ret "[~] Java != 11 is used... Setting it to 11"
         sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-        update_log $ret "[*] Java version setted to 11.0.18"
+        update_log $ret "[*] Java version setted to 11"
 fi
 
 if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
