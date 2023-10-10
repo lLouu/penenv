@@ -90,10 +90,10 @@ apt_installation () {
                 update_log $ret "[~] $name not detected... Installing"
                 # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed (thanks to parrallelization)
                 if [[ $# -le 2 ]];then
-                        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
                 else
                         for pkg in ${@:3};do
-                                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=600 install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
+                                sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
                         done
                 fi
                 update_log $ret "[+] $name Installed"
@@ -133,7 +133,7 @@ pip_proc=() # process for pip upgrade
 installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
-        while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep .2; done
+        while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep $frequency; done
         (file=$(date +%s%N); echo $@ > $thread_dir/$file; "$@"; rm $thread_dir/$file) &
         p=$!
 }
@@ -156,7 +156,7 @@ pip_install () {
 # wait for process to end
 wait_pid() {
         if [[ $# -eq 0 ]];then return; fi
-        while [[ -e "/proc/$1" ]];do sleep .2;done
+        while [[ -e "/proc/$1" ]];do sleep $frequency;done
 }
 wait_bg () {
         for job in "${bg_proc[@]}"
@@ -172,7 +172,7 @@ wait_procs () {
                         wait_pid $job
                 done
                 if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $goback_dir/$file;fi # Put the thread in want to activate again mode
-                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -gt $thread ]];do sleep .2; done # Wait a working thread to be available again while being the first in queue
+                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -gt $thread ]];do sleep $frequency; done # Wait a working thread to be available again while being the first in queue
                 if [[ -f "$goback_dir/$file" ]];then mv $goback_dir/$file $thread_dir/$file;fi
         fi
 }
@@ -180,7 +180,7 @@ wait_apt () { wait_procs ${apt_proc[@]}; }
 wait_pip () { wait_procs ${pip_proc[@]}; }
 wait_command() {
         (for cmd in $@;do
-                while [[ ! "$(command -v $cmd)" ]];do sleep .2;done
+                while [[ ! "$(command -v $cmd)" ]];do sleep $frequency;done
         done) &
         wait_procs $!
 }
@@ -235,7 +235,7 @@ gui_proc () {
                 total=$(($ended + $waiting + $used - 1))
 
                 echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)\n  >  Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
-                sleep .2
+                sleep $frequency
         done
 }
 
@@ -252,7 +252,10 @@ check="1"
 force=""
 no_upgrade=""
 nologs=""
-thread=5
+thread=20
+
+dpkg_timeout=600
+frequency=0.2
 
 POSITIONAL_ARGS=()
 ORIGINAL_ARGS=$@
@@ -331,7 +334,7 @@ fi
 # Inform user
 add_log_entry; update_log $ret "$(banner)"
 if [[ $branch != "main" && $check ]];then add_log_entry; update_log $ret "[*] $branch will be the used github branch for installation";fi
-if [[ $thread != 5 ]];then add_log_entry; update_log $ret "[*] $thread additional active processes wil be used for parallel tasks";fi
+if [[ $thread != 20 ]];then add_log_entry; update_log $ret "[*] $thread additional active processes wil be used for parallel tasks";fi
 if [[ $force ]];then add_log_entry; update_log $ret "[*] installation will be forced for every components"; fi
 if [[ $nologs ]];then add_log_entry; update_log $ret "[*] logging is disabled"; fi
 if [[ $no_upgrade ]];then add_log_entry; update_log $ret "[*] apt, pip and metasploit will not be upgraded"; fi
@@ -391,11 +394,11 @@ if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
         add_log_entry; update_log $ret "[~] Updating apt-get and upgrading installed packages..."
         apt-task() {
-        sudo apt-get -o DPkg::Lock::Timeout=600 update > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout update > /dev/null
         update_log $ret "[~] Upgrading installed packages... Updating apt-get done..."
-        sudo apt-get -o DPkg::Lock::Timeout=600 upgrade -y > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout upgrade -y > /dev/null
         update_log $ret "[~] Update and upgrade done... Removing unused packages..."
-        sudo apt-get -o DPkg::Lock::Timeout=600 autoremove -y > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout autoremove -y > /dev/null
         update_log $ret "[+] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
         }
         apt_install apt-task
@@ -412,7 +415,7 @@ pip-task (){
 if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 add_log_entry; update_log $ret "[~] pip not detected... Installing"
-                sudo apt-get -o DPkg::Lock::Timeout=600 install python3-pip -y >>$(get_log_file pip) 2>>$(get_log_file pip)
+                sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install python3-pip -y >>$(get_log_file pip) 2>>$(get_log_file pip)
                 update_log $ret "[+] pip Installed"
         fi
         # Check if an alias is needed
@@ -518,10 +521,10 @@ if [[ ! -x "$(command -v mozroots)" || $force ]];then
         add_log_entry; update_log $ret "[*] Mono not detected... Waiting for apt upgrade"
         wait_apt
         update_log $ret "[~] Mono not detected... Installing"
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -yq dirmngr ca-certificates gnupg >>$(get_log_file mono) 2>>$(get_log_file mono) 
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install -yq dirmngr ca-certificates gnupg >>$(get_log_file mono) 2>>$(get_log_file mono) 
         sudo gpg --homedir /tmp --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF 2>>$(get_log_file mono) >>$(get_log_file mono)
         echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/debian stable-buster main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list >/dev/null
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -yq mono-devel >>$(get_log_file mono) 2>>$(get_log_file mono) 
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install -yq mono-devel >>$(get_log_file mono) 2>>$(get_log_file mono) 
         update_log $ret "[+] Mono Installed"
 fi
 }
@@ -544,7 +547,7 @@ bg_install task-dotnet
 ###### Install gradle
 task-gradle () {
         if [[ ! -x "$(command -v gradle)" || $force ]];then
-                add_log_entry; update_log $ret "[~] gradle not detected... Waiting for 7z"
+                add_log_entry; update_log $ret "[*] gradle not detected... Waiting for 7z"
                 wait_command "7z"
                 update_log $ret "[~] gradle not detected... Installing"
                 if [[ -d "/lib/gradle" ]];then
@@ -589,7 +592,7 @@ task-chrome() {
 if [[ ! -x "$(command -v google-chrome)" || $force ]];then
         add_log_entry; update_log $ret "[~] google-chrome not detected... Installing"
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -q
-        sudo apt-get -o DPkg::Lock::Timeout=600 install ./google-chrome-stable_current_amd64.deb -y >>$(get_log_file chrome) 2>>$(get_log_file chrome)
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install ./google-chrome-stable_current_amd64.deb -y >>$(get_log_file chrome) 2>>$(get_log_file chrome)
         rm google-chrome-stable_current_amd64.deb
         update_log $ret "[+] google-chrome Installed"
 fi
@@ -619,7 +622,7 @@ if [[ ! -x "$(command -v sublist3r)" || $force ]];then
                 ret=$tmp
         fi
         GIT_ASKPASS=true git clone https://github.com/aboul3la/Sublist3r.git --quiet >>$(get_log_file sublister) 2>>$(get_log_file sublister)
-        update_log $ret "[~] sublist3r not detected... Waiting for pip"
+        update_log $ret "[*] sublist3r not detected... Waiting for pip"
         wait_pip
         update_log $ret "[~] sublist3r not detected... Installing requirements"
         pip install -r Sublist3r/requirements.txt -q 2>>$(get_log_file sublister) >>$(get_log_file sublister)
@@ -702,9 +705,9 @@ bg_install go_installation "hakrawler" "github.com/hakluke/hakrawler@latest"
 ###### Install linkfinder
 task-linkfinder () {
         if [[ ! "$(command -v linkfinder)" || $force ]];then
-                add_log_entry; update_log $ret "[~] Linkfinder not detected... Waiting for pip"
+                add_log_entry; update_log $ret "[*] Linkfinder not detected... Waiting for pip"
                 wait_pip
-                update_log $ret "[~] Linkfinder not detected... Waiting for git"
+                update_log $ret "[*] Linkfinder not detected... Waiting for git"
                 wait_command "git"
                 update_log $ret "[~] Linkfinder not detected... Installing dependencies"
                 GIT_ASKPASS=true git clone https://github.com/GerbenJavado/LinkFinder.git --quiet >>$(get_log_file linkfinder) 2>>$(get_log_file linkfinder)
@@ -736,7 +739,7 @@ if [[ ! -x "$(command -v x8)" || $force ]];then
         add_log_entry; update_log $ret "[*] x8 not detected... Waiting for apt"
         wait_apt
         update_log $ret "[~] x8 not detected... Installing dependencies"
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev >>$(get_log_file x8) 2>>$(get_log_file x8)
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install -y libssl-dev >>$(get_log_file x8) 2>>$(get_log_file x8)
         update_log $ret "[*] x8 not detected... Waiting for rust"
         wait_command "cargo"
         update_log $ret "[~] x8 not detected... Installing"
@@ -778,7 +781,7 @@ bg_install task-wappalyzer
 ###### Install testssl
 task-testssl() {
 if [[ ! -x "$(command -v testssl)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Testssl not detected... Waiting for git"
+        add_log_entry; update_log $ret "[*] Testssl not detected... Waiting for git"
         wait_command "git"
         update_log $ret "[~] Testssl not detected... Installing"
         if [[ -d "/lib32/testssl" ]];then
@@ -1046,7 +1049,7 @@ bg_install apt_installation "gdb" "GDB" "libelf1=0.183-1" "libdw1=0.183-1" "gdb"
 ###### Install shocker
 task-shocker() {
 if [[ ! -x "$(command -v shocker)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Shocker not detected... Waiting for 2to3"
+        add_log_entry; update_log $ret "[*] Shocker not detected... Waiting for 2to3"
         wait_command "2to3"
         update_log $ret "[~] Shocker not detected... Installing"
         wget https://raw.githubusercontent.com/nccgroup/shocker/master/shocker.py -q 2>>$(get_log_file shocker) >>$(get_log_file shocker)
@@ -1103,7 +1106,7 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Moved /lib/crackmapexec to /lib/crackmapexec-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >>$(get_log_file cme) 2>>$(get_log_file cme)
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install -y libssl-dev libffi-dev python-dev-is-python3 build-essential >>$(get_log_file cme) 2>>$(get_log_file cme)
         update_log $ret "[*] crackmapexec not detected... Waiting for poetry and git"
         wait_command "poetry" "git"
         update_log $ret "[~] crackmapexec not detected... Installing"
@@ -1152,6 +1155,11 @@ if [[ ! -x "$(command -v ddexec)" || $force ]];then
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
         chmod +x DDexec.sh
         sudo mv DDexec.sh /bin/ddexec
+        update_log $ret "[~] DDexec not detected... Waiting for apt and pip"
+        wait_apt
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install -y --allow-downgrades readelf objdump >>$(get_log_file ddexec) 2>>$(get_log_file ddexec)
+        wait_pip
+        sudo pip install ROPGaget
         update_log $ret "[+] DDexec Installed"
 fi
 }
@@ -1236,10 +1244,12 @@ bg_install task-evilwinrm
 
 ###### Install Bloody AD
 task-bloodyad () {
-        wait_apt
-        wait_pip
-        sudo apt-get -o DPkg::Lock::Timeout=600 install -y --allow-downgrades libcom-err2=1.46.2-2 libkrb5-dev >>$(get_log_file bloodyAD) 2>>$(get_log_file bloodyAD)
-        pip_installation bloodyAD
+        if [[ ! "$(pip list | grep bloodyAD)" || $force ]];then
+                wait_apt
+                wait_pip
+                sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install -y --allow-downgrades libcom-err2=1.46.2-2 libkrb5-dev >>$(get_log_file bloodyAD) 2>>$(get_log_file bloodyAD)
+                pip_installation bloodyAD
+        fi
 }
 bg_install task-bloodyad
 
@@ -1346,7 +1356,7 @@ task-frp() {
 if [[ ! -d "$hotscript/frp" || $force ]];then
         add_log_entry; update_log $ret "[*] frp not detected... Waiting for git and go 1.20"
         wait_command "git" "go"
-        while [[ ! "$(go version)" =~ "1.20" ]];do sleep .2;done
+        while [[ ! "$(go version)" =~ "1.20" ]];do sleep $frequency;done
         update_log $ret "[~] frp not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp) 2>>$(get_log_file frp)
         cd frp
@@ -1513,7 +1523,7 @@ task-ligolo () {
         if [[ ! -f "$hotscript/ligolo" || ! "$(command -v ligolo)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go 1.20"
                 wait_command "go"
-                while [[ ! "$(go version)" =~ "1.20" ]];do sleep .2;done
+                while [[ ! "$(go version)" =~ "1.20" ]];do sleep $frequency;done
                 update_log $ret "[~] Ligolo not detected... Installing"
                 GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ligolo-ng
@@ -1575,14 +1585,16 @@ if [[ ! "$(java --version)" =~ "openjdk 11" || $force ]];then
 fi
 
 if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
-        add_log_entry; update_log $ret "[~] Nessus not detected... Installing"
+        add_log_entry; update_log $ret "[*] Nessus not detected... Waiting for apt"
+        wait_apt
+        update_log $ret "[~] Nessus not detected... Installing"
         file=$(curl -s --request GET --url 'https://www.tenable.com/downloads/api/v2/pages/nessus' | grep -o -P "Nessus-\d+\.\d+\.\d+-debian10_amd64.deb" | head -n 1)
         curl -s --request GET \
                --url "https://www.tenable.com/downloads/api/v2/pages/nessus/files/$file" \
                --output 'Nessus.deb'
-        sudo apt-get -o DPkg::Lock::Timeout=600 install ./Nessus.deb -y >>$(get_log_file nessus) 2>>$(get_log_file nessus)
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install ./Nessus.deb -y >>$(get_log_file nessus) 2>>$(get_log_file nessus)
         rm Nessus.deb
-        sudo systemctl start nessusd
+        sudo systemctl start nessusd >>$(get_log_file nessus) 2>>$(get_log_file nessus)
         update_log $ret "[~] Go to https://localhost:8834 to complete nessus installation"
 fi
 }
