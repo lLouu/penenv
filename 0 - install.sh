@@ -13,8 +13,8 @@ banner (){
         echo "                                     ";
         echo ""
         echo "Author : lLou_"
-        echo "Suite version : V0.2.7"
-        echo "Script version : V2.3"
+        echo "Suite version : V0.2.8"
+        echo "Script version : V2.4"
         echo ""
         echo ""
 }
@@ -27,14 +27,14 @@ if [[ $usr == "root" ]];then
 fi
 
 # Trap ctrl+Z to remove artifacts and restore shell before exiting
-artifacts="/home/$usr/artifacts-$(date +%s)"
+artifacts="/home/$usr/.artifacts-$(date +%s)"
 mkdir $artifacts
 cd $artifacts
 
 # Set gui pipes
 gui="$artifacts/pipe"
 mkdir $gui
-touch $gui/updates
+touch $gui/.updates
 echo -ne "-1" > $gui/position
 
 # Set threading management
@@ -60,7 +60,7 @@ stop () {
         transcript=$log/transcript
         echo "=========================" >> $transcript
         if [[ -d $gui ]];then
-                u=$(cat $gui/updates)
+                u=$(cat $gui/.updates)
                 for i in $(seq 1 ${#u});do
                         if [[ -f $gui/$i ]];then cat $gui/$i; cat $gui/$i >> $transcript;fi
                 done
@@ -133,7 +133,7 @@ pip_proc=() # process for pip upgrade
 installation () {
         if [[ $# -eq 0 ]];then add_log_entry; update_log $ret "[!] DEBUG : No arguments but need at least 1... Cannot procceed to installation";return;fi
         if [[ "$(type $1 | grep 'not found')" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a defined function... Cannot procceed to installation";return;fi
-        while [[ $(ls $thread_dir | wc -l) -gt $thread ]];do sleep $frequency; done
+        while [[ $(ls $thread_dir | wc -l) -ge $thread ]];do sleep $frequency; done
         (file=$(date +%s%N); echo $@ > $thread_dir/$file; "$@"; rm $thread_dir/$file) &
         p=$!
 }
@@ -172,7 +172,7 @@ wait_procs () {
                         wait_pid $job
                 done
                 if [[ -f "$waiting_dir/$file" ]];then mv $waiting_dir/$file $goback_dir/$file;fi # Put the thread in want to activate again mode
-                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -gt $thread ]];do sleep $frequency; done # Wait a working thread to be available again while being the first in queue
+                while [[ $(ls $goback_dir | head -n1) -ne $file || $(ls $thread_dir | wc -l) -ge $thread ]];do sleep $frequency; done # Wait a working thread to be available again while being the first in queue
                 if [[ -f "$goback_dir/$file" ]];then mv $goback_dir/$file $thread_dir/$file;fi
         fi
 }
@@ -207,8 +207,8 @@ add_log_entry() {
         touch $gui/$lname
         while [[ -d $gui && $(ls $gui | grep getting | head -n 1) -ne $lname ]];do sleep .1; done
         if [[ ! -d $gui ]];then return;fi
-        printf '0' >> $gui/updates
-        ret=$(wc -c $gui/updates | awk '{print($1)}')
+        printf '0' >> $gui/.updates
+        ret=$(wc -c $gui/.updates | awk '{print($1)}')
         rm $gui/$lname
         touch $gui/$ret
         return $ret
@@ -217,7 +217,7 @@ update_log() {
         if [[ ! -d $gui ]]; then return; fi
         if [[ ! -f "$gui/$1" ]];then add_log_entry; update_log $ret "[!] DEBUG : $1 is not a log entry";return; fi
         echo "${@:2}" > $gui/$1
-        sed -i "s/./1/$1" $gui/updates
+        sed -i "s/./1/$1" $gui/.updates
 }
 
 gui_proc () {
@@ -229,7 +229,7 @@ gui_proc () {
                 # Observe updating to reduce gui needs ?
                 # And maybe sort such that Installing process are all the way down
 
-                used=$((1 + $(ls $thread_dir | wc -l)))
+                used=$((2 + $(ls $thread_dir | wc -l)))
                 waiting=$(($(ls $waiting_dir | wc -l) + $(ls $goback_dir | wc -l) - 1))
                 ended=$(cat $gui/* | grep "\[+\]" | wc -l)
                 total=$(($ended + $waiting + $used - 1))
@@ -320,12 +320,17 @@ gui_proc &
 guiproc_id=$!
 
 # Set directory environement
-log=/home/$usr/logs
-hotscript=/home/$usr/hot-script
+log=/home/$usr/.logs
 if [[ ! -d $log && ! $nologs ]];then
         add_log_entry; update_log $ret "[+] Creating log folder in $log"
         mkdir $log
 fi
+log=$log/install
+if [[ ! -d $log && ! $nologs ]];then
+        add_log_entry; update_log $ret "[+] Creating install log folder in $log"
+        mkdir $log
+fi
+hotscript=/home/$usr/hot-script
 if [[ ! -d $hotscript ]];then
         add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
         mkdir $hotscript
@@ -356,18 +361,6 @@ fi
 }
 bg_install task-ipenenv
 
-###### Install autoenum
-task-autoenum() {
-if [[ ! -x "$(command -v autoenum)" || $check || $force ]];then
-        add_log_entry; update_log $ret "[~] autoenum not detected... Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/A%20-%20autoenum.sh -q
-        chmod +x A\ -\ autoenum.sh
-        sudo mv A\ -\ autoenum.sh /bin/autoenum
-        update_log $ret "[+] autoenum Installed"
-fi
-}
-bg_install task-autoenum
-
 ###### Install start
 task-start() {
 if [[ ! -x "$(command -v start)" || $check || $force ]];then
@@ -380,6 +373,18 @@ fi
 }
 bg_install task-start
 
+###### Install get-session
+task-getsession() {
+if [[ ! -x "$(command -v get-session)" || $check || $force ]];then
+        add_log_entry; update_log $ret "[~] get-session not detected... Installing"
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/tools/get-session.sh -q
+        chmod +x get-session.sh
+        sudo mv get-session.sh /bin/get-session
+        update_log $ret "[+] get-session Installed"
+fi
+}
+bg_install task-getsession
+
 if [[ $check ]];then
         wait_bg
         stop --no-exit
@@ -388,7 +393,6 @@ if [[ $check ]];then
 fi
 
 ## Languages and downloaders
-add_log_entry; update_log $ret "[*] Getting languages and downloaders..."
 ###### Upgrade apt
 if [[ ! $no_upgrade ]];then
         start_update=$(date +%s)
@@ -573,14 +577,13 @@ bg_install apt_installation "git"
 ###### Install krb5
 bg_install apt_installation "kinit" "Kerberos" "krb5-user"
 
-
 ###### Install 7z
+bg_install apt_installation "7z" "7-zip" "p7zip-full"
 
 ###### Install winrar
-
+bg_install apt_installation "rar" "winrar" "rar" "unrar"
 
 # Commands
-add_log_entry; update_log $ret "[*] Getting commands..."
 ###### Install ftp module
 bg_install pip_installation pyftpdlib
 
@@ -607,7 +610,6 @@ bg_install apt_installation "unbuffer" "expect"
 
 # Tools
 ## Web scan
-add_log_entry; update_log $ret "[*] Getting web scan tools..."
 ### Subdomain & paths
 ###### Install sublist3r
 task-sublister() {
@@ -841,7 +843,6 @@ bg_install task-wpscan
 
 
 ### Bruteforce
-add_log_entry; update_log $ret "[*] Getting bruteforce tools..."
 ###### Install hashcat
 bg_install apt_installation "hashcat"
 
@@ -868,7 +869,6 @@ bg_install task-hydra
 bg_install apt_installation "john"
 
 ### Network
-add_log_entry; update_log $ret "[*] Getting network tools..."
 ###### Install nmap
 bg_install apt_installation "nmap"
 
@@ -885,7 +885,6 @@ bg_install apt_installation "snmp-check" "snmp-check" "snmpcheck"
 bg_install apt_installation "snmpwalk" "snmpwalk" "snmp"
 
 ### Exploits
-add_log_entry; update_log $ret "[*] Getting exploit tools..."
 ###### Install Metasploit & Armitage
 task-metasploit() {
 if [[ ! -x "$(command -v msfconsole)" || ! -x "$(command -v armitage)" || $force ]];then
@@ -935,18 +934,6 @@ if [[ ! -x "$(command -v searchsploit)" || $force ]];then
 fi
 }
 bg_install task-searchsploit
-
-# ###### Install AutoHackBruteOS
-# task-autohackbruteos() {
-# if [[ ! -x "$(command -v AutoHackBruteOS)" || $force ]];then
-#         add_log_entry; update_log $ret "[~] AutoHackBruteOS not detected... Installing"
-#         (echo "#! /usr/bin/env ruby" && curl -L -s https://raw.githubusercontent.com/carlospolop/AutoHackBruteOs/master/AutoHackBruteOs.rc) > AutoHackBruteOs.rc
-#         chmod +x AutoHackBruteOs.rc
-#         sudo mv AutoHackBruteOs.rc /bin/AutoHackBruteOs
-#         update_log $ret "[+] AutoHackBruteOS Installed"
-# fi
-# }
-# bg_install task-autohackbruteos
 
 ###### Install sqlmap
 task-sqlmap() {
@@ -1063,7 +1050,6 @@ bg_install task-shocker
 
 
 ### Others
-add_log_entry; update_log $ret "[*] Getting other tools..."
 ###### Install impacket
 bg_install apt_installation "impacket-ntlmrelayx" "impacket" "impacket-scripts"
 
@@ -1283,7 +1269,6 @@ bg_install task-pydictor
 
 
 ## Hot scripts
-add_log_entry; update_log $ret "[*] Getting scripts..."
 ###### Install dnscat2 & dependencies
 task-dnscat() {
 if [[ ! -d "/lib/dnscat" || $force ]];then
@@ -1300,6 +1285,27 @@ if [[ ! -d "/lib/dnscat" || $force ]];then
         sudo mv dnscat2 /lib/dnscat
         # correct minor sourcecode error
         sudo sed -i 's/return a.value.ptr == a.value.ptr/return a.value.ptr == b.value.ptr/g' /lib/dnscat/client/libs/ll.c
+        # replace relative path with absolute path
+        sudo sed -i "s/require 'libs/require '\/lib\/dnscat\/server\/libs/g" /lib/dnscat/server/dnscat2.rb
+        sudo sed -i "s/require 'controller/require '\/lib\/dnscat\/server\/controller/g" /lib/dnscat/server/dnscat2.rb
+        sudo sed -i "s/require 'tunnel_drivers/require '\/lib\/dnscat\/server\/tunnel_drivers/g" /lib/dnscat/server/dnscat2.rb
+        sudo sed -i "s/require 'drivers/require '\/lib\/dnscat\/server\/drivers/g" /lib/dnscat/server/dnscat2.rb
+        sudo sed -i "s/require 'libs/require '\/lib\/dnscat\/server\/libs/g" /lib/dnscat/server/libs/*
+        sudo sed -i "s/require 'controller/require '\/lib\/dnscat\/server\/controller/g" /lib/dnscat/server/libs/*
+        sudo sed -i "s/require 'tunnel_drivers/require '\/lib\/dnscat\/server\/tunnel_drivers/g" /lib/dnscat/server/libs/*
+        sudo sed -i "s/require 'drivers/require '\/lib\/dnscat\/server\/drivers/g" /lib/dnscat/server/libs/*
+        sudo sed -i "s/require 'libs/require '\/lib\/dnscat\/server\/libs/g" /lib/dnscat/server/controller/*
+        sudo sed -i "s/require 'controller/require '\/lib\/dnscat\/server\/controller/g" /lib/dnscat/server/controller/*
+        sudo sed -i "s/require 'tunnel_drivers/require '\/lib\/dnscat\/server\/tunnel_drivers/g" /lib/dnscat/server/controller/*
+        sudo sed -i "s/require 'drivers/require '\/lib\/dnscat\/server\/drivers/g" /lib/dnscat/server/controller/*
+        sudo sed -i "s/require 'libs/require '\/lib\/dnscat\/server\/libs/g" /lib/dnscat/server/tunnel_drivers/*
+        sudo sed -i "s/require 'controller/require '\/lib\/dnscat\/server\/controller/g" /lib/dnscat/server/tunnel_drivers/*
+        sudo sed -i "s/require 'tunnel_drivers/require '\/lib\/dnscat\/server\/tunnel_drivers/g" /lib/dnscat/server/tunnel_drivers/*
+        sudo sed -i "s/require 'drivers/require '\/lib\/dnscat\/server\/drivers/g" /lib/dnscat/server/tunnel_drivers/*
+        sudo sed -i "s/require 'libs/require '\/lib\/dnscat\/server\/libs/g" /lib/dnscat/server/drivers/*
+        sudo sed -i "s/require 'controller/require '\/lib\/dnscat\/server\/controller/g" /lib/dnscat/server/drivers/*
+        sudo sed -i "s/require 'tunnel_drivers/require '\/lib\/dnscat\/server\/tunnel_drivers/g" /lib/dnscat/server/drivers/*
+        sudo sed -i "s/require 'drivers/require '\/lib\/dnscat\/server\/drivers/g" /lib/dnscat/server/drivers/*
         update_log $ret "[+] Dnscat sourcecode Installed"
 fi
 
@@ -1334,7 +1340,7 @@ fi
 
 if [[ ! -x "$(command -v dnscat-shell)" || $force ]];then
         add_log_entry; update_log $ret "[~] dnscat shell not detected... Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/dnscat-shell.sh -q
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/tools/dnscat-shell.sh -q
         chmod +x dnscat-shell.sh
         sudo mv dnscat-shell.sh /bin/dnscat-shell
         update_log $ret "[+] dnscat shell Installed"
@@ -1450,8 +1456,26 @@ fi
 bg_install task-pspy64
 
 ###### Install rubeus
+task-rubeus() {
+if [[ ! -f "$hotscript/Rubeus.exe" || $force ]];then
+        add_log_entry; update_log $ret "[~] Rubeus not detected... Installing"
+        wget https://github.com/lLouu/binary-bank/raw/main/Rubeus/Rubeus.exe -q
+        mv Rubeus.exe $hotscript/Rubeus.exe
+        update_log $ret "[+] Rubeus Installed"
+fi
+}
+bg_install task-rubeus
 
 ###### Install mimikatz
+task-mimikatz() {
+if [[ ! -f "$hotscript/mimikatz.exe" || $force ]];then
+        add_log_entry; update_log $ret "[~] mimikatz not detected... Installing"
+        wget https://github.com/lLouu/binary-bank/raw/main/Mimikatz/Win32/mimikatz.exe -q
+        mv mimikatz.exe $hotscript/mimikatz.exe
+        update_log $ret "[+] mimikatz Installed"
+fi
+}
+bg_install task-mimikatz
 
 ###### Install mimipenguin
 task-mimipenguin() {
@@ -1491,6 +1515,15 @@ task-wesng() {
 bg_install task-wesng
 
 ###### Install watson
+task-watson() {
+if [[ ! -f "$hotscript/Watson.exe" || $force ]];then
+        add_log_entry; update_log $ret "[~] Watson not detected... Installing"
+        wget https://github.com/lLouu/binary-bank/raw/main/Watson/Watson.exe -q
+        mv Watson.exe $hotscript/Watson.exe
+        update_log $ret "[+] Watson Installed"
+fi
+}
+bg_install task-watson
 
 ###### Install powersploit
 task-powersploit () {
@@ -1502,8 +1535,6 @@ task-powersploit () {
         fi
 }
 bg_install task-powersploit
-
-###### Install evilSSDP
 
 ###### Install netcat exe
 task-netcatexe () {
@@ -1559,9 +1590,44 @@ task-godpotato () {
 }
 bg_install task-godpotato
 
+###### Install ddenum
+task-ddenum() {
+if [[ ! -f "$hotscript/ddenum" || $force ]];then
+        add_log_entry; update_log $ret "[~] ddenum not detected... Installing"
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/ddenum.sh -q
+        chmod +x ddenum.sh
+        sudo mv ddenum.sh $hotscript/ddenum
+        update_log $ret "[+] ddenum Installed"
+fi
+}
+bg_install task-ddenum
+
+###### Install filestream
+task-filestream() {
+if [[ ! -f "$hotscript/filestream" || $force ]];then
+        add_log_entry; update_log $ret "[~] filestream not detected... Installing"
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/filestream.sh -q
+        chmod +x filestream.sh
+        sudo mv filestream.sh $hotscript/filestream
+        update_log $ret "[+] filestream Installed"
+fi
+}
+bg_install task-filestream
+
+###### Install shscanner
+task-shscanner() {
+if [[ ! -f "$hotscript/shscanner" || $force ]];then
+        add_log_entry; update_log $ret "[~] shscanner not detected... Installing"
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/shscanner.sh -q
+        chmod +x shscanner.sh
+        sudo mv shscanner.sh $hotscript/shscanner
+        update_log $ret "[+] shscanner Installed"
+fi
+}
+bg_install task-shscanner
+
 
 ## Services
-add_log_entry; update_log $ret "[*] Getting Services..."
 ###### Install bloodhound
 bg_install apt_installation "bloodhound"
 

@@ -1,4 +1,8 @@
 #! /bin/sh
+echo "pwd2ntlm"
+echo "Author : lLou_"
+echo "---"
+
 if [[ $# -eq 0 ]];then
    read -e -p "Password > " pwd
 else

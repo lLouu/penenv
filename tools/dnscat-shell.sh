@@ -14,7 +14,7 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.2.7"
+echo "Suite version : V0.2.8"
 echo "Script version : V1.0"
 echo ""
 echo ""
@@ -22,8 +22,8 @@ echo ""
 echo "[+] Retrieving standard input and output..."
 
 usr=$(whoami)
-stdin="/home/$usr/session/dnscat.stdin"
-stdout="/home/$usr/session/dnscat.stdout"
+stdin="/home/$usr/.session/dnscat.stdin"
+stdout="/home/$usr/.session/dnscat.stdout"
 
 echo -ne "" > $stdout
 echo "help" >> $stdin

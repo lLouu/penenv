@@ -1,7 +1,14 @@
 
 # General Informations
 
+## The project
+PenEnv is a suite of scripts to be used for pentesting<br>
+It has a goal to provide tools for installing environement, osint, enumeration, exploitation and post-exploitation, and to automize their utilisation. 
+
 ## Installation
+ > Count around 40 to 45 minutes for the forced installation using the default 20 threads and a decent internet connection
+ > The time is mainly due to apt and pip upgrade, don't hesitate using --no-update (or -nc) to gain time if that does not seem usefull to you
+
 ### Main installation
 ```
 curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh | bash
@@ -17,16 +24,36 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.sh | bash -s -- -f
 ```
 
-# Content
+### Misc script installation
+```
+script=<script-you-want> && wget https://raw.githubusercontent.com/lLouu/penenv/main/misc/$script && chmod +x $script
+```
 
-## Install (99/105)
+## Components
+
+### install.sh
+install.sh is the script that manage penenv installation.
+
+### start.sh
+start.sh launches usefull services for your pentesting. It uses some ports
+ - 21 for providing hotscripts with ftp server and allowing uploads
+ - 53 for dnscat server
+ - 80 for providing hotscripts with http server
+ - 445 for smb share
+ - 7474 for neo4j
+ - 8834 for nessus
+ - 11601 for ligolo proxy
+
+# Detailed Content
+
+## Install (107)
 
 ### Penenv (3)
  - [X] install_penenv
- - [X] autoenum
  - [X] start
+ - [X] get-session
 
-### Lang & downloaders (17/19)
+### Lang & downloaders (19)
  - [X] apt upgrade
  - [X] python 3
     - [X] 2to3
@@ -46,8 +73,8 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
     - [X] gradle
  - [X] git
  - [X] krb5-user
- - [ ] 7z
- - [ ] winrar
+ - [X] 7z
+ - [X] winrar
 
 ### Commands (5)
  - [X] pyftpdlib
@@ -129,7 +156,7 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] Certipy
  - [X] pydictor
 
-### Scripts (15/19)
+### Scripts (21)
  - [X] dnscat (server & client & shell)
  - [X] Chisel
  - [X] frp
@@ -137,18 +164,20 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
  - [X] WinPEAS
  - [X] miranda
  - [X] pspy
- - [ ] rubeus
- - [ ] mimikatz
+ - [X] rubeus
+ - [X] mimikatz
  - [X] mimipenguin
  - [X] linux-exploit-suggester-2
  - [X] wesng
- - [ ] watson
+ - [X] watson
  - [X] powersploit
- - [ ] evilSSDP
  - [X] netcat Windows
  - [X] ligolo-ng
  - [X] FullPowers
  - [X] GodPotato
+ - [X] ddenum
+ - [X] filestream
+ - [X] shscanner
 
 ### Services (3)
  - [X] bloodhound
@@ -160,8 +189,11 @@ curl -L -s https://raw.githubusercontent.com/lLouu/penenv/main/0%20-%20install.s
 ### Services
  - [X] neo4j
  - [X] nessus
+
+### Servers
  - [X] dnscat
  - [X] openvpn
+ - [X] ligolo proxy
 
 ### File transfer servers
  - [X] http server
