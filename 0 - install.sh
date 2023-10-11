@@ -566,7 +566,7 @@ task-gradle () {
                 sudo mv gradle-8.4 /lib/gradle
                 if [[ -f "/bin/gradle" ]];then sudo rm /bin/gradle;fi
                 sudo ln -s /lib/gradle/bin/gradle /bin/gradle
-                update_log $ret "[+] sublist3r Installed"
+                update_log $ret "[+] gradle Installed"
         fi
 }
 bg_install task-gradle
@@ -607,6 +607,9 @@ bg_install apt_installation "jq"
 
 ###### Install expect
 bg_install apt_installation "unbuffer" "expect"
+
+###### Install lightdm and Mate
+apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
 
 # Tools
 ## Web scan

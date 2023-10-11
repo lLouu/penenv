@@ -226,8 +226,14 @@ start.sh launches usefull services for your pentesting. It uses some ports
    - [ ] Raspery
    - [ ] VM
 
+# Known issue
+
+## I001 - Mate compromission
+An unidentified process can compromize somehow mate menu and seems to remove parts of mate-desktop-environment package<br>
+This can be solved with 'apt install mate-desktop-environment' again and rebooting
 
 # Journey map
+> Public notion page is currently in bulding
 
 ## OSINT
 
@@ -247,7 +253,7 @@ Name    | Tools
 network | nmap
 banner  | nmap, telnet
 fuzz    | ffuf, gobuster
-web     | arjun, brockenlinkchecker, dirscapper, gowitness, hakrawler, nikto, secretfinder, testssl, wappalyzer, whatweb
+web     | arjun, brokenlinkchecker, linkfinder, gowitness, hakrawler, nikto, secretfinder, testssl, wappalyzer, whatweb
 upnp    | miranda
 
 
@@ -277,6 +283,9 @@ upnp    | miranda
  - metasploit
  - sqlmap
  - commix
+#### Binary manipulation
+ - ghidra
+ - gdb
 
 ### Backdoor
  - reverse shells
@@ -293,20 +302,27 @@ upnp    | miranda
  - pspy
  - linux-exploit-suggestor-2
  - watson
+ - FullPowers
+ - GodPotato
+ - rubeus / mimikatz
 
 ### Dumping
  - impacket
  - bloodhound
+ - BloodyAD
+ - Certipy
  - crackmapexec
  - rubeus
  - mimikatz
  - mimipenguin
 
 ### Spying
- - proxychain
  - responder
  - mitm6
  - impacket
 
-### Social Eng
- - evilSSDP
+### Pivoting
+ - proxychains
+ - logolo-ng
+ - frp
+ - chisel
