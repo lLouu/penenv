@@ -609,7 +609,7 @@ bg_install apt_installation "jq"
 bg_install apt_installation "unbuffer" "expect"
 
 ###### Install lightdm and Mate
-apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
+bg_install apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
 
 # Tools
 ## Web scan
