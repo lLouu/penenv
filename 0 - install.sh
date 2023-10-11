@@ -608,9 +608,6 @@ bg_install apt_installation "jq"
 ###### Install expect
 bg_install apt_installation "unbuffer" "expect"
 
-###### Install lightdm and Mate
-bg_install apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
-
 # Tools
 ## Web scan
 ### Subdomain & paths
@@ -1671,6 +1668,10 @@ bg_install task-nessus
 
 wait_apt
 wait_pip
+wait_bg
+
+###### Install lightdm and Mate
+bg_install apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
 wait_bg
 
 add_log_entry; update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"
