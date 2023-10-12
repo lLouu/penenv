@@ -134,7 +134,7 @@ echo ""
 # Start ftp server
 echo "[+] (Re)Starting file transfer through ftp"
 restart-service pyftpdlib
-sudo unbuffer python3 -m pyftpdlib -p 21 -w -d hot-script -u $usr -P penenv 2>&1 | tee logs/ftp.log > /dev/null &
+sudo unbuffer python3 -m pyftpdlib -p 21 -w -d hot-script -u $usr -P penenv 2>&1 | tee $log/ftp.log > /dev/null &
 sudo ln -s $log/ftp.log $session/ftp.stdout
 tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:21 with $usr:penenv";tput sgr0
 
