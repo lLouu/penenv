@@ -84,10 +84,19 @@ else
 fi
 if [[ ! -f $session_dir/$choice_name.stdin ]];then echo "[!] No stdin is available for $choice_name session"; fi
 
+cmd=""
 while [[ "1" ]];do
    if [[ -f $session_dir/$choice_name.stdin ]];then
-      read -e cmd
-      echo $cmd >> $session_dir/$choice_name.stdin
+      read -n1 s
+      if [[ $s == $escape_char ]]; then
+         read -rsn2 c
+         echo -ne "$s$c" >> $session_dir/$choice_name.stdin
+      elif [[ $s == $(echo "") ]]; then
+         echo "$cmd" >> $session_dir/$choice_name.stdin
+         cmd=""
+      else
+         cmd=$cmd$s
+      fi
    else
       sleep 1000
    fi
