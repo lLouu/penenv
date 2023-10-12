@@ -74,9 +74,11 @@ for i in $sessions;do
    if [[ $k -eq $choice ]];then choice_name=$i;fi
    k=$((k+1))
 done
+echo ""
 echo "[+] Loading $choice_name"
 if [[ ! -f $session_dir/$choice_name.stdout ]];then echo "[!] No stdout is available for $choice_name session"
 else
+   echo ""
    tail -f -n+1 $session_dir/$choice_name.stdout &
    output=$!
 fi

@@ -56,7 +56,8 @@ sudo rm $session/* 2>/dev/null
 # Starting Neo4j
 echo "[+] (Re)Starting neo4j"
 restart-service neo4j
-sudo unbuffer -p neo4j console | tee $log/neo4j.log > /dev/null &
+touch $session/neo4j.stdin
+tail -f $session/neo4j.stdin | sudo unbuffer -p neo4j console 2>&1 | tee $log/neo4j.log > /dev/null &
 sudo ln -s $log/neo4j.log $session/neo4j.stdout
 tput setaf 4;echo "[*] Access to neo4j web interface through http://localhost:7474";tput sgr0
 tput setaf 6;echo "[~] Launch bloodhound using 'bloodhound' command";tput sgr0
@@ -79,7 +80,7 @@ read -e -p "Secret > " sec
 if [[ ! "$sec" ]];then sec="hellowthere";fi
 touch $session/dnscat.stdin
 touch $session/dnscat.stdout
-tail -f $session/dnscat.stdin | sudo unbuffer -p dnscat $dom --secret $sec --security=authenticated | tee $session/dnscat.stdout > /dev/null &
+tail -f $session/dnscat.stdin | sudo unbuffer -p dnscat $dom --secret $sec --security=authenticated 2>&1 | tee $session/dnscat.stdout > /dev/null &
 tput setaf 4;echo "[*] Access to dnscat tunnel through localhost:53 with secret $sec";tput sgr0
 tput setaf 6;echo "[~] To connect while using domain request, make sure this server is an authoritative DNS";tput sgr0
 tput setaf 6;echo "[~] To get your shell after executing client dnscat, execute get-session";tput sgr0
@@ -93,7 +94,7 @@ sudo ip tuntap add user $usr mode tun ligolo 2>/dev/null
 sudo ip link set ligolo up
 touch $session/ligolo.stdin
 touch $session/ligolo.stdout
-tail -f $session/ligolo.stdin | sudo unbuffer -p ligolo -selfsign | tee $session/ligolo.stdout > /dev/null &
+tail -f $session/ligolo.stdin | sudo unbuffer -p ligolo -selfcert 2>&1 | tee $session/ligolo.stdout > /dev/null &
 tput setaf 4;echo "[*] Ligolo proxy vpn has been made";tput sgr0
 tput setaf 6;echo "[~] To connect use ligolo hotscript on the victim to connect to port 11601";tput sgr0
 tput setaf 6;echo "[~] To get your shell after executing client dnscat, execute get-session";tput sgr0
@@ -108,7 +109,7 @@ tput setaf 6;echo "[~] Give vpn file path to launch if you want to initiate a vp
 read -e -p "VPN File > " vpnfile
 if [[ $vpnfile ]];then
   if [[ -f $vpnfile ]];then
-    sudo unbuffer openvpn $vpnfile | tee $log/openvpn.log > /dev/null &
+    sudo unbuffer openvpn $vpnfile 2>&1 | tee $log/openvpn.log > /dev/null &
     sudo ln -s $log/openvpn.log $session/openvpn.stdout
     tput setaf 4;echo "[*] Connexion to $(basename $vpnfile) done";tput sgr0
   else
@@ -124,7 +125,7 @@ echo ""
 # Start http server
 echo "[+] (Re)Starting file transfer through http"
 restart-service http.server
-sudo unbuffer python3 -m http.server --directory $hotscript 80  | tee $log/http.log > /dev/null &
+sudo unbuffer python3 -m http.server --directory $hotscript 80 2>&1 | tee $log/http.log > /dev/null &
 sudo ln -s $log/http.log $session/http.stdout
 tput setaf 4;echo "[*] Access to file download through http://localhost:80/<path>";tput sgr0
 
@@ -133,7 +134,7 @@ echo ""
 # Start ftp server
 echo "[+] (Re)Starting file transfer through ftp"
 restart-service pyftpdlib
-sudo unbuffer python3 -m pyftpdlib -p 21 -w -d hot-script -u $usr -P penenv | tee logs/ftp.log > /dev/null &
+sudo unbuffer python3 -m pyftpdlib -p 21 -w -d hot-script -u $usr -P penenv 2>&1 | tee logs/ftp.log > /dev/null &
 sudo ln -s $log/ftp.log $session/ftp.stdout
 tput setaf 4;echo "[*] Access to file transfer through ftp://localhost:21 with $usr:penenv";tput sgr0
 
@@ -142,7 +143,7 @@ echo ""
 # Start smb server
 echo "[+] (Re)Starting file transfer through smb"
 restart-service impacket-smbserver
-sudo unbuffer impacket-smbserver share $hotscript -smb2support | tee $log/smb.log > /dev/null &
+sudo unbuffer impacket-smbserver share $hotscript -smb2support 2>&1 | tee $log/smb.log > /dev/null &
 sudo ln -s $log/smb.log $session/smb.stdout
 tput setaf 4;echo "[*] Access to file transfer through //localhost/share/<path>";tput sgr0
 
