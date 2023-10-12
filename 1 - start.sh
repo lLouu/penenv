@@ -32,22 +32,22 @@ fi
 # Set directory environement
 log=/home/$usr/.logs
 if [[ ! -d $log && ! $nologs ]];then
-        add_log_entry; update_log $ret "[+] Creating log folder in $log"
+        echo "[+] Creating log folder in $log"
         mkdir $log
 fi
 log=$log/start-$(date +%F)
 if [[ ! -d $log && ! $nologs ]];then
-        add_log_entry; update_log $ret "[+] Creating start log folder in $log"
+        echo "[+] Creating start log folder in $log"
         mkdir $log
 fi
 hotscript=/home/$usr/hot-script
 if [[ ! -d $hotscript ]];then
-        add_log_entry; update_log $ret "[+] Creating hotscript folder in $hotscript"
+        echo "[+] Creating hotscript folder in $hotscript"
         mkdir $hotscript
 fi
 session=/home/$usr/.session
 if [[ ! -d $session ]];then
-        add_log_entry; update_log $ret "[+] Creating session folder in $session"
+        echo "[+] Creating session folder in $session"
         mkdir $session
 fi
 sudo rm $session/* 2>/dev/null
