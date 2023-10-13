@@ -33,7 +33,7 @@ case $# in
             read -n1 -p "[>] Press any key once the listner is ready"
             echo ""
             cat </dev/tcp/$(echo $2 | cut -d':' -f1)/$(echo $2 | cut -d':' -f2) > $3
-            chmod $3 700
+            chmod 700 $3
             echo "[+] File transfer ended"
             ;;
          *)

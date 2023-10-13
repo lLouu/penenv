@@ -145,7 +145,7 @@ start.sh launches usefull services for your pentesting. It uses some ports
  - [X] crackmapexec
  - [X] cewl
  - [X] cupp
- - [X] DDexec
+ - [X] DDexec payloader & script
  - [X] openvpn
  - [X] mitm6
  - [X] proxychain

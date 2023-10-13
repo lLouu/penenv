@@ -15,6 +15,7 @@ while [[ $# -gt 0 ]]; do
       echo "  -b  | --brute   : enable bruteforcing ip"
       echo "  -r  | --range   : edit port range (default 10000)"
       echo "  -to | --timeout : edit port timeout (default .01)"
+      exit 1
       ;;
     -b|--brute|--bruteforce)
       brute="1"
@@ -103,9 +104,9 @@ if [[ $brute ]];then
       IFS=. read -r a b c d <<< "$base"
       IFS=. read -r e f g h <<< "$mask"
       start=$(($((a & e)) * 256 ** 3 + $((b & f)) * 256 ** 2 + $((c & g)) * 256 + $((d & h))))
-      range=$(($((255 - e)) * 256 ** 3 + $((255 - f)) * 256 ** 2 + $((255 - g)) * 256 + $((255 - h))))
-      echo "[*] Scanning inet $(int_to_ip $start) for its $range addresses"
-      for i in $(seq 1 $range); do
+      size=$(($((255 - e)) * 256 ** 3 + $((255 - f)) * 256 ** 2 + $((255 - g)) * 256 + $((255 - h))))
+      echo "[*] Scanning inet $(int_to_ip $start) for its $size addresses"
+      for i in $(seq 1 $size); do
          pingscan $i &
       done
       sleep 1.1
@@ -117,7 +118,7 @@ echo ""
 echo "[*] Scanning $range ports using tcp scanning"
 
 for addr in $(ls $workingdir); do
-   for i in $(req 1 $range); do
+   for i in $(seq 1 $range); do
       timeout $to /bin/bash -c "</dev/tcp/$addr/$port" 2>/dev/null && echo $port >> $workingdir/$addr
    done
    echo "[+] Found $(cat $workingdir/$addr | wc -l) open ports at $addr"

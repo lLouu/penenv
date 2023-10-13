@@ -1134,8 +1134,8 @@ fi
 }
 bg_install task-cupp
 
-###### Install DDexec
-task-ddexec() {
+###### Install DDexec payloader
+task-ddexec-payloader() {
 if [[ ! -x "$(command -v ddexec)" || $force ]];then
         add_log_entry; update_log $ret "[~] DDexec not detected... Installing"
         wget https://raw.githubusercontent.com/carlospolop/DDexec/main/DDexec.sh -q
@@ -1149,7 +1149,7 @@ if [[ ! -x "$(command -v ddexec)" || $force ]];then
         update_log $ret "[+] DDexec Installed"
 fi
 }
-bg_install task-ddexec
+bg_install task-ddexec-payloader
 
 ###### Install openvpn
 bg_install apt_installation "openvpn"
@@ -1589,6 +1589,18 @@ task-godpotato () {
         fi
 }
 bg_install task-godpotato
+
+###### Install ddexec script
+task-ddexec() {
+if [[ ! -f "$hotscript/ddexec" || $force ]];then
+        add_log_entry; update_log $ret "[~] ddenum not detected... Installing"
+        wget https://raw.githubusercontent.com/arget13/DDexec/main/ddexec.sh -q
+        chmod +x ddexec.sh
+        sudo mv ddexec.sh $hotscript/ddexec
+        update_log $ret "[+] ddexec Installed"
+fi
+}
+bg_install task-ddexec
 
 ###### Install ddenum
 task-ddenum() {
