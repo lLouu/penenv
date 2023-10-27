@@ -176,10 +176,10 @@ ip="1"
 while [[ "$ip" ]];do
         read -e -p "Attacker ip > " ip
         if [[ "$ip" ]];then
-                if [[ ! "$ip" =~ ^[0-9]{1-3}\.[0-9]{1-3}\.[0-9]{1-3}\.[0-9]{1-3}$ ]];then echo "[!] '$ip' is not an ip in the format 0.0.0.0"
+                if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then echo "[!] '$ip' is not an ip in the format 0.0.0.0"
                 else
                         read -e -p "Attacker port > " port
-                        if [[ ! "$ip" =~ ^[0-9]{1-5}$ || $ip -gt 65535 ]];then echo "[!] '$port' is not a valid port";
+                        if [[ ! "$ip" =~ ^[0-9]{1,5}$ || $ip -gt 65535 ]];then echo "[!] '$port' is not a valid port";
                         else echo "[*] Generating payloads for $ip:$port"; generating-payloads $ip $port; fi
                 fi
         fi

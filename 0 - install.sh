@@ -116,6 +116,7 @@ go_installation () {
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 add_log_entry; update_log $ret "[*] $1 not detected... Waiting go to be installed"
                 wait_command "go"
+                while [[ ! $(curl https://go.dev/dl/ -s 2>/dev/null | grep linux-amd64.tar.gz | head -n1 | cut -d'"' -f4) =~ "$(go version | awk '{print($3)}')" ]];do sleep $frequency;done
                 update_log $ret "[~] $1 not detected... Installing"
                 go install $2 2>> $(get_log_file $1)
                 sudo cp /home/$usr/go/bin/$1 /bin/$1
@@ -1132,6 +1133,8 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         cd /lib/crackmapexec
         cd /lib/crackmapexec && poetry lock >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd /lib/crackmapexec && poetry install >>$(get_log_file cme) 2>>$(get_log_file cme)
+        ## It may happens that dependencies are not downloaded on the correct order, re-installing allow to download previously failed ones
+        cd /lib/crackmapexec && poetry install >>$(get_log_file cme) 2>>$(get_log_file cme)
         update_log $ret "[~] crackmapexec not detected... Initialize"
         cd /lib/crackmapexec && poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd $workingdir
@@ -1186,10 +1189,11 @@ bg_install apt_installation "openvpn"
 
 ###### Install mitm6
 task-mitmsix() {
-pip_install mitm6
+wait_pip
 pip install cryptography==38.0.4 >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
 pip install service_identity >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
 pip install scapy --upgrade >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
+pip_install mitm6
 }
 bg_install task-mitmsix
 
