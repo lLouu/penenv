@@ -13,8 +13,8 @@ banner (){
         echo "                                     ";
         echo ""
         echo "Author : lLou_"
-        echo "Suite version : V0.2.8"
-        echo "Script version : V2.4"
+        echo "Suite version : V0.3.0"
+        echo "Script version : V2.5"
         echo ""
         echo ""
 }
@@ -467,10 +467,10 @@ if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
         add_log_entry; update_log $ret "[~] go 1.20 not detected... Installing"
         wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -q
         sudo tar xzf go1.20.2.linux-amd64.tar.gz 
-        if [[ -d "/usr/local/go" ]];then
-                sudo mv /usr/local/go /usr/local/go-$(date +%y-%m-%d--%T).old
+        if [[ -d "/usr/lib/go" ]];then
+                sudo mv /usr/lib/go /usr/lib/go-$(date +%y-%m-%d--%T).old
                 tmp=$ret
-                add_log_entry; update_log $ret "[*] Moved /usr/local/go to /usr/local/go-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                add_log_entry; update_log $ret "[*] Moved /usr/lib/go to /usr/lib/go-$(date +%y-%m-%d--%T).old due to forced reinstallation"
                 ret=$tmp
         fi
         sudo mv go /usr/lib/go-1.20
@@ -488,6 +488,31 @@ bg_install apt_installation "gem" "Ruby" "ruby-dev"
 
 ###### Install Java
 bg_install apt_installation "java" "Java" "default-jdk" "openjdk-17-jdk"
+
+###### Install maven
+task-maven () {
+if [[ ! -x "$(command -v mvn)" || $force ]];then
+        add_log_entry; update_log $ret "[*] Maven not detected... Waiting for 7z"
+        wait_command "7z"
+        update_log $ret "[~] Maven not detected... Installing"
+        wget https://dlcdn.apache.org/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.zip -q
+        7z x apache-maven-3.9.5-bin.zip
+        if [[ -d "/usr/lib/maven" ]];then
+                sudo mv /usr/lib/maven /usr/lib/maven-$(date +%y-%m-%d--%T).old
+                tmp=$ret
+                add_log_entry; update_log $ret "[*] Moved /usr/lib/maven to /usr/lib/maven-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                ret=$tmp
+        fi
+        sudo mv apache-maven-3.9.5 /usr/lib/maven
+        if [[ -f "/bin/mvn" ]];then sudo rm /bin/mvn;fi
+        if [[ -f "/bin/mvnyjp" ]];then sudo rm /bin/mvnyjp;fi
+        sudo ln -s /usr/lib/maven/bin/mvn /bin/mvn
+        sudo ln -s /usr/lib/maven/bin/mvnyjp /bin/mvnyjp
+        sudo rm apache-maven-3.9.5-bin.zip
+        update_log $ret "[+] Maven Installed"
+fi
+}
+bg_install task-maven
 
 ###### Install Nodejs
 task-js() {
@@ -570,6 +595,9 @@ task-gradle () {
         fi
 }
 bg_install task-gradle
+
+###### Install shc
+bg_install apt_installation "shc"
 
 ###### Install git
 bg_install apt_installation "git"
@@ -849,7 +877,11 @@ bg_install apt_installation "hashcat"
 ###### Install hydra
 task-hydra() {
 if [[ ! -x "$(command -v hydra)" || $force ]];then
-        add_log_entry; update_log $ret "[*] Hydra not detected... Waiting for make and git"
+        add_log_entry; update_log $ret "[*] Hydra not detected... Waiting for apt"
+        wait_apt
+        update_log $ret "[*] Hydra not detected... Installing dependencies"
+        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install libssl-dev libssh-dev libidn11-dev libpcre3-dev libpq-dev libsvn-dev libssl-dev firebird-dev libmemcached-dev libgpg-error-dev libgcrypt20-dev libaio-dev libbson-dev libpcre2-dev libmongoc-dev --allow-downgrades -yq 2>>$(get_log_file hydra) >>$(get_log_file hydra)
+        update_log $ret "[*] Hydra not detected... Waiting for make and git"
         wait_command "make" "git"
         update_log $ret "[~] Hydra not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/vanhauser-thc/thc-hydra --quiet >>$(get_log_file hydra) 2>>$(get_log_file hydra)
@@ -1156,20 +1188,10 @@ bg_install apt_installation "openvpn"
 
 ###### Install mitm6
 task-mitmsix() {
-if [[ ! -x "$(command -v mitm6)" || $force ]];then
-        add_log_entry; update_log $ret "[*] mitm6 not detected... Waiting for git"
-        wait_command "git"
-        update_log $ret "[~] mitm6 not detected... Installing"
-        GIT_ASKPASS=true git clone https://github.com/dirkjanm/mitm6.git --quiet >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
-        update_log $ret "[*] mitm6 not detected... Waiting for pip upgrade"
-        wait_pip
-        update_log $ret "[~] mitm6 not detected... Installing requirements"
-        pip install -r mitm6/requirements.txt -q 2>>$(get_log_file mitm6) >>$(get_log_file mitm6)
-        sudo chmod +x mitm6/mitm6/mitm6.py
-        sudo mv mitm6/mitm6/mitm6.py /bin/mitm6
-        sudo rm -R mitm6
-        update_log $ret "[+] mitm6 Installed"
-fi
+pip_install mitm6
+pip install cryptography==38.0.4
+pip install service_identity
+pip install scapy --upgrade
 }
 bg_install task-mitmsix
 
@@ -1267,7 +1289,13 @@ fi
 }
 bg_install task-pydictor
 
+###### Install rdesktop
+bg_install apt_installation rdesktop
 
+###### Install xfreerdp
+bg_install apt_installation xfreerdp xfreerdp "libwinpr2-2=2.3.0+dfsg1-2+deb11u1 libfreerdp2-2=2.3.0+dfsg1-2+deb11u1 libfreerdp-client2-2=2.3.0+dfsg1-2+deb11u1 freerdp2-x11"
+
+ 
 ## Hot scripts
 ###### Install dnscat2 & dependencies
 task-dnscat() {
@@ -1336,14 +1364,6 @@ if [[ ! -x "$(command -v dnscat)" || $force ]];then
         if [[ -f "/bin/dnscat" ]];then sudo rm /bin/dnscat;fi
         sudo ln -s /lib/dnscat/server/dnscat2.rb /bin/dnscat
         update_log $ret "[+] Dnscat server Made"
-fi
-
-if [[ ! -x "$(command -v dnscat-shell)" || $force ]];then
-        add_log_entry; update_log $ret "[~] dnscat shell not detected... Installing"
-        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/tools/dnscat-shell.sh -q
-        chmod +x dnscat-shell.sh
-        sudo mv dnscat-shell.sh /bin/dnscat-shell
-        update_log $ret "[+] dnscat shell Installed"
 fi
 }
 bg_install task-dnscat
@@ -1582,9 +1602,9 @@ bg_install task-fullpowers
 task-godpotato () {
         if [[ ! -f "$hotscript/godpotatoNET2.exe" || ! -f "$hotscript/godpotatoNET4.exe" || ! -f "$hotscript/godpotatoNET35.exe" || $force ]];then
                 add_log_entry; update_log $ret "[~] GodPotato not detected... Installing"
-                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET2.exe" -q -o "$hotscript/godpotatoNET2.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
-                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe" -q -o "$hotscript/godpotatoNET4.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
-                wget "https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET35.exe" -q -o "$hotscript/godpotatoNET35.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
+                curl https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET2.exe -Lso "$hotscript/godpotatoNET2.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
+                curl https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe -Lso "$hotscript/godpotatoNET4.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
+                curl https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET35.exe -Lso "$hotscript/godpotatoNET35.exe" >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
                 update_log $ret "[+] GodPotato Installed"
         fi
 }
@@ -1593,7 +1613,7 @@ bg_install task-godpotato
 ###### Install ddexec script
 task-ddexec() {
 if [[ ! -f "$hotscript/ddexec" || $force ]];then
-        add_log_entry; update_log $ret "[~] ddenum not detected... Installing"
+        add_log_entry; update_log $ret "[~] ddexec not detected... Installing"
         wget https://raw.githubusercontent.com/arget13/DDexec/main/ddexec.sh -q
         chmod +x ddexec.sh
         sudo mv ddexec.sh $hotscript/ddexec
@@ -1613,6 +1633,18 @@ if [[ ! -f "$hotscript/ddenum" || $force ]];then
 fi
 }
 bg_install task-ddenum
+
+###### Install ddsheller
+task-ddsheller() {
+if [[ ! -f "$hotscript/ddsheller" || $force ]];then
+        add_log_entry; update_log $ret "[~] ddsheller not detected... Installing"
+        wget https://raw.githubusercontent.com/lLouu/penenv/$branch/misc/ddsheller.sh -q
+        chmod +x ddsheller.sh
+        sudo mv ddsheller.sh $hotscript/ddsheller
+        update_log $ret "[+] ddsheller Installed"
+fi
+}
+bg_install task-ddsheller
 
 ###### Install filestream
 task-filestream() {
@@ -1640,18 +1672,71 @@ bg_install task-shscanner
 
 
 ## Services
-###### Install bloodhound
-bg_install apt_installation "bloodhound"
-
-task-invoke-bloodhound() {
-if [[ ! -f "$hotscript/Invoke-Bloodhound.ps1" || $force ]];then
-        add_log_entry; update_log $ret "[~] Invoke-Bloodhound not detected... Installing"
-        wget https://raw.githubusercontent.com/BloodHoundAD/BloodHound/master/Collectors/SharpHound.ps1 -q
-        mv SharpHound.ps1 $hotscript/Invoke-Bloodhound.ps1
-        update_log $ret "[+] Invoke-Bloodhound Installed"
+###### Install neo4j
+task-neo4j () {
+if [[ ! -x "$(command -v neo4j)" || $force ]];then
+        add_log_entry; update_log $ret "[*] neo4j not detected... Waiting for apt"
+        wait_apt
+        update_log $ret "[~] neo4j not detected... Installing"
+        wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+        echo 'deb https://debian.neo4j.com stable latest' | sudo tee -a /etc/apt/sources.list.d/neo4j.list
+        sudo apt-get update
+        sudo apt-get install neo4j=1:5.13.0
+        update_log $ret "[+] neo4j Installed"
 fi
 }
-bg_install task-invoke-bloodhound
+bg_install task-neo4j
+
+###### Install bloodhound
+task-bloodhound () {
+if [[ ! -x "$(command -v bloodhound)" || $force ]];then
+        add_log_entry; update_log $ret "[*] bloodhound not detected... Waiting for 7z"
+        wait_command "7z"
+        update_log $ret "[~] bloodhound not detected... Installing"
+        curl https://github.com/BloodHoundAD/BloodHound/releases/download/v4.3.1/BloodHound-linux-x64.zip -LsO >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
+        7z x BloodHound-linux-x64.zip
+        if [[ -d "/usr/lib/bloodhound" ]];then
+                sudo mv /usr/lib/bloodhound /usr/lib/bloodhound-$(date +%y-%m-%d--%T).old
+                tmp=$ret
+                add_log_entry; update_log $ret "[*] Moved /usr/lib/bloodhound to /usr/lib/bloodhound-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                ret=$tmp
+        fi
+        sudo mv BloodHound-linux-x64 /usr/lib/bloodhound
+        if [[ -f "/bin/bloodhound" ]];then sudo rm /bin/bloodhound;fi
+        sudo ln -s /usr/lib/bloodhound/BloodHound /bin/bloodhound
+        sudo rm BloodHound-linux-x64.zip
+        update_log $ret "[+] bloodhound Installed"
+fi
+}
+bg_install task-bloodhound
+
+task-sharphound () {
+if [[ ! -f "$hotscript/SharpHound.exe" || $force ]];then
+        add_log_entry; update_log $ret "[~] SharpHound not detected... Installing"
+        wget https://github.com/BloodHoundAD/BloodHound/raw/master/Collectors/SharpHound.exe -q
+        wget https://github.com/BloodHoundAD/BloodHound/raw/master/Collectors/SharpHound.ps1 -q
+        mv SharpHound.exe $hotscript/SharpHound.exe
+        mv SharpHound.ps1 $hotscript/SharpHound.ps1
+        update_log $ret "[+] SharpHound Installed"
+fi
+}
+bg_install task-sharphound
+
+task-azurehound () {
+if [[ ! -x "$(command -v azurehound)" || $force ]];then
+        add_log_entry; update_log $ret "[*] AzureHound not detected... Waiting for git and go"
+        wait_command "git" "go"
+        update_log $ret "[~] AzureHound not detected... Installing"
+        GIT_ASKPASS=true git clone https://github.com/BloodHoundAD/AzureHound --quiet >>$(get_log_file azurehound) 2>>$(get_log_file azurehound)
+        cd AzureHound
+        go build -ldflags="-s -w -X github.com/bloodhoundad/azurehound/v2/constants.Version=`git describe tags --exact-match 2> /dev/null || git rev-parse HEAD`" >>$(get_log_file azurehound) 2>>$(get_log_file azurehound)
+        sudo mv azurehound /bin/azurehound
+        cd ..
+        sudo rm -r AzureHound
+        update_log $ret "[~] AzureHound not detected... Installing"
+fi
+}
+bg_install task-azurehound
 
 ###### Install Nessus
 task-nessus() {
@@ -1685,6 +1770,22 @@ wait_bg
 ###### Install lightdm and Mate
 bg_install apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
 wait_bg
+
+###### Final apt update & useless package removal
+if [[ ! $no_upgrade ]];then
+        start_update=$(date +%s)
+        add_log_entry; update_log $ret "[~] Doing final apt-get update and upgrade..."
+        apt-task() {
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout update > /dev/null
+        update_log $ret "[~] Doing final apt-get upgrade... Updating done..."
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout upgrade -y > /dev/null
+        update_log $ret "[~] Final apt update and upgrade done... Removing unused packages..."
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout autoremove -y > /dev/null
+        update_log $ret "[+] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
+        }
+        apt_install apt-task
+fi
+wait_apt
 
 add_log_entry; update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"
 

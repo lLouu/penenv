@@ -46,14 +46,14 @@ start.sh launches usefull services for your pentesting. It uses some ports
 
 # Detailed Content
 
-## Install (107)
+## Install (112)
 
 ### Penenv (3)
  - [X] install_penenv
  - [X] start
  - [X] get-session
 
-### Lang & downloaders (19)
+### Lang & downloaders (21)
  - [X] apt upgrade
  - [X] python 3
     - [X] 2to3
@@ -62,6 +62,7 @@ start.sh launches usefull services for your pentesting. It uses some ports
  - [X] go
  - [X] ruby
  - [X] java
+    - [X] maven
  - [X] nodejs
     - [X] npm
     - [X] yarn
@@ -71,6 +72,7 @@ start.sh launches usefull services for your pentesting. It uses some ports
     - [X] mono
     - [X] dotnet
     - [X] gradle
+ - [X] shc
  - [X] git
  - [X] krb5-user
  - [X] 7z
@@ -83,7 +85,7 @@ start.sh launches usefull services for your pentesting. It uses some ports
  - [X] jq
  - [X] expect
 
-### Tools (59)
+### Tools (61)
 #### Web Scan (26)
 ##### Subdomains & paths (15)
  - [X] sublist3r
@@ -137,7 +139,7 @@ start.sh launches usefull services for your pentesting. It uses some ports
  - [X] gdb
  - [X] Shocker
 
-#### Other (17)
+#### Other (19)
  - [X] impacket
  - [X] fierce
  - [X] oscanner
@@ -155,9 +157,11 @@ start.sh launches usefull services for your pentesting. It uses some ports
  - [X] smbmap
  - [X] Certipy
  - [X] pydictor
+ - [X] rdesktop
+ - [X] xfreerdp
 
-### Scripts (21)
- - [X] dnscat (server & client & shell)
+### Scripts (22)
+ - [X] dnscat (server & client)
  - [X] Chisel
  - [X] frp
  - [X] LinPEAS
@@ -176,12 +180,13 @@ start.sh launches usefull services for your pentesting. It uses some ports
  - [X] FullPowers
  - [X] GodPotato
  - [X] ddenum
+ - [X] ddsheller
  - [X] filestream
  - [X] shscanner
 
 ### Services (3)
+ - [X] neo4j
  - [X] bloodhound
-    - [X] neo4j
  - [X] nessus
 
 ## start

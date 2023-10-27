@@ -8,8 +8,8 @@ echo "/_/    \___/_/ /_/_____/_/ /_/|___/  ";
 echo "                                     ";
 echo ""
 echo "Author : lLou_"
-echo "Suite version : V0.2.8"
-echo "Script version : V1.0"
+echo "Suite version : V0.3.0"
+echo "Script version : V1.1"
 echo ""
 echo ""
 
@@ -87,15 +87,15 @@ if [[ ! -f $session_dir/$choice_name.stdin ]];then echo "[!] No stdin is availab
 cmd=""
 while [[ "1" ]];do
    if [[ -f $session_dir/$choice_name.stdin ]];then
-      read -n1 s
+      read -N1 s
       if [[ $s == $escape_char ]]; then
          read -rsn2 c
          echo -ne "$s$c" >> $session_dir/$choice_name.stdin
-      elif [[ $s == $(echo "") ]]; then
+      elif [[ $s == $'\n' ]]; then
          echo "$cmd" >> $session_dir/$choice_name.stdin
          cmd=""
       else
-         cmd=$cmd$s
+         cmd="$cmd$s"
       fi
    else
       sleep 1000
