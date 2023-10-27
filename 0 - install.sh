@@ -463,22 +463,24 @@ bg_install poetry-task
 
 ###### Install go
 go-task(){
-if [[ ! -x "$(command -v go)" || ! "$(go version)" =~ "1.20" || $force ]];then
-        add_log_entry; update_log $ret "[~] go 1.20 not detected... Installing"
-        wget  https://go.dev/dl/go1.20.2.linux-amd64.tar.gz -q
-        sudo tar xzf go1.20.2.linux-amd64.tar.gz 
+path=$(curl https://go.dev/dl/ -s 2>/dev/null | grep linux-amd64.tar.gz | head -n1 | cut -d'"' -f4)
+if [[ ! -x "$(command -v go)" || ! $path =~ "$(go version | awk '{print($3)}')" || $force ]];then
+        add_log_entry; update_log $ret "[~] latest version go not detected... Installing"
+        wget  https://go.dev$path -q
+        sudo tar xzf go*linux-amd64.tar.gz 
         if [[ -d "/usr/lib/go" ]];then
                 sudo mv /usr/lib/go /usr/lib/go-$(date +%y-%m-%d--%T).old
                 tmp=$ret
-                add_log_entry; update_log $ret "[*] Moved /usr/lib/go to /usr/lib/go-$(date +%y-%m-%d--%T).old due to forced reinstallation"
+                add_log_entry; update_log $ret "[*] Moved /usr/lib/go to /usr/lib/go-$(date +%y-%m-%d--%T).old due to forced reinstallation or version upgrading"
                 ret=$tmp
         fi
-        sudo mv go /usr/lib/go-1.20
+        sudo mv go /usr/lib/go
         if [[ -f "/bin/go" ]];then sudo rm /bin/go;fi
         if [[ -f "/bin/gofmt" ]];then sudo rm /bin/gofmt;fi
-        sudo ln -s /usr/lib/go-1.20/bin/go /bin/go
-        sudo ln -s /usr/lib/go-1.20/bin/gofmt /bin/gofmt
-        update_log $ret "[+] go 1.20 Installed"
+        sudo ln -s /usr/lib/go/bin/go /bin/go
+        sudo ln -s /usr/lib/go/bin/gofmt /bin/gofmt
+        rm go*linux-amd64.tar.gz
+        update_log $ret "[+] go Installed"
 fi
 }
 bg_install go-task
@@ -496,7 +498,7 @@ if [[ ! -x "$(command -v mvn)" || $force ]];then
         wait_command "7z"
         update_log $ret "[~] Maven not detected... Installing"
         wget https://dlcdn.apache.org/maven/maven-3/3.9.5/binaries/apache-maven-3.9.5-bin.zip -q
-        7z x apache-maven-3.9.5-bin.zip
+        7z x apache-maven-3.9.5-bin.zip >>$(get_log_file maven) 2>>$(get_log_file maven)
         if [[ -d "/usr/lib/maven" ]];then
                 sudo mv /usr/lib/maven /usr/lib/maven-$(date +%y-%m-%d--%T).old
                 tmp=$ret
@@ -1189,9 +1191,9 @@ bg_install apt_installation "openvpn"
 ###### Install mitm6
 task-mitmsix() {
 pip_install mitm6
-pip install cryptography==38.0.4
-pip install service_identity
-pip install scapy --upgrade
+pip install cryptography==38.0.4 >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
+pip install service_identity >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
+pip install scapy --upgrade >>$(get_log_file mitm6) 2>>$(get_log_file mitm6)
 }
 bg_install task-mitmsix
 
@@ -1678,10 +1680,11 @@ if [[ ! -x "$(command -v neo4j)" || $force ]];then
         add_log_entry; update_log $ret "[*] neo4j not detected... Waiting for apt"
         wait_apt
         update_log $ret "[~] neo4j not detected... Installing"
-        wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
-        echo 'deb https://debian.neo4j.com stable latest' | sudo tee -a /etc/apt/sources.list.d/neo4j.list
-        sudo apt-get update
-        sudo apt-get install neo4j=1:5.13.0
+        sudo rm /etc/apt/sources.list.d/neo4j.list >/dev/null 2>/dev/null
+        wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add - 2>>$(get_log_file neo4j) >>$(get_log_file neo4j)
+        echo 'deb https://debian.neo4j.com stable latest' | sudo tee -a /etc/apt/sources.list.d/neo4j.list > /dev/null
+        sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout update > /dev/null
+        sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install neo4j=1:5.13.0 --allow-downgrades -yq 2>>$(get_log_file neo4j) >>$(get_log_file neo4j)
         update_log $ret "[+] neo4j Installed"
 fi
 }
@@ -1693,8 +1696,8 @@ if [[ ! -x "$(command -v bloodhound)" || $force ]];then
         add_log_entry; update_log $ret "[*] bloodhound not detected... Waiting for 7z"
         wait_command "7z"
         update_log $ret "[~] bloodhound not detected... Installing"
-        curl https://github.com/BloodHoundAD/BloodHound/releases/download/v4.3.1/BloodHound-linux-x64.zip -LsO >>$(get_log_file godpotato) 2>>$(get_log_file godpotato)
-        7z x BloodHound-linux-x64.zip
+        curl https://github.com/BloodHoundAD/BloodHound/releases/download/v4.3.1/BloodHound-linux-x64.zip -LsO >>$(get_log_file bloodhound) 2>>$(get_log_file bloodhound)
+        7z x BloodHound-linux-x64.zip >>$(get_log_file bloodhound) 2>>$(get_log_file bloodhound)
         if [[ -d "/usr/lib/bloodhound" ]];then
                 sudo mv /usr/lib/bloodhound /usr/lib/bloodhound-$(date +%y-%m-%d--%T).old
                 tmp=$ret
