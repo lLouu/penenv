@@ -928,11 +928,7 @@ if [[ ! -x "$(command -v msfconsole)" || ! -x "$(command -v armitage)" || $force
         wait_command "java"
         update_log $ret "[~] Metasploit and Armitage not detected... Installing"
         if [[ ! "$(java --version)" =~ "openjdk 11" || $force ]];then
-                tmp=$ret
-                add_log_entry; update_log $ret "[~] Java != 11 is used... Setting it to 11"
                 sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-                update_log $ret "[*] Java version setted to 11"
-                ret=$tmp
         fi
         curl -s -L https://raw.githubusercontent.com/Matt-London/Install-Armitage-on-Linux/master/ArmitageInstaller --output ArmitageInstaller
         chmod +x ArmitageInstaller
@@ -1139,13 +1135,13 @@ if [[ ! -x "$(command -v crackmapexec)" || $force ]];then
         update_log $ret "[~] crackmapexec not detected... Initialize"
         cd /lib/crackmapexec && poetry run crackmapexec >>$(get_log_file cme) 2>>$(get_log_file cme)
         cd $workingdir
-        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run crackmapexec \$args" > crackmapexec
+        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run crackmapexec \$@" > crackmapexec
         chmod +x crackmapexec
         sudo mv crackmapexec /bin/crackmapexec
-        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run crackmapexec \$args" > cme
+        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run crackmapexec \$@" > cme
         chmod +x cme
         sudo mv cme /bin/cme
-        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run cmedb \$args" > cmedb
+        printf "#! /bin/sh\ncd /lib/crackmapexec\npoetry run cmedb \$@" > cmedb
         chmod +x cmedb
         sudo mv cmedb /bin/cmedb
         update_log $ret "[+] crackmapexec Installed"
@@ -1384,7 +1380,7 @@ task-frp() {
 if [[ ! -d "$hotscript/frp" || $force ]];then
         add_log_entry; update_log $ret "[*] frp not detected... Waiting for git and go 1.20"
         wait_command "git" "go"
-        while [[ ! "$(go version)" =~ "1.20" ]];do sleep $frequency;done
+        while [[ ! $(curl https://go.dev/dl/ -s 2>/dev/null | grep linux-amd64.tar.gz | head -n1 | cut -d'"' -f4) =~ "$(go version | awk '{print($3)}')" ]];do sleep $frequency;done
         update_log $ret "[~] frp not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/fatedier/frp.git --quiet >>$(get_log_file frp) 2>>$(get_log_file frp)
         cd frp
@@ -1576,7 +1572,7 @@ task-ligolo () {
         if [[ ! -f "$hotscript/ligolo" || ! "$(command -v ligolo)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go 1.20"
                 wait_command "go"
-                while [[ ! "$(go version)" =~ "1.20" ]];do sleep $frequency;done
+                while [[ ! $(curl https://go.dev/dl/ -s 2>/dev/null | grep linux-amd64.tar.gz | head -n1 | cut -d'"' -f4) =~ "$(go version | awk '{print($3)}')" ]];do sleep $frequency;done
                 update_log $ret "[~] Ligolo not detected... Installing"
                 GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ligolo-ng
@@ -1745,9 +1741,7 @@ bg_install task-azurehound
 task-nessus() {
 wait_command "java"
 if [[ ! "$(java --version)" =~ "openjdk 11" || $force ]];then
-        add_log_entry; update_log $ret "[~] Java != 11 is used... Setting it to 11"
         sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-        update_log $ret "[*] Java version setted to 11"
 fi
 
 if [[ ! "$(systemctl status nessusd 2>/dev/null)" || $force ]];then
@@ -1773,6 +1767,11 @@ wait_bg
 ###### Install lightdm and Mate
 bg_install apt_installation "mate-terminal" "mate" "lightdm" "lightdm-gtk-greeter" "mate-desktop-environment" "mate-desktop-environment-extras"
 wait_bg
+
+###### Reset java version at 17
+if [[ "$(java --version)" =~ "openjdk 11" ]];then
+        sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+fi
 
 ###### Final apt update & useless package removal
 if [[ ! $no_upgrade ]];then
