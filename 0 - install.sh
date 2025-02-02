@@ -1440,6 +1440,17 @@ fi
 }
 bg_install task-wpeasbat
 
+task-wpeasexe() {
+if [[ ! -f "$hotscript/WinPEAS.exe" || $force ]];then # TODO : check it's downloading rightly
+        add_log_entry; update_log $ret "[~] WinPEAS exe not detected... Installing"
+        wget https://raw.githubusercontent.com/carlospolop/PEASS-ng/releases/latest/download/winPEASany_ofs.exe -q
+        mv winPEASany_ofs.exe $hotscript/WinPEAS.exe
+        chmod +x $hotscript/WinPEAS.exe
+        update_log $ret "[+] WinPEAS exe Installed"
+fi
+}
+bg_install task-wpeasexe
+
 ###### Install miranda
 task-miranda() {
 if [[ ! -f "$hotscript/miranda.py" || $force ]];then
@@ -1580,7 +1591,7 @@ task-ligolo () {
                 update_log $ret "[~] Ligolo not detected... Installing"
                 GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ligolo-ng
-                go build -o $hotscript/ligolo cmd/agent/main.go >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
+                CGO_ENABLED=0 go build -o $hotscript/ligolo cmd/agent/main.go >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 sudo go build -o /bin/ligolo cmd/proxy/main.go >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
                 cd ..
                 sudo rm -r ligolo-ng

