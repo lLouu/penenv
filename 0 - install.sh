@@ -54,9 +54,10 @@ stop () {
         update_log $ret "[+] All launched installation process has ended"
         # kill gui proc
         kill_pc $guiproc_id
-        kill_pc $inpcaptproc_id
         tput cnorm
         tput rmcup
+        kill_pc $inpcaptproc_id
+        exec 3>&-
         # report states in shell and in transcript
         transcript=$log/transcript
         echo "=========================" >> $transcript
@@ -248,7 +249,7 @@ gui_proc () {
                 list=$(ls $gui | sort -g | tail -n+3)
                 position=$(cat $gui/position)
                 if [[ $position -ne -1 ]];then
-                        new_list=$(cat $list | head -n $position)
+                        new_list="$(echo $list | cut -d' ' -f1-$position)"
                         list=$new_list
                 fi
                 echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $list;do  cat $gui/$log;done)\n  >  Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
@@ -266,21 +267,31 @@ get_log_file () {
 # User inputs
 input_capture () {
         while [[ true ]];do
-                read -n1 c;
-                if [[ $c -eq '[' ]];then
-                        read -n1 cmd;
-                        if [[ $cmd -eq '[' ]];then
-                                read -n1 sub_cmd;
-                                case $sub_cmd in 
-                                        A) sc_up
-                                        ;;
-                                        B) sc_down
-                                        ;;
-                                        *)
-                                        ;;
+                read -rsn1 c <&3;
+                case $c in 
+                        $'\x06')
+                                # CTRL+F
+                                ;;
+                        $'\x07')
+                                # CTRL+G
+                                ;;
+                        $'\e')
+                                read -rsn1 cmd <&3;
+                                case $cmd in 
+                                        '[')
+                                                read -rsn1 sub_cmd <&3;
+                                                case $sub_cmd in 
+                                                        A) sc_up
+                                                        ;;
+                                                        B) sc_down
+                                                        ;;
+                                                        *)
+                                                        ;;
+                                                esac
+                                                ;;
                                 esac
-                        fi
-                fi
+                                ;;
+                esac
         done
 }
 
@@ -288,7 +299,7 @@ sc_up () {
         current_pos=$(cat $gui/position)
         if [[ $current_pos -eq -1 ]];then
                 echo -ne "$(wc -c $gui/.updates | awk '{print($1)}')" > $gui/position
-        elif [[ $current_pos -ne 0 ]]
+        elif [[ $current_pos -ne 0 ]];then
                 echo -ne "$((current_pos - 1))" > $gui/position
         fi
 }
@@ -296,7 +307,7 @@ sc_down () {
         current_pos=$(cat $gui/position)
         if [[ $current_pos -eq $(wc -c $gui/.updates | awk '{print($1)}') ]];then
                 echo -ne "-1" > $gui/position
-        elif [[ $current_pos -ne -1 ]]
+        elif [[ $current_pos -ne -1 ]];then
                 echo -ne "$((current_pos + 1))" > $gui/position
         fi
 }
@@ -310,7 +321,7 @@ nologs=""
 thread=20
 
 dpkg_timeout=600
-frequency=0.2
+frequency=0.05
 
 POSITIONAL_ARGS=()
 ORIGINAL_ARGS=$@
@@ -373,6 +384,7 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
 gui_proc &
 guiproc_id=$!
+exec 3<> /dev/tty
 input_capture &
 inpcaptproc_id=$!
 
