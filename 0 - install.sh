@@ -54,6 +54,7 @@ stop () {
         update_log $ret "[+] All launched installation process has ended"
         # kill gui proc
         kill_pc $guiproc_id
+        kill_pc $inpcaptproc_id
         tput cnorm
         tput rmcup
         # report states in shell and in transcript
@@ -87,8 +88,10 @@ apt_installation () {
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 add_log_entry; update_log $ret "[*] $name not detected... Waiting for apt upgrade"
                 wait_apt
+                update_log $ret "[~] $name not detected... Waiting for DPKG unlock"
+                while fuser /var/lib/dpkg/lock >/dev/null 2>&1 ; do sleep 1; done;
                 update_log $ret "[~] $name not detected... Installing"
-                # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed (thanks to parrallelization)
+                # non interactive apt install, and wait 10 minutes for dpkg lock to be unlocked if needed
                 if [[ $# -le 2 ]];then
                         sudo DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=$dpkg_timeout install $pkg --allow-downgrades -yq 2>>$(get_log_file $name) >>$(get_log_file $name)
                 else
@@ -115,7 +118,7 @@ go_installation () {
         if [[ $# -ne 2 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for go installation, when 2 are required... ($@)"; return; fi 
         if [[ ! -x "$(command -v $1)" || $force ]];then
                 add_log_entry; update_log $ret "[*] $1 not detected... Waiting go to be installed"
-                wait_command "go"
+                wait_go
                 while [[ ! $(curl https://go.dev/dl/ -s 2>/dev/null | grep linux-amd64.tar.gz | head -n1 | cut -d'"' -f4) =~ "$(go version | awk '{print($3)}')" ]];do sleep $frequency;done
                 update_log $ret "[~] $1 not detected... Installing"
                 go install $2 2>> $(get_log_file $1)
@@ -129,6 +132,7 @@ go_installation () {
 bg_proc=() # array of process to wait for complete installation
 apt_proc=() # process for apt upgrade
 pip_proc=() # process for pip upgrade
+go_proc=() # process for go upgrade
 
 # // functions
 installation () {
@@ -152,6 +156,11 @@ pip_install () {
         p=-1
         installation $@
         if [[ $p -ne -1 ]];then pip_proc+=( $p );fi
+}
+go_install () {
+        p=-1
+        installation $@
+        if [[ $p -ne -1 ]];then go_proc+=( $p );fi
 }
 
 # wait for process to end
@@ -179,6 +188,7 @@ wait_procs () {
 }
 wait_apt () { wait_procs ${apt_proc[@]}; }
 wait_pip () { wait_procs ${pip_proc[@]}; }
+wait_go () { wait_procs ${go_proc[@]}; }
 wait_command() {
         (for cmd in $@;do
                 while [[ ! "$(command -v $cmd)" ]];do sleep $frequency;done
@@ -233,9 +243,15 @@ gui_proc () {
                 used=$((2 + $(ls $thread_dir | wc -l)))
                 waiting=$(($(ls $waiting_dir | wc -l) + $(ls $goback_dir | wc -l) - 1))
                 ended=$(cat $gui/* | grep "\[+\]" | wc -l)
-                total=$(($ended + $waiting + $used - 1))
+                total=$(($ended + $waiting + $used - 3))
 
-                echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $(ls $gui | sort -g | tail -n+3);do  cat $gui/$log;done)\n  >  Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
+                list=$(ls $gui | sort -g | tail -n+3)
+                position=$(cat $gui/position)
+                if [[ $position -ne -1 ]];then
+                        new_list=$(cat $list | head -n $position)
+                        list=$new_list
+                fi
+                echo -ne "$(tput cup 0 0)$(tput ed)$(for log in $list;do  cat $gui/$log;done)\n  >  Used threads : $used  -  Waiting : $waiting - Progress : $ended / $total"
                 sleep $frequency
         done
 }
@@ -245,6 +261,44 @@ get_log_file () {
         if [[ $# -ne 1 ]];then add_log_entry; update_log $ret "[!] DEBUG : $# argument given for get_log_file, when only 1 is accepted... ($@)"; return; fi 
         if [[ $nologs ]];then echo "/dev/null";return;fi
         echo "$log/$1.log"
+}
+
+# User inputs
+input_capture () {
+        while [[ true ]];do
+                read -n1 c;
+                if [[ $c -eq '[' ]];then
+                        read -n1 cmd;
+                        if [[ $cmd -eq '[' ]];then
+                                read -n1 sub_cmd;
+                                case $sub_cmd in 
+                                        A) sc_up
+                                        ;;
+                                        B) sc_down
+                                        ;;
+                                        *)
+                                        ;;
+                                esac
+                        fi
+                fi
+        done
+}
+
+sc_up () {
+        current_pos=$(cat $gui/position)
+        if [[ $current_pos -eq -1 ]];then
+                echo -ne "$(wc -c $gui/.updates | awk '{print($1)}')" > $gui/position
+        elif [[ $current_pos -ne 0 ]]
+                echo -ne "$((current_pos - 1))" > $gui/position
+        fi
+}
+sc_down () {
+        current_pos=$(cat $gui/position)
+        if [[ $current_pos -eq $(wc -c $gui/.updates | awk '{print($1)}') ]];then
+                echo -ne "-1" > $gui/position
+        elif [[ $current_pos -ne -1 ]]
+                echo -ne "$((current_pos + 1))" > $gui/position
+        fi
 }
 
 # Manage options
@@ -319,6 +373,10 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 printf "Defaults\ttimestamp_timeout=-1\n" | sudo tee /etc/sudoers.d/tmp > /dev/null
 gui_proc &
 guiproc_id=$!
+input_capture &
+inpcaptproc_id=$!
+
+
 
 # Set directory environement
 log=/home/$usr/.logs
@@ -417,6 +475,15 @@ bg_install apt_installation "2to3"
 
 ###### Install pip
 pip-task (){
+# Check if permission update is needed
+for py in $(ls /usr/lib/ | grep python3.);do
+        if [[ -f /usr/lib/$py/EXTERNALLY-MANAGED ]];then
+                add_log_entry; update_log $ret "[~] $py is externally managed... Allowing pip to manage env"
+                sudo mv /usr/lib/$py/EXTERNALLY-MANAGED /usr/lib/$py/EXTERNALLY-MANAGED.old
+                update_log $ret "[*] $py was externally managed... /usr/lib/$py/EXTERNALLY-MANAGED moved to /usr/lib/$py/EXTERNALLY-MANAGED.old"
+        fi
+done
+
 if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
                 add_log_entry; update_log $ret "[~] pip not detected... Installing"
@@ -484,7 +551,7 @@ if [[ ! -x "$(command -v go)" || ! $path =~ "$(go version | awk '{print($3)}')" 
         update_log $ret "[+] go Installed"
 fi
 }
-bg_install go-task
+go_install go-task
 
 ###### Install Ruby
 bg_install apt_installation "gem" "Ruby" "ruby-dev"
@@ -1373,7 +1440,7 @@ bg_install task-dnscat
 ###### Install Chisel
 task-chisel() {
 go_installation "chisel" "github.com/jpillora/chisel@latest"
-if [[ -f "$hotscript/chisel" || $force ]];then
+if [[ ! -f "$hotscript/chisel" || $force ]];then
         sudo cp $(command -v chisel) $hotscript/chisel
 fi
 }
@@ -1586,7 +1653,7 @@ bg_install task-netcatexe
 task-ligolo () {
         if [[ ! -f "$hotscript/ligolo" || ! "$(command -v ligolo)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go 1.20"
-                wait_command "go"
+                wait_go
                 while [[ ! $(curl https://go.dev/dl/ -s 2>/dev/null | grep linux-amd64.tar.gz | head -n1 | cut -d'"' -f4) =~ "$(go version | awk '{print($3)}')" ]];do sleep $frequency;done
                 update_log $ret "[~] Ligolo not detected... Installing"
                 GIT_ASKPASS=true git clone https://github.com/nicocha30/ligolo-ng.git --quiet >>$(get_log_file ligolo) 2>>$(get_log_file ligolo)
@@ -1739,7 +1806,9 @@ bg_install task-sharphound
 task-azurehound () {
 if [[ ! -x "$(command -v azurehound)" || $force ]];then
         add_log_entry; update_log $ret "[*] AzureHound not detected... Waiting for git and go"
-        wait_command "git" "go"
+        wait_command "git"
+        update_log $ret "[*] AzureHound not detected... Waiting for go"
+        wait_go
         update_log $ret "[~] AzureHound not detected... Installing"
         GIT_ASKPASS=true git clone https://github.com/BloodHoundAD/AzureHound --quiet >>$(get_log_file azurehound) 2>>$(get_log_file azurehound)
         cd AzureHound
@@ -1747,7 +1816,7 @@ if [[ ! -x "$(command -v azurehound)" || $force ]];then
         sudo mv azurehound /bin/azurehound
         cd ..
         sudo rm -r AzureHound
-        update_log $ret "[~] AzureHound not detected... Installing"
+        update_log $ret "[+] AzureHound Installed"
 fi
 }
 bg_install task-azurehound
