@@ -1438,6 +1438,7 @@ fi
 bg_install task-dnscat
 
 ###### Install Chisel
+# TODO : get a windows-compatible version too
 task-chisel() {
 go_installation "chisel" "github.com/jpillora/chisel@latest"
 if [[ ! -f "$hotscript/chisel" || $force ]];then
@@ -1650,6 +1651,7 @@ task-netcatexe () {
 bg_install task-netcatexe
 
 ###### Install ligolo ng
+# TODO : build with windows dll
 task-ligolo () {
         if [[ ! -f "$hotscript/ligolo" || ! "$(command -v ligolo)" || $force ]];then
                 add_log_entry; update_log $ret "[*] Ligolo not detected... Waiting for go 1.20"
@@ -1784,7 +1786,7 @@ if [[ ! -x "$(command -v bloodhound)" || $force ]];then
         fi
         sudo mv BloodHound-linux-x64 /usr/lib/bloodhound
         if [[ -f "/bin/bloodhound" ]];then sudo rm /bin/bloodhound;fi
-        sudo ln -s /usr/lib/bloodhound/BloodHound /bin/bloodhound
+        sudo ln -s /usr/lib/bloodhound/BloodHound /bin/bloodhound # TODO : add -no-sandbox option by default
         sudo rm BloodHound-linux-x64.zip
         update_log $ret "[+] bloodhound Installed"
 fi
