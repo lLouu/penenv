@@ -523,14 +523,14 @@ if [[ ! $no_upgrade ]];then
         pip install --upgrade pip -q 2>>$(get_log_file pip) >>$(get_log_file pip)
         l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
         n=$(echo "$l" | wc -l | awk '{print($1)}')
+        i=0
         for line in $l
         do
+                update_log $ret "[~] Upgrading pip and python packages... $i/$n packages upgraded  | currently upgrading $line"
                 pip_install pip install $line --upgrade -q 2>>$(get_log_file pip) >>$(get_log_file pip)
+                (( i = i+1 ))
         done
-        while [ ${#pip_proc[@]} -gt 1 ];do
-                update_log $ret "[~] Upgrading pip and python packages... $(( $n - ${#pip_proc[@]} + 1 ))/$n packages upgraded"
-                sleep 5
-        done
+        # TODO : find a valid way to wait for the last tasks to be done
         update_log $ret "[+] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
 }
@@ -1896,14 +1896,14 @@ if [[ ! $no_upgrade ]];then
         add_log_entry; update_log $ret "[~] Final upgrading python packages..."
         l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
         n=$(echo "$l" | wc -l | awk '{print($1)}')
+        i=0
         for line in $l
         do
+                update_log $ret "[~] Final upgrading python packages... $i/$n packages upgraded  | currently upgrading $line"
                 pip_install pip install $line --upgrade -q 2>>$(get_log_file pip) >>$(get_log_file pip)
+                (( i = i+1 ))
         done
-        while [ ${#pip_proc[@]} -gt 0 ];do
-                update_log $ret "[~] Upgrading pip and python packages... $(( $n - ${#pip_proc[@]} ))/$n packages upgraded"
-                sleep 5
-        done
+        wait_pip
         update_log $ret "[+] Python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
 wait_apt
