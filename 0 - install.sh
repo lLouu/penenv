@@ -487,6 +487,7 @@ bg_install apt_installation "2to3"
 
 ###### Install pip
 pip-task (){
+wait_command "python3";
 # Check if permission update is needed
 for py in $(ls /usr/lib/ | grep python3.);do
         if [[ -f /usr/lib/$py/EXTERNALLY-MANAGED ]];then
@@ -495,6 +496,11 @@ for py in $(ls /usr/lib/ | grep python3.);do
                 update_log $ret "[*] $py was externally managed... /usr/lib/$py/EXTERNALLY-MANAGED moved to /usr/lib/$py/EXTERNALLY-MANAGED.old"
         fi
 done
+
+# set symlink to python3
+if [[ ! -f "/usr/bin/python" ]];then
+        sudo ln -s /usr/bin/python3 /usr/bin/python
+fi
 
 if [[ ! -x "$(command -v pip)" || $force ]];then
         if [[ ! -x "$(command -v pip3)" || $force ]];then
@@ -517,12 +523,13 @@ if [[ ! $no_upgrade ]];then
         pip install --upgrade pip -q 2>>$(get_log_file pip) >>$(get_log_file pip)
         l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
         n=$(echo "$l" | wc -l | awk '{print($1)}')
-        i=0
         for line in $l
         do
-                update_log $ret "[~] Upgrading pip and python packages... $i/$n packages upgraded  | currently upgrading $line"
                 pip_install pip install $line --upgrade -q 2>>$(get_log_file pip) >>$(get_log_file pip)
-                (( i = i+1 ))
+        done
+        while [ ${#pip_proc[@]} -gt 1 ];do
+                update_log $ret "[~] Upgrading pip and python packages... $(( $n - ${#pip_proc[@]} + 1 ))/$n packages upgraded"
+                sleep 5
         done
         update_log $ret "[+] pip and python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
@@ -1871,11 +1878,11 @@ if [[ "$(java --version)" =~ "openjdk 11" ]];then
         sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
 fi
 
-###### Final apt update & useless package removal
+###### Final apt update & useless package removal & pip upgrade
 if [[ ! $no_upgrade ]];then
-        start_update=$(date +%s)
         add_log_entry; update_log $ret "[~] Doing final apt-get update and upgrade..."
         apt-task() {
+        start_update=$(date +%s)
         sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout update > /dev/null
         update_log $ret "[~] Doing final apt-get upgrade... Updating done..."
         sudo apt-get -o DPkg::Lock::Timeout=$dpkg_timeout upgrade -y > /dev/null
@@ -1884,8 +1891,23 @@ if [[ ! $no_upgrade ]];then
         update_log $ret "[+] apt-get updated and upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
         }
         apt_install apt-task
+        
+        start_update=$(date +%s)
+        add_log_entry; update_log $ret "[~] Final upgrading python packages..."
+        l=$(pip list --outdated | awk '{print($1)}' | tail -n +3)
+        n=$(echo "$l" | wc -l | awk '{print($1)}')
+        for line in $l
+        do
+                pip_install pip install $line --upgrade -q 2>>$(get_log_file pip) >>$(get_log_file pip)
+        done
+        while [ ${#pip_proc[@]} -gt 0 ];do
+                update_log $ret "[~] Upgrading pip and python packages... $(( $n - ${#pip_proc[@]} ))/$n packages upgraded"
+                sleep 5
+        done
+        update_log $ret "[+] Python packages upgraded... Took $(date -d@$(($(date +%s)-$start_update)) -u +%H:%M:%S)"
 fi
 wait_apt
+
 
 add_log_entry; update_log $ret "[~] Installation done... Took $(date -d@$(($(date +%s)-$start)) -u +%H:%M:%S)"
 
